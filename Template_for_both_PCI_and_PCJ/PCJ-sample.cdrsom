@@ -1,0 +1,16 @@
+\begingroup
+%  Article : PCJ_2021__1__A1_0
+%  Fichier : PCJ-sample.tex
+%  Date prod. : 2021/11/16
+\SomLine
+    [42]
+    {\firstname {Antoine} \lastname {Lavoisier}\IsEqualContrib \unskip ,\penalty -1 \space \ignorespaces \firstname {Mary} \middlename {P.} \lastname {Curry}\IsEqualContrib \unskip ,\penalty -1 \space \ignorespaces \firstname {Dick} \lastname {Darlington}\unskip \space \@@and ~\firstname {Peter} \lastname {Curry}}
+    {\firstname {Antoine} \lastname {Lavoisier}\IsEqualContrib \hasaddress {}{Rue sans aplomb, Paris, France}\hasemail {A. Lavoisier}{a-lavois@lead-free-univ.edu}\unskip ,\penalty -1 \space \ignorespaces \firstname {Mary} \middlename {P.} \lastname {Curry}\IsEqualContrib \hasaddress {}{Center for spiced radium experiments, United Kingdom}\hasemail {M.~P.~Curry}{m.p.curry@radexp.edu.uk}\unskip ,\penalty -1 \space \ignorespaces \firstname {Dick} \lastname {Darlington}\hasaddress {}{Bruce's Bar and Grill, London (near Susan's)}\hasemail {D.~Darlington}{dd@example.com}\unskip \space \@@and ~\firstname {Peter} \lastname {Curry}\hasaddress {}{Center for spiced radium experiments, United Kingdom}\hasemail {P.~Curry}{p.curry@radexp.edu.uk}}
+    {english}
+    {Sample for the template, with quite a very long title}
+    {}
+    {\ignorespaces  \lipsum [1] }
+    {}
+    {1}
+    {8}
+\endgroup

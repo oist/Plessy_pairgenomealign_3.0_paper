@@ -1,0 +1,30 @@
+###### To do when update of the package by Centre Mersenne ######
+
+
+#####in cedram-PCJ.sty#####
+#add lines ~9 
+#after \RequirePackage{fancyhdr}
+\RequirePackage{lineno}
+
+#added lines ~22-23
+#after \def\currentjournaltitle{Peer Community Journal}
+\def\thePCIcorresp{UNKNOWN}
+\newcommand{\PCIcorresp}[1]{\def\thePCIcorresp{#1}}
+
+#comment lines ~44-46
+%\fancyfoot{}
+%\fancyfoot[L]{\color{PCIdark}\publname, Vol.\ \currentvolume\ (\currentyear), article \thearticle}
+%\fancyfoot[R]{\color{PCIdark}\url@sfstyle\printDOI}
+
+#comment line ~101
+%    \NewDocumentCommand {\PCIcorresp} {v} {\seq_put_right:Nn \cdr_corresp_seq {#1}}
+
+#add line ~134 after \ifcdr@pagedegarde
+    \linenumbers
+
+######Use previous PCJ-pagedegarde.tex
+######Use previous PCJ-sample.tex
+######Use previous PCJ-sample.bib
+
+
+

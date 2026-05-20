@@ -1,0 +1,43 @@
+\makeatletter
+\newgeometry{margin=2.54cm,top=2.54cm}
+\thispagestyle{empty}
+
+\vfill
+
+\ifx\PDGauthors\undefined\let\PDGauthors\authors\fi
+
+\noindent\tcboxfit[%
+  reset,width=\hsize,height=24cm,
+  colframe=white,colback=white,
+  left*=0pt,right*=0pt,top=0pt,bottom=0pt,
+  fit fontsize macros,
+  fit algorithm=hybrid*,
+  fit height from=0cm to 24cm,
+  ]{
+        \begin{minipage}[t]{.9\textwidth}
+        \normalsize\setlength{\parskip}{3ex}
+        \def\IsEqualContrib{\textsuperscript{$\#$,}\global\cdr@hasequalcontribtrue}
+
+        {\raggedright\Huge\bf\@title\par}
+
+        {\raggedright\LARGE\let\footnotesize=\normalsize\cdr@listauthors@footnotes\par}
+
+%        {\Large Volume \textbf{\currentvolume} (\currentyear), article \thearticle}
+
+        {\Large\url@sfstyle\printDOI}
+
+
+        \bigskip{\huge\bf Abstract}\\[1ex]
+        \normalsize{\setlength{\parskip}{0ex}\@abstract\par}
+        \ifx\@empty\@keywords\else\textbf{Keywords:} \@keywords\par\fi
+
+        \footnotesize\cdr@listaddresses@footnotes
+        \ifcdr@hasequalcontrib,\quad\textsuperscript{$\#$}Equal contribution\par\fi
+
+        \normalsize\textbf{Correspondence}\\
+        {\url@sfstyle\url{\thePCIcorresp}}
+
+    \end{minipage}
+  }
+
+\vfill\restoregeometry

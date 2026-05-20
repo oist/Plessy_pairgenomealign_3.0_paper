@@ -1,0 +1,7 @@
+\def\@mainsize{11}%
+\def\@ptsize{1}%
+\def\@typesizes{%
+    \or{6}{7}\or{7}{8}\or{8}{10}\or{9}{11}\or{10}{12}\or{\@xipt}{13}%
+    \or{\@xiipt}{14}\or{\@xivpt}{17}\or{\@xviipt}{20}\or{\@xxpt}{24}\or{\@xxvpt}{30}%
+}%
+\normalsize\linespacing=\baselineskip
