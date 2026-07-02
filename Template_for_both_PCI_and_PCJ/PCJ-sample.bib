@@ -415,6 +415,41 @@ OA = {hybrid},
 DA = {2026-07-01},
 }
 
+@phdthesis{ Harris_2007,
+  author        = {Harris, Robert S.},
+  title         = {Improved Pairwise Alignment of Genomic DNA},
+  school        = {The Pennsylvania State University},
+  year          = {2007},
+  type          = {Doctor of Philosophy Dissertation},
+  month         = {dec},
+  date          = {2007},
+  degree        = {Ph.D.},
+  department    = {Computer Science and Engineering},
+  advisor       = {Webb Miller},
+  url           = {https://www.bx.psu.edu/~rsharris/rsharris_phd_thesis_2007.pdf},
+  abstract      = {Advances in DNA sequencing technology have fueled a rapid increase in the
+number of sequenced vertebrate genomes, and we anticipate an explosion in the number
+of genomes sequenced in the near future. Detecting similarities between genomes is a
+valuable technique in discovering functional elements, and sequence alignment is the
+primary tool for discovering similarities. The quality of alignments is affected by several
+user-specified control parameters. The parameters are so little understood that most users
+simply use default settings. We seek to change that, to have the program automatically
+infer appropriate parameter choices from statistics derived automatically from the
+sequences.
+    We introduce a program, INFERZ, which addresses part of the inference problem,
+inferring substitution and gap scores according to a mathematically sound model. Further,
+we explore the usefulness of iterating inferred scores to convergence. We test this process
+on both simulated and actual genomic data, and show that iteration will converge in
+general, but found that converged scores were not a consistent improvement.
+    INFERZ has a synergistic relationship with LASTZ, our improved drop-in
+replacement for the widely used alignment program BLASTZ. INFERZ makes repeated
+calls to LASTZ to test score sets, and LASTZ provides the user an option to have
+INFERZ decide what scoring parameters to use. Compared to BLASTZ, LASTZ adds a
+richer set of seeding strategy choices, supports alignment to probabilistic sequences and
+reduces memory requirements. Additionally, disciplined software techniques make it a
+better platform for continued experimentation},
+}
+
 @article{ Kent_2003,
 Author = {Kent, WJ and Baertsch, R and Hinrichs, A and Miller, W and Haussler, D},
 Title = {Evolution's cauldron: Duplication, deletion, and rearrangement in the
@@ -488,6 +523,73 @@ Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
 Unique-ID = {WOS:000185685700057},
 OA = {Green Submitted},
 DA = {2026-07-01},
+}
+
+@article{ Li_2018,
+Author = {Li, Heng},
+Title = {Minimap2: pairwise alignment for nucleotide sequences},
+Journal = {BIOINFORMATICS},
+Year = {2018},
+Volume = {34},
+Number = {18},
+Pages = {3094-3100},
+Month = {SEP 15},
+Abstract = {Motivation: Recent advances in sequencing technologies promise
+   ultra-long reads of similar to 100 kb in average, full-length mRNA or
+   cDNA reads in high throughput and genomic contigs over 100 Mb in length.
+   Existing alignment programs are unable or inefficient to process such
+   data at scale, which presses for the development of new alignment
+   algorithms.
+   Results: Minimap2 is a general-purpose alignment program to map DNA or
+   long mRNA sequences against a large reference database. It works with
+   accurate short reads of >= 100 bp in length, >= 1 kb genomic reads at
+   error rate similar to 15\%, full-length noisy Direct RNA or cDNA reads
+   and assembly contigs or closely related full chromosomes of hundreds of
+   megabases in length. Minimap2 does split-read alignment, employs concave
+   gap cost for long insertions and deletions and introduces new heuristics
+   to reduce spurious alignments. It is 3-4 times as fast as mainstream
+   short-read mappers at comparable accuracy, and is >= 30 times faster
+   than longread genomic or cDNA mappers at higher accuracy, surpassing
+   most aligners specialized in one type of alignment.},
+Publisher = {OXFORD UNIV PRESS},
+Address = {GREAT CLARENDON ST, OXFORD OX2 6DP, ENGLAND},
+Type = {Article},
+Language = {English},
+Affiliation = {Li, H (Corresponding Author), Broad Inst, Dept Med Populat Genet Program, Cambridge, MA 02142 USA.
+   Li, Heng, Broad Inst, Dept Med Populat Genet Program, Cambridge, MA 02142 USA.},
+DOI = {10.1093/bioinformatics/bty191},
+ISSN = {1367-4803},
+EISSN = {1460-2059},
+Keywords-Plus = {BURROWS-WHEELER TRANSFORM; READ ALIGNMENT; LONG SEQUENCES; ALGORITHM;
+   GENOME; GENERATION; LIBRARY; RNA},
+Research-Areas = {Biochemistry \& Molecular Biology; Biotechnology \& Applied
+   Microbiology; Computer Science; Mathematical \& Computational Biology;
+   Mathematics},
+Web-of-Science-Categories  = {Biochemical Research Methods; Biotechnology \& Applied Microbiology;
+   Computer Science, Interdisciplinary Applications; Mathematical \&
+   Computational Biology; Statistics \& Probability},
+Author-Email = {hengli@broadinstitute.org},
+Affiliations = {Harvard University; Massachusetts Institute of Technology (MIT); Broad
+   Institute},
+ResearcherID-Numbers = {Li, Heng/D-9344-2011},
+ORCID-Numbers = {Li, Heng/0000-0003-4874-2874},
+Funding-Acknowledgement = {National Human Genome Research Institute {[}1R01HG010040-01]; National
+   Human Genome Research Institute {[}R01HG010040] Funding Source: NIH
+   RePORTER},
+Funding-Text = {This work was supported by the National Human Genome Research Institute
+   {[}1R01HG010040-01].},
+Number-of-Cited-References = {37},
+Times-Cited = {9632},
+Usage-Count-Last-180-days = {14},
+Usage-Count-Since-2013 = {388},
+Journal-ISO = {Bioinformatics},
+Doc-Delivery-Number = {GV8XK},
+Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
+Unique-ID = {WOS:000446433800005},
+OA = {Green Submitted, Bronze},
+ESI-Highly-Cited-Paper = {Y},
+ESI-Hot-Paper = {N},
+DA = {2026-07-02},
 }
 
 @article{ Marcais_2018,
@@ -582,4 +684,20 @@ OA = {Green Submitted, gold},
 ESI-Highly-Cited-Paper = {Y},
 ESI-Hot-Paper = {N},
 DA = {2026-07-02},
+}
+
+@article{ Myers_2025,
+    author = {Myers, Gene and Durbin, Richard and Zhou, Chenxi},
+    title = {FastGA: fast genome alignment},
+    journal = {Bioinformatics Advances},
+    volume = {5},
+    number = {1},
+    pages = {vbaf238},
+    year = {2025},
+    month = {01},
+    abstract = {FastGA finds alignments between two genome sequences more than an order of magnitude faster than previous methods that have comparable sensitivity. Its speed is due to (i) a fully cache-local architecture involving only MSD radix sorts and merges, (ii) an algorithm for finding adaptive seed hits in a linear merge of sorted k-mer tables, and (iii) a variant of the Myers adaptive wave algorithm to find alignments around a chain of seed hits. It further stores alignments in a fraction of the space of a conventional CIGAR string using a trace-point encoding and our ONEcode data system introduced here.For example, two 2 Gbp bat genomes are compared in 2.1 min with eight threads on an Apple laptop using 5.7 GB of memory and producing 1.05 million alignments covering 60\% of each genome. Our ALN format file occupies 66 MB and in just 6 s can be converted to a standard 1.03 GB PAF file.FastGA is freely available at GitHub: http://www.github.com/thegenemyers/FASTGA along with utilities for viewing inputs, intermediates, and outputs and transforming ALN files to PSL or PAF with or without CIGAR strings and common formats. There is also a utility to chain FastGA’s alignments and display them in a dot-plot view in PostScript files.},
+    issn = {2635-0041},
+    doi = {10.1093/bioadv/vbaf238},
+    url = {https://doi.org/10.1093/bioadv/vbaf238},
+    eprint = {https://academic.oup.com/bioinformaticsadvances/article-pdf/5/1/vbaf238/64518813/vbaf238.pdf},
 }

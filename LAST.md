@@ -72,6 +72,11 @@ alignment seed to decide the tradeoff between sensitivity and specificity
 aligment parameters (scoring matrix and gap creation/extension) by iself
 (BibTeX Hamada_2017).
 
+Other software are available but did not offer all the features of LAST.  In
+particular, LASTZ (BibTeX Harris_2007) and MUMmer (Marcais_2018) are slower,
+Minimap2 (BibTeX Li_2018) is not designed to align distantly and FASTGA
+(Myers_2025) was not available at the time the core of this pipeline was
+developped.
 
 Copilot version:
 ----------------
@@ -92,3 +97,18 @@ mapping between genomes, thereby resolving multi-mapping regions in a
 principled manner (Frith_2015). This integrated approach avoids the need for
 post hoc chaining and netting strategies (Kent_2003) while maintaining high
 sensitivity and specificity.
+
+Several alternative pairwise alignment tools were considered, including LASTZ,
+MUMmer4, Minimap2, and, more recently, FastGA (Harris_2007; Marcais_2018;
+Li_2018; Myers_2025). LASTZ and MUMmer4 are widely used for whole-genome
+comparison, but neither combines the flexible seeding strategies, adaptive
+parameter training, and probabilistic split-alignment framework provided by
+LAST in a single integrated workflow. Minimap2 achieves excellent performance
+for read mapping and alignment of closely related long sequences but was not
+primarily designed for sensitive alignment of more diverged genomes. FastGA
+offers substantially improved speed for genome alignment; however, it became
+available after the core design and implementation of the present pipeline. We
+therefore selected LAST because it uniquely combined broad applicability across
+evolutionary distances with configurable sensitivity, data-driven parameter
+training, and principled resolution of ambiguous alignments.
+
