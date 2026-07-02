@@ -82,9 +82,44 @@ style=pcj
 %you may choose to use a table of content
 %\tableofcontents
 \onehalfspacing
-\section*{Example of a section, e.g. Introduction}
-\lipsum[3]
+
+\section*{Introduction}
+
+Why align genomes?  Why at a high throughput?
+
+What is Nextflow?
+
+We used the LAST software suite (\cite{Frith_2010}) for pairwise genome alignment because it
+accommodates a wide range of sequence lengths, divergences and compositional
+biases, while implementing an efficient seed-and-extend strategy with
+successive gapless and gapped X-drop extensions. The key advantages of LAST are 1) its
+flexible seeding framework, which allows users to tune sensitivity and
+specificity through the design of exact or inexact seeds, including spaced,
+transition-constrained, and sparsely sampled seeds (\cite{Frith_2014}, \cite{Frith_2020},
+\cite{Frith_2023}), 2) its training procedure that automatically infers
+substitution scores and gap penalties from the data, enabling robust alignment
+across queries with heterogeneous evolutionary distances (\cite{Hamada_2017}), and 3) its last-split program, which selects an
+optimal set of non-overlapping alignments to produce a consistent one-to-one
+mapping between genomes, thereby resolving multi-mapping regions in a
+principled manner (\cite{Frith_2015}), which avoids the need for
+post hoc chaining and netting strategies (\cite{Kent_2003}).
+
+Several alternative pairwise alignment tools were considered, including LASTZ,
+MUMmer4, Minimap2, and, more recently, FastGA (Harris_2007; Marcais_2018;
+Li_2018; Myers_2025). LASTZ and MUMmer4 are widely used for whole-genome
+comparison, but neither combines the flexible seeding strategies, adaptive
+parameter training, and probabilistic split-alignment framework provided by
+LAST in a single integrated workflow. Minimap2 achieves excellent performance
+for read mapping and alignment of closely related long sequences but was not
+primarily designed for sensitive alignment of more diverged genomes. FastGA
+offers substantially improved speed for genome alignment; however, it became
+available after the core design and implementation of the present pipeline. We
+therefore selected LAST because it uniquely combined broad applicability across
+evolutionary distances with configurable sensitivity, data-driven parameter
+training, and principled resolution of ambiguous alignments.
+
 \section*{Example of a section, e.g. Material and methods }
+
 \lipsum[4]
 \subsection*{First subsection}
 \lipsum[5]
