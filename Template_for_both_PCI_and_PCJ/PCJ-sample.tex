@@ -87,7 +87,7 @@ style=pcj
 
 Why align genomes?  Why at a high throughput?
 
-What is Nextflow?
+What is Nextflow? What is nf-core?
 
 We used the LAST software suite (\cite{Frith_2010}) for pairwise genome alignment because it
 accommodates a wide range of sequence lengths, divergences and compositional
@@ -104,9 +104,8 @@ mapping between genomes, thereby resolving multi-mapping regions in a
 principled manner (\cite{Frith_2015}), which avoids the need for
 post hoc chaining and netting strategies (\cite{Kent_2003}).
 
-Several alternative pairwise alignment tools were considered, including LASTZ,
-MUMmer4, Minimap2, and, more recently, FastGA (Harris_2007; Marcais_2018;
-Li_2018; Myers_2025). LASTZ and MUMmer4 are widely used for whole-genome
+Several alternative pairwise alignment tools were considered, including LASTZ (\cite{Harris_2007}),
+MUMmer4 (\cite{Marcais_2018}), Minimap2 (\cite{Li_2018}), and, more recently, FastGA (\cite{Myers_2025}). LASTZ and MUMmer4 are widely used for whole-genome
 comparison, but neither combines the flexible seeding strategies, adaptive
 parameter training, and probabilistic split-alignment framework provided by
 LAST in a single integrated workflow. Minimap2 achieves excellent performance
@@ -114,7 +113,7 @@ for read mapping and alignment of closely related long sequences but was not
 primarily designed for sensitive alignment of more diverged genomes. FastGA
 offers substantially improved speed for genome alignment; however, it became
 available after the core design and implementation of the present pipeline. We
-therefore selected LAST because it uniquely combined broad applicability across
+therefore selected LAST because it combined broad applicability across
 evolutionary distances with configurable sensitivity, data-driven parameter
 training, and principled resolution of ambiguous alignments.
 
