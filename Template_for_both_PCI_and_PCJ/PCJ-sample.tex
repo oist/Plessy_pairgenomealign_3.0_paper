@@ -117,6 +117,10 @@ therefore selected LAST because it combined broad applicability across
 evolutionary distances with configurable sensitivity, data-driven parameter
 training, and principled resolution of ambiguous alignments.
 
+Once computed, whole-genome alignments can be stored in formats that differ substantially in information content and storage efficiency. The Multiple Alignment Format (MAF), originally developed for the UCSC Genome Browser and related tools such as MULTIZ (\cite{Kent_2002a}; \cite{Blanchette_2004}), is the primary output format of LAST. In addition to alignment coordinates, MAF stores the aligned sequences and, in LAST, per-base alignment confidence values. More compact formats trade information for storage efficiency. The tabular output of LAST and the PSL format used by BLAT (\cite{Kent_2002b}) omit the alignment strings while retaining gap structure and summary statistics such as mismatch counts and gap openings. BLAST tabular output (\cite{Altschul_1990}) is more compact still, discarding the gap coordinates. At the end of the spectrum, alignments can be represented simply as paired genomic intervals in GFF or BED format with only an alignment score, providing near-maximal lossy compression in a text representation. Conversely, MAF alignments can be converted with minimal information loss to SAM/BAM (\cite{Li_2009}) and subsequently compressed in CRAM format (\cite{Bonfield_2022}), benefiting from reference-based compression. The LAST suite can directly generate or export all of these formats.
+
+Dot-plot representations, last-dotplot, other export formats, the problem of filtering, the solution in LAST, ...
+
 \section*{Example of a section, e.g. Material and methods }
 
 \lipsum[4]
@@ -132,6 +136,8 @@ training, and principled resolution of ambiguous alignments.
 \subsection*{Use case 1: multiple genome alignment}
 
 (in particular with broad diversity of evolutionary distances). UCEs. Phylogenetic trees.
+
+The CRAM format is remarkably efficient after solving the max value of hard-clipping.  IGV, Pysam, …
 
 \subsection*{Use case 2: QC of a new assembly}
 
