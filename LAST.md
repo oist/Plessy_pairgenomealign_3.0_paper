@@ -78,6 +78,26 @@ Minimap2 (BibTeX Li_2018) is not designed to align distantly and FASTGA
 (Myers_2025) was not available at the time the core of this pipeline was
 developped.
 
+Once computed, whole-genome alignments can be stored in formats that may
+discard part of the information.  The MAF format was originally used by
+alignemnt tools related to the UCSC genome browser (Kent_2002a), such as MULTIZ
+(Blanchette_2004) and is the primary output of LAST, which not only uses it to
+report the alignment but also the per-base quality value of the aligment.  In
+this text-based format, the self-aligment of a genome takes as much space as
+twice the genome itself, which is not convenient for applications that do not
+need the exact aligment.  The tabular output of LAST and the PSL format of BLAT
+(Kent_2002b) discard the alignment but report statisics such as the number of
+mismatches and the position of gaps.  This information is not compressed
+efficiently, and formats like the tabular output of BLAST (Altschul_1990)
+discards it.  Finally, pairs of aligment coordinates in each genome can be
+stored in GFF and BED formats without further information than the alignment
+score, reaching close to maximal lossy compaction in text format.  In addition,
+the MAF-formatted alignments can also be converted almost losslessly to the
+SAM/BAM format (Li_2009) and benefit from reference-based compression in CRAM
+format (Bonfield_2022).  The LAST suite is able to either output or to export
+to each of these format.
+
+
 Copilot version:
 ----------------
 
@@ -112,3 +132,24 @@ therefore selected LAST because it uniquely combined broad applicability across
 evolutionary distances with configurable sensitivity, data-driven parameter
 training, and principled resolution of ambiguous alignments.
 
+Whole-genome alignments can be stored in formats that differ substantially in
+information content and storage efficiency. The Multiple Alignment Format
+(MAF), introduced for the UCSC Genome Browser and related tools such as MULTIZ
+(\cite{Kent_2002a}; \cite{Blanchette_2004}), is the primary output format of
+LAST. In addition to alignment coordinates, MAF stores the aligned sequences
+and, in LAST, per-base alignment confidence values. This richness comes at a
+cost: a self-alignment occupies roughly twice the space of the underlying
+genome sequence, making MAF unnecessarily large for applications that do not
+require base-level alignment information. More compact formats trade
+information for storage efficiency. The tabular output of LAST and the PSL
+format used by BLAT (\cite{Kent_2002b}) omit the alignment strings while
+retaining summary statistics such as mismatch counts and gap sizes. BLAST
+tabular output (\cite{Altschul_1990}) is more compact still, discarding the gap
+structure itself. At the most compact end of the spectrum, alignments can be
+represented simply as paired genomic intervals in GFF or BED format with only
+an alignment score, providing near-maximal lossy compression in a text
+representation. Conversely, MAF alignments can be converted with minimal
+information loss to SAM/BAM (\cite{Li_2009}) and subsequently compressed in
+CRAM format (\cite{Bonfield_2022}), benefiting from reference-based
+compression. The LAST suite can directly generate or export all of these
+formats.
