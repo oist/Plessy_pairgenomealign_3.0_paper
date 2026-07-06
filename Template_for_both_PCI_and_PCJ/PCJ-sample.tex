@@ -148,43 +148,22 @@ Wave images provided through Seqera. Container images may be cached locally and
 shared between users, reducing software installation overhead and improving
 reproducibility.
 
-The nf-core modules implementing the LAST alignment workflow use several minimal
-containers with partially overlapping software dependencies. To avoid repeated
-downloads of redundant images, the pairgenome pipeline overrides the default
-module configuration and provides a single shared container containing LAST
-v1651, samtools, htslib, and bcftools v1.23.1, open-fonts v0.7.0 from
-conda-forge (required for rendering sequence names in dotplots), gzip v1.14,
-bgzip v1.0.8, and xz v5.8.3.
+The nf-core modules implementing the LAST alignment workflow use several minimal containers with partially overlapping software dependencies. To avoid repeated downloads of redundant images, the pairgenome pipeline overrides the default module configuration and provides a single shared container containing LAST v1651, samtools, htslib \cite{Bonfield_2021}, and bcftools (\cite{Danecek_2021}) v1.23.1, open-fonts v0.7.0 from conda-forge (required for rendering sequence names in dotplots), gzip v1.14, bgzip v1.0.8, and xz v5.8.3.
 
 \subsection*{Software configuration}
 
-Software components are modularised through script templates that combine
-hard-coded tool arguments with configurable process parameters defined by the
-module maintainer. Configurable parameters are either linked directly to
-pipeline command-line options or passed through standard nf-core module
-variables, allowing users to modify or extend the resulting tool arguments via
-Nextflow configuration files. Resource settings that apply across modules,
-such as the number of CPU threads, are controlled through dedicated
-parameters.
+Software components are modularised through script templates that combine hard-coded tool arguments with configurable process parameters defined by the module maintainer. Configurable parameters are either linked directly to pipeline command-line options or passed through standard nf-core module variables, allowing users to modify or extend the resulting tool arguments via Nextflow configuration files. Resource settings that apply across modules, such as the number of CPU threads, are controlled through dedicated parameters.
 
-Maximum execution times and memory allocations are assigned according to broad
-resource classes, ranging from lightweight to computationally intensive
-processes. These default settings can be overridden through standard Nextflow
-configuration mechanisms to match the requirements of specific computing
-environments.
+Maximum execution times and memory allocations are assigned according to broad resource classes, ranging from lightweight to computationally intensive processes. These default settings can be overridden through standard Nextflow configuration mechanisms to match the requirements of specific computing environments.
 
 \subsection*{Input}
-
-HTTP URLs OK.
 
 Input genomes are provided in FASTA format and may optionally be compressed
 with gzip. When downstream outputs are generated in BAM, BCF, or CRAM format,
 the pipeline ensures that the corresponding reference genomes are available in
 the block-gzip (BGZF) format by recompressing them when necessary
 (\cite{Li_2011}). Existing BGZF-compressed files are reused unchanged. The use
-of BGZF enables the random-access indexing required by these output formats.
-
-The target genome is specified with the pipeline parameter
+of BGZF enables the random-access indexing required by these output formats. The target genome is specified with the pipeline parameter
 \texttt{--target}. Query genomes are specified through a sample sheet supplied
 via \texttt{--input}. This table defines the collection of query genomes to be
 aligned against the target. As a convenience for pairwise analyses, a single
@@ -193,49 +172,21 @@ query genome may alternatively be provided directly through the
 
 \subsection*{Alignment parameters}
 
-Prior to database construction, any existing lowercase soft masking in the
-target genome is discarded and replaced with tandem-repeat masking using the
-tantan implementation embedded in LAST (\cite{Frith_2011}). By default,
-\texttt{lastdb} is executed with option \texttt{-R01}. This behaviour can be
-disabled with the pipeline parameter \texttt{--softmask original}, which
-preserves the masking present in the input assembly.
+Prior to database construction, any existing lowercase soft masking in the target genome is discarded and replaced with tandem-repeat masking using the tantan implementation embedded in LAST (\cite{Frith_2011}). By default, \texttt{lastdb} is executed with option \texttt{-R01}. This behaviour can be disabled with the pipeline parameter \texttt{--softmask original}, which preserves the masking present in the input assembly.
 
-The target database is indexed on both strands using the \texttt{lastdb}
-option \texttt{-S2}. This increases memory usage during indexing but accelerates
-subsequent alignments. An important consequence is that some alignments may be
-reported between the reverse-complement strand of the target and the forward
-strand of the query, a representation that is not handled consistently by all
-downstream software. Users may therefore revert to single-strand indexing with
-the pipeline parameter \texttt{--strand both}. The default seed scheme is
-\texttt{RY4}, although alternative seeds can be selected through the
-\texttt{--seed} parameter.
+The target database is indexed on both strands using the \texttt{lastdb} option \texttt{-S2}. This increases memory usage during indexing but accelerates subsequent alignments. An important consequence is that some alignments may be reported between the reverse-complement strand of the target and the forward strand of the query, a representation that is not handled consistently by all downstream software. Users may therefore revert to single-strand indexing with the pipeline parameter \texttt{--strand both}. The default seed scheme is \texttt{RY4}, although alternative seeds can be selected through the \texttt{--seed} parameter.
 
-Alignment parameter training is performed with symmetric substitution scores
-and gap penalties by passing the \texttt{-revsym}, \texttt{--gapsym}, and
-\texttt{--matsym} arguments to \texttt{last-train}. These constraints are
-appropriate for most nuclear genomes but may be undesirable when evolutionary
-processes differ between strands, such as in animal mitochondrial genomes. In
-such cases, advanced users can override the training arguments by redefining
-\texttt{ext.args} for the \texttt{ALIGNMENT\_TRAIN} process in a Nextflow
-configuration file. Alternatively, a predefined LAST parameter file may be
-supplied through the pipeline parameter \texttt{--lastal\_params}. The same
-parameter set is then applied to all query genomes. Such files may originate
-from a previous training run or correspond to a standard LAST scoring scheme.
+Alignment parameter training is performed with symmetric substitution scores and gap penalties by passing the \texttt{-revsym}, \texttt{--gapsym}, and \texttt{--matsym} arguments to \texttt{last-train}. These constraints are appropriate for most nuclear genomes but may be undesirable when evolutionary processes differ between strands, such as in animal mitochondrial genomes. In such cases, advanced users can override the training arguments by redefining \texttt{ext.args} for the \texttt{ALIGNMENT\_TRAIN} process in a Nextflow configuration file. Alternatively, a predefined LAST parameter file may be supplied through the pipeline parameter \texttt{--lastal\_params}. The same parameter set is then applied to all query genomes. Such files may originate from a previous training run or correspond to a standard LAST scoring scheme.
 
-Multi-threaded LAST processes are allocated up to 12 CPU cores, subject to any
-lower limit imposed by user settings or institutional execution profiles.
-Thread count is not expected to affect alignment results, but it may alter the
-order in which alignments are reported. Consequently, bitwise-identical output
-is guaranteed only when the same number of CPU cores is used. This behaviour is
-verified by the pipeline regression tests, which compare checksums of key
-output files against reference results.
+Multi-threaded LAST processes are allocated up to 12 CPU cores, subject to any lower limit imposed by user settings or institutional execution profiles. Thread count is not expected to affect alignment results, but it may alter the order in which alignments are reported. Consequently, bitwise-identical output is guaranteed only when the same number of CPU cores is used. This behaviour is verified by the pipeline regression tests, which compare checksums of key output files against reference results.
 
 \subsection*{Export to SAM/BAM/BCF/CRAM formats}
 
-Software versions.  CRAM 3.1.
+Alignments are converted from MAF to SAM format using the \texttt{maf-convert} utility distributed with LAST. Subsequent conversion to BAM, BCF, and CRAM is performed by shell commands encapsulated in nf-core modules developed for this pipeline. Although these formats were originally designed to store sequencing reads aligned to a reference genome, they can also represent whole-genome alignments. The pipeline exploits this capability by assigning a distinct read group to each query genome and encoding genome alignments as hard-clipped segments of the query sequence.
 
-The longest clipped region that can be represented in BAM and CRAM formats is 268,435,455 bases (28 bits).  Fortunately, it is possible to split longer regions as  adjascent chunks.  Thus, we can represent genomic alignments in BAM/CRAM formats, with hard-clipping of the regions flanking the reported alignment in the query genomes.  (explain that each query sequence is often split in many small regions because of x-drop and non-collinearity).
+In BAM and CRAM files, hard-clipped regions are limited to 268,435,455~bases. Longer query sequences are therefore represented as a series of adjacent alignment records, allowing arbitrarily long chromosomes and scaffolds to be encoded without loss of information.
 
+CRAM files are written in version~3.1 format by default. Advanced users may select a different CRAM version by modifying the \texttt{ext.args2} setting of the \texttt{ALIGNMENT\_EXP} process and the \texttt{ext.args} setting of the \texttt{ALIGNMENT\_MERGE} process in a Nextflow configuration file. Index files are generated automatically for all BAM, BCF, and CRAM outputs.
 
 \subsection*{Statistics and metadata collection}
 
@@ -268,7 +219,8 @@ No limit on the list of query genomes as Nextflow will chunk batches.
 
 The main purpose of this pipeline is to align one target to a list of query genomes in parallel.  The "full" tests of the pipeline illustrate it by aligning the human genome to XYZ primate genomes.  On the AWS, it takes xyz time.  In particular, the alignment and the split steps take this and that amount of resource.  The main outputs are 1) the pairwise alignmetns, which allow the computation of phylogentic distances, (JC, Kimura, ...) and 2) optionally, a single CRAM file representing all the alignments in the coordinate system of the target alignments.  It is neither a pangenome graph, nor a multiple sequence alignment, but MSAs can be extracted trivially.  It is also useful for inspection of phylogenetic footprints in genome browsers.
 
-Details on the CRAN trick, read groups etc.
+(explain that each query sequence is often split in many small regions because of x-drop and non-collinearity).
+
 
 
 We aslo ran this pipeline on similar test as in the FASTGA paper: the performance is xyz compared to what reported in their last figure.
@@ -352,6 +304,9 @@ Preprocess genomes to remove unplaced scaffolds.  (Many are junk or alternative 
 Discuss why not repeat masking.  use tantan or alternatives.  Widnowmasker not faster.  -m option as alternative?
 
 Mention HUMSUM (since v1600) somewhere 
+
+HTTP URLs OK.
+
 
 \lipsum[12]
 \begin{itemize}
