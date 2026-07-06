@@ -177,7 +177,19 @@ environments.
 
 HTTP URLs OK.
 
-Genomes are read in FASTA format, optionally compressed in the gzip format.  When the pipeline exports results to the BAM, BCF or CRAM formats, the genomes are (re-)compressed with the indexable and gzip-compatible bgzip format (cite) unless they were already bgzip-compressed.  The target genome is passed via command line parameter and the list of query genomes via a text table, the "sample sheet".
+Input genomes are provided in FASTA format and may optionally be compressed
+with gzip. When downstream outputs are generated in BAM, BCF, or CRAM format,
+the pipeline ensures that the corresponding reference genomes are available in
+the block-gzip (BGZF) format by recompressing them when necessary
+(\cite{Li_2011}). Existing BGZF-compressed files are reused unchanged. The use
+of BGZF enables the random-access indexing required by these output formats.
+
+The target genome is specified with the pipeline parameter
+\texttt{--target}. Query genomes are specified through a sample sheet supplied
+via \texttt{--input}. This table defines the collection of query genomes to be
+aligned against the target. As a convenience for pairwise analyses, a single
+query genome may alternatively be provided directly through the
+\texttt{--query} parameter.
 
 \subsection*{Alignment parameters}
 
