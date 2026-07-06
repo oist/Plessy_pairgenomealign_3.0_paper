@@ -49,7 +49,7 @@ style=pcj
 
 \title[Sample for the template]{Sample for the template, with quite a very long title}
 
-% Authors: me, the inerns, Nick, ask Martin, ask nf-core community, ask Nico.
+% Authors: me, the inerns, Nick, ask Martin, ask nf-core community, ask Nico, Jiashun?
 
 %
  \author{\firstname{Antoine} \lastname{Lavoisier}\IsEqualContrib}
@@ -71,7 +71,13 @@ style=pcj
  \keywords{Example, Keyword}
 %
  \begin{abstract}
-     \lipsum[1]
+
+ - Only needs Nextflow and conda/docker/singularity
+
+ - Aligns everything
+
+ - Makes a pseudo MSA of all primate genomes in X hours.
+
  \end{abstract}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,19 +127,106 @@ Once computed, whole-genome alignments can be stored in formats that differ subs
 
 Dot-plot representations, last-dotplot, other export formats, the problem of filtering, the solution in LAST, ...
 
-\section*{Example of a section, e.g. Material and methods }
+\section*{Methods }
 
-\lipsum[4]
-\subsection*{First subsection}
-\lipsum[5]
-\subsection*{Second subsection}
-\lipsum[6]
-\subsection*{Third subsection}
-\lipsum[7]
-\section*{Example of a section, e.g. Results }
+\subsection*{Software deployment and versions}
+
+The nf-core modules used in this pipeline rely on Free Software distributed through
+Bioconda (\cite{Gruening_2018}). Depending on the execution environment, these
+packages are installed automatically by Nextflow in isolated conda environments or
+provided through software containers. The default container sources are
+BioContainers (\cite{Leprevost_2017}; \cite{Bai_2021}), which maintain a one-to-one
+correspondence with Bioconda packages, and Wave containers
+(\cite{seqera_wave}), which can combine packages from both Bioconda and
+conda-forge (\cite{conda_forge_zenodo}) within a single image. Containers are
+distributed in Docker-compatible formats (\cite{DiTommaso_2015}) and can also be
+used through Singularity/Apptainer (\cite{Kurtzer_2017}), with BioContainers
+images converted and distributed by the Galaxy project (\cite{Afgan_2016}) and
+Wave images provided through Seqera. Container images may be cached locally and
+shared between users, reducing software installation overhead and improving
+reproducibility.
+
+The nf-core modules implementing the LAST alignment workflow use several minimal
+containers with partially overlapping software dependencies. To avoid repeated
+downloads of redundant images, the pairgenome pipeline overrides the default
+module configuration and provides a single shared container containing LAST
+v1651, samtools, htslib, and bcftools v1.23.1, open-fonts v0.7.0 from
+conda-forge (required for rendering sequence names in dotplots), gzip v1.14,
+bgzip v1.0.8, and xz v5.8.3.
+
+\subsection*{Software configuration}
+
+Software are modularised within containers or environments via a script containing hardcoded arguments at the discretion of the module maitainer, plus arguments tied to the pipeline's command-line options, plus standard variables allowing the users to add or override arguments via the use of nextflow configuration files.  (give example).  In addition, parameters relevant to all modules such as CPU threads are accessed through their own flags.  Finally, the maximum amount of time and memory allocated to the containers are preset for broad classes (list single, light, medium, heavy), and can also be overriden.
+
+Copilot, please standardise arguments, options, parameters in a readable way.
+
+Configurable argumnets interfaced via command-line flags.  Other arguments can be overridden if placed before \$args.  ext.args may also contain defaults and can be changed with a nextflow config file (example).
+
+Versions fixed and tested with nf-test
+
+\subsection*{Input}
+
+HTTP URLs OK.
+
+Genomes are read in FASTA format, optionally compressed in the gzip format.  When the pipeline exports results to the BAM, BCF or CRAM formats, the genomes are (re-)compressed with the indexable and gzip-compatible bgzip format (cite) unless they were already bgzip-compressed.  The target genome is passed via command line parameter and the list of query genomes via a text table, the "sample sheet".
+
+\subsection*{Alignment parameters}
+
+The ones passed by parameters, the ones passed by ext.args, the ones hardcoded.
+
+alignment is --symmetric but this should be disabled when aligning known strand-biased sequences like mitochondrial genomes.
+
+Genome masking.  No need to mask the repeats (cite).
+
+memory, time, cpu.
+
+Influence of theread numbers on bit-wise reproducibility.
+
+training by default but user can provide parameter file to fix them for all queries, or to use preset score matrix such as HUMSUM (HUMan oposSUM SUbstitution Matrix) in LAST since version 1600.
+
+\subsection*{Export to SAM/BAM/BCF/CRAM formats}
+
+Software versions.  CRAM 3.1.
+
+The longest clipped region that can be represented in BAM and CRAM formats is 268,435,455 bases (28 bits).  Fortunately, it is possible to split longer regions as  adjascent chunks.  Thus, we can represent genomic alignments in BAM/CRAM formats, with hard-clipping of the regions flanking the reported alignment in the query genomes.  (explain that each query sequence is often split in many small regions because of x-drop and non-collinearity).
+
+
+\subsection*{Statistics and metadata collection}
+
+genome QCs.  Can be skipped
+
+Some simple alignment statistics are collected in the nf-core modules with shell or python scripts that are not part of the original LAST packages, and saved in text files in the output folder.  Some of these files are further aggregated by local subworkflows for plotting in the MultiQC report.  These statistics are blah, blah, blah, plus the nucleotide substitution matrix of the whole alignment.
+
+seqtk cutn with --maxnantoka set to a high value to enforce strictness.
+
+\subsection*{Output formats}
+
+BAM/CRAM/BCF conversion.  Read group trick.  CRAM hard-clipping trick.
+
+Cite samtools, bcftools, seqtk, ...
+
+All formats mentionned in the introduction can be produced
+directly by last or maf-convert (LAST version number), except for BAM and CRAM which are created on-the-fly from SAM output by samtools (version, citation).  The nf-core module also sorts and indexes them.  Genomes are represented by read groups.  BCF: same as above but with bcftools (version, citation).
+
+\section*{Results }
+
 \subsection*{How it works}
 
+genomes -> m2o -> o2o
+
+or geonomes -> m2m -> m2o / o2m -> o2o
+
+No limit on the list of query genomes as Nextflow will chunk batches.
+
 \subsection*{Use case 1: multiple genome alignment}
+
+The main purpose of this pipeline is to align one target to a list of query genomes in parallel.  The "full" tests of the pipeline illustrate it by aligning the human genome to XYZ primate genomes.  On the AWS, it takes xyz time.  In particular, the alignment and the split steps take this and that amount of resource.  The main outputs are 1) the pairwise alignmetns, which allow the computation of phylogentic distances, (JC, Kimura, ...) and 2) optionally, a single CRAM file representing all the alignments in the coordinate system of the target alignments.  It is neither a pangenome graph, nor a multiple sequence alignment, but MSAs can be extracted trivially.  It is also useful for inspection of phylogenetic footprints in genome browsers.
+
+Details on the CRAN trick, read groups etc.
+
+
+We aslo ran this pipeline on similar test as in the FASTGA paper: the performance is xyz compared to what reported in their last figure.
+
 
 (in particular with broad diversity of evolutionary distances). UCEs. Phylogenetic trees.
 
@@ -141,13 +234,34 @@ The CRAM format is remarkably efficient after solving the max value of hard-clip
 
 \subsection*{Use case 2: QC of a new assembly}
 
+Align a reference assembly to the new contigs in m2o: there should be two matches per reference sequence.
+
+Make a primary assembly.
+
+Align the primary assembly to the contigs and to the reference assembly in m2o.  Homozygous regions appear as bands with no repeat noise.
+
 (pink lines in dotplots)
 
+multi-cram file of other assemblies (various software) aligned to primary.
+
 \subsection*{Use case 3: m2m self-alignment}
+
+The only reasonable choice when aligning diploid to diploid?
 
 (also useful for QC)
 
 \subsection*{Use case 4 (easter egg): read alignment}
+
+Why not minimap2?
+
+ - minimap2 is good, just go for it, but
+ - reproducible pipeline that installs the software for you
+ - aligning multiple read files of various quality and origin (Nanopore, Pacbio) is possible because last-train
+ - m2o (how about minimap2)
+ - CRAM output
+ - parallelisation when many read files need to be mapped to one reference.
+
+ Example: Oik reads to mitochondria
 
 (Needs special config file)
 
@@ -156,7 +270,39 @@ The CRAM format is remarkably efficient after solving the max value of hard-clip
     \lipsum[9-11]
 \end{landscape}
 
-\section*{Example of a section, e.g. Discussion}
+\section*{Discussion}
+
+Customisation.
+
+User can replace image (for instance Debian Med).
+Can run bare but not recommentded (combination of versions not tested)
+
+cutom containers can be used to pin the aligner version while using new developments of the pipeline.
+
+Can run local executor within a job to let processes share CPU and memory.
+
+Possibility to run m2m on the target genome to annotate it by producing a coverage track.  Also run tantan as LAST runs in internally?  Or extract masking info from lastdb.  Or both.   Add other maskiers like ultra and windowmasker, for control?
+
+Add --reverse, for control?
+
+Genome compression... allow other formats?
+
+The pipeline can be run in scripts for all-versus-all comparisons, or could be used for nearest neighbor plus outgroup comparisons before ancestor reconstitution (cactus, Martin's work).
+
+Alignment is not symmetric (one genome is indexed) so one can compute both sides and average results (like in all-versus-all).  The bottleneck is similar genomes, so for most of the pairs it is cheap to compute both.
+
+Also because not symmetric, we call one the target and the other the query.  The target is indexed.  We do not call it reference to avoid confusion with reference genomes (GenBank).
+
+Value of the collected statistics.  Can be used for phylogeny etc.
+
+If users like the CRAM trick, it can be further expanded, for instance: 1) post-processing to either break gaps or merge collinear alignments into longer gaps.  2) what else?
+
+Desined for structural variant detection, but not running this analysis because too open.  Also do not want to recompute alignments when changing SV detection parameters.  We use GenomicBreaks.
+
+Can the pipeline output used in Syri?
+
+Preprocess genomes to remove unplaced scaffolds.  (Many are junk or alternative haplotypes)
+
 \lipsum[12]
 \begin{itemize}
 \item toto (see Appendix~\ref{sA} and Eq.~\ref{eq:eq1})
@@ -225,41 +371,28 @@ This is a proof that ends with a \verb+{align}+ type of equation. The last equat
 \end{align}
 \end{proof}
 
-\section*{Example of a section, e.g. Conclusion}
+\section*{Conclusion}
 \lipsum[20]
-
-\appendix
-\section{Some other things}\label{sA}
-If your appendices fit in less than 2 pages, add your appendices here.
-
-If your appendices take more than 2 pages, please proceed as follows:
-\begin{itemize}
-\item deposit them in an open repository such as Zenodo
-\item add the DOI and the citation in the section “Data, scripts, code, and supplementary information availability”
-\item add the reference in the list of references
-\end{itemize}
 
 \section*{Acknowledgements}
 
-This is your acknowledgments. Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the
-recommendation]; \cite{fake}[replace by the citation of the recommendation]).
+We thank the DNA Sequencing Section and the Scientific Computing and Data Analysis Section of the Research Support Division at OIST for their support.
 
+%% This is your acknowledgments. Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the recommendation]; \cite{fake}[replace by the citation of the recommendation]).
 
 \section*{Fundings}
 
-Declare your fundings. If your study has not been supported by particular
-funding, please indicate ``The authors declare that they have received no
-specific funding for this study''.
+This work was supported by OIST core funding.
 
 \section*{Conflict of interest disclosure}
 
-The authors declare that they comply with the PCI rule of having no financial conflicts of interest in relation to the content of the article. [IF APPROPRIATE: The authors declare the following non-financial conflict of interest: XXX (if some of the authors are recommenders of a PCI, indicate it here)].
+The authors declare that they comply with the PCI rule of having no financial conflicts of interest in relation to the content of the article.
 
 \section*{Data, script, code, and supplementary information availability}
 
-Data are available online (\url{https://doi.org/10.24072/fake1}[Replace by the DOI of the webpage hosting the data]; \cite{CharleMar_independant-trace-su2_2012}[Replace by the citation of the data])\\
-Script and codes are available online (\url{https://doi.org/10.24072/fake2}[Replace by the DOI of the webpage hosting the script and code]; \cite{CharleMar_independant-trace-su2_2012}[Replace by the citation of the script and code])\\
-Supplementary information is available online (\url{https://doi.org/10.24072/fake3}[Replace by the DOI of the webpage hosting the Supplementary information]; \cite{CharleMar_independant-trace-su2_2012}[Replace by the citation of the Supplementary information])\\ \\
+% Data are available online (\url{https://doi.org/10.24072/fake1}[Replace by the DOI of the webpage hosting the data]; \cite{CharleMar_independant-trace-su2_2012}[Replace by the citation of the data])\\
+Script and codes are available online (\url{https://doi.org/10.24072/fake2}[Replace by the DOI of the webpage hosting the script and code]; \cite{fixme}[Replace by the citation of the script and code])\\
+Supplementary information is available online (\url{https://doi.org/10.24072/fake3}[Replace by the DOI of the webpage hosting the Supplementary information]; \cite{fixme}[Replace by the citation of the Supplementary information])\\ \\
 The DOI hyperlinks should be active. They should also be present in the reference list and cited in the text.
 \\For the reference section below, do not forget to add a doi for each reference (if available). Do not forget to add the reference of the recommendation, the reference of the data, scripts, code and supplementary material to your bib file, if appropriate.
 
