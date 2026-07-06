@@ -372,6 +372,88 @@ OA = {Green Published, hybrid},
 DA = {2026-07-03},
 }
 
+@article{ Bonfield_2021,
+Author = {Bonfield, James K. and Marshall, John and Danecek, Petr and Li, Heng and
+   Ohan, Valeriu and Whitwham, Andrew and Keane, Thomas and Davies, Robert
+   M.},
+Title = {HTSlib: C library for reading/writing high-throughput sequencing data},
+Journal = {GIGASCIENCE},
+Year = {2021},
+Volume = {10},
+Number = {2},
+Month = {FEB},
+Abstract = {Background: Since the original publication of the VCF and SAM formats,
+   an explosion of software tools have been created to process these data
+   files. To facilitate this a library was produced out of the original
+   SAMtools implementation, with a focus on performance and robustness. The
+   file formats themselves have become international standards under the
+   jurisdiction of the Global Alliance for Genomics and Health. Findings:
+   We present a software library for providing programmatic access to
+   sequencing alignment and variant formats. It was born out of the widely
+   used SAMtools and BCFtools applications. Considerable improvements have
+   been made to the original code plus many new features including newer
+   access protocols, the addition of the CRAM file format, better indexing
+   and iterators, and better use of threading. Conclusion: Since the
+   original Samtools release, performance has been considerably improved,
+   with a BAM read-write loop running 5 times faster and BAM to SAM
+   conversion 13 times faster (both using 16 threads, compared to Samtools
+   0.1.19). Widespread adoption has seen HTSlib downloaded >1 million times
+   from GitHub and conda. The C library has been used directly by an
+   estimated 900 GitHub projects and has been incorporated into Perl,
+   Python, Rust, and R, significantly expanding the number of uses via
+   other languages. HTSlib is open source and is freely available from
+   htslib.org under MIT/BSD license.},
+Publisher = {OXFORD UNIV PRESS},
+Address = {GREAT CLARENDON ST, OXFORD OX2 6DP, ENGLAND},
+Type = {Article},
+Language = {English},
+Affiliation = {Whitwham, A (Corresponding Author), Wellcome Sanger Inst, Wellcome Genome Campus, Hinxton CB10 1SA, Cambs, England.
+   Bonfield, James K.; Danecek, Petr; Ohan, Valeriu; Whitwham, Andrew; Davies, Robert M., Wellcome Sanger Inst, Wellcome Genome Campus, Hinxton CB10 1SA, Cambs, England.
+   Marshall, John, Univ Glasgow, Wolfson Wohl Canc Res Ctr, Inst Canc Sci, Switchback Rd, Glasgow G61 1QH, Lanark, Scotland.
+   Li, Heng, Dana Farber Canc Inst, Dept Data Sci, 450 Brookline Ave, Boston, MA 02215 USA.
+   Li, Heng, Harvard Med Sch, Dept Biomed Informat, 10 Shattuck St, Boston, MA 02215 USA.
+   Keane, Thomas, EMBL EBI, Wellcome Genome Campus, Hinxton CB10 1SD, Cambs, England.},
+DOI = {10.1093/gigascience/giab007},
+EarlyAccessDate = {FEB 2021},
+Article-Number = {giab007},
+ISSN = {2047-217X},
+Keywords = {samtools; bcftools; high-throughput sequencing; next generation
+   sequencing; variant calling; data analysis},
+Keywords-Plus = {ALIGNMENT; DISCOVERY},
+Research-Areas = {Life Sciences \& Biomedicine - Other Topics; Science \& Technology -
+   Other Topics},
+Web-of-Science-Categories  = {Biology; Multidisciplinary Sciences},
+Author-Email = {samtools@sanger.ac.uk},
+Affiliations = {Wellcome Trust Sanger Institute; University of Glasgow; Harvard
+   University; Harvard University Medical Affiliates; Dana-Farber Cancer
+   Institute; Harvard University; Harvard Medical School; European
+   Molecular Biology Laboratory (EMBL); European Bioinformatics Institute},
+ResearcherID-Numbers = {Li, Heng/D-9344-2011
+   Danecek, Petr/R-1394-2017
+   },
+ORCID-Numbers = {Li, Heng/0000-0003-4874-2874
+   Keane, Thomas/0000-0001-7532-6898
+   Bonfield, James/0000-0002-6447-4112
+   Danecek, Petr/0000-0002-4159-1666
+   Davies, Robert/0000-0002-9983-1378
+   Whitwham, Anew/0000-0001-8117-400X
+   Marshall, John/0000-0002-1216-5457},
+Funding-Acknowledgement = {Wellcome Trust {[}206194]},
+Funding-Text = {This work was supported by the Wellcome Trust grant (206194).},
+Number-of-Cited-References = {25},
+Times-Cited = {256},
+Usage-Count-Last-180-days = {0},
+Usage-Count-Since-2013 = {13},
+Journal-ISO = {GigaScience},
+Doc-Delivery-Number = {RI8YA},
+Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
+Unique-ID = {WOS:000637191300009},
+OA = {Green Published, Green Accepted, gold},
+ESI-Highly-Cited-Paper = {Y},
+ESI-Hot-Paper = {N},
+DA = {2026-07-06},
+}
+
 @article{ Bonfield_2022,
 Author = {Bonfield, James K.},
 Title = {CRAM 3.1: advances in the CRAM file format},
@@ -436,6 +518,83 @@ DA = {2026-07-03},
   publisher    = {Zenodo},
   doi          = {10.5281/zenodo.4774217},
   url          = {https://doi.org/10.5281/zenodo.4774217},
+}
+
+@article{ Danecek_2021,
+Author = {Danecek, Petr and Bonfield, James K. and Liddle, Jennifer and Marshall,
+   John and Ohan, Valeriu and Pollard, Martin O. and Whitwham, Andrew and
+   Keane, Thomas and McCarthy, Shane A. and Davies, Robert M. and Li, Heng},
+Title = {Twelve years of SAMtools and BCFtools},
+Journal = {GIGASCIENCE},
+Year = {2021},
+Volume = {10},
+Number = {2},
+Month = {FEB},
+Abstract = {Background: SAMtools and BCFtools are widely used programs for
+   processing and analysing high-throughput sequencing data. They include
+   tools for file format conversion and manipulation, sorting, querying,
+   statistics, variant calling, and effect analysis amongst other methods.
+   Findings: The first version appeared online 12 years ago and has been
+   maintained and further developed ever since, with many new features and
+   improvements added over the years. The SAMtools and BCFtools packages
+   represent a unique collection of tools that have been used in numerous
+   other software projects and countless genomic pipelines. Conclusion:
+   Both SAMtools and BCFtools are freely available on GitHub under the
+   permissive MIT licence, free for both non-commercial and commercial use.
+   Both packages have been installed >1 million times via Bioconda. The
+   source code and documentation are available from https://www.htslib.org.},
+Publisher = {OXFORD UNIV PRESS},
+Address = {GREAT CLARENDON ST, OXFORD OX2 6DP, ENGLAND},
+Type = {Article},
+Language = {English},
+Affiliation = {Whitwham, A (Corresponding Author), Wellcome Sanger Inst, Wellcome Genome Campus, Hinxton CB10 1SA, Cambs, England.
+   Danecek, Petr; Bonfield, James K.; Liddle, Jennifer; Ohan, Valeriu; Pollard, Martin O.; Whitwham, Andrew; McCarthy, Shane A.; Davies, Robert M., Wellcome Sanger Inst, Wellcome Genome Campus, Hinxton CB10 1SA, Cambs, England.
+   Marshall, John, Univ Glasgow, Wolfson Wohl Canc Res Ctr, Inst Canc Sci, Switchback Rd, Glasgow G61 1QH, Lanark, Scotland.
+   Keane, Thomas, EMBL EBI, Wellcome Genome Campus, Hinxton CB10 1SD, Cambs, England.
+   Li, Heng, Dana Farber Canc Inst, Dept Data Sci, 450 Brookline Ave, Boston, MA 02215 USA.
+   Li, Heng, Harvard Med Sch, Dept Biomed Informat, 10 Shattuck St, Boston, MA 02215 USA.},
+DOI = {10.1093/gigascience/giab008},
+EarlyAccessDate = {FEB 2021},
+Article-Number = {giab008},
+ISSN = {2047-217X},
+Keywords = {samtools; bcftools; high-throughput sequencing; next generation
+   sequencing; variant calling; data analysis},
+Keywords-Plus = {DISCOVERY; FRAMEWORK; ALIGNMENT},
+Research-Areas = {Life Sciences \& Biomedicine - Other Topics; Science \& Technology -
+   Other Topics},
+Web-of-Science-Categories  = {Biology; Multidisciplinary Sciences},
+Author-Email = {samtools@sanger.ac.uk},
+Affiliations = {Wellcome Trust Sanger Institute; University of Glasgow; European
+   Molecular Biology Laboratory (EMBL); European Bioinformatics Institute;
+   Harvard University; Harvard University Medical Affiliates; Dana-Farber
+   Cancer Institute; Harvard University; Harvard Medical School},
+ResearcherID-Numbers = {Pollard, Martin/G-7205-2012
+   Li, Heng/D-9344-2011
+   Danecek, Petr/R-1394-2017
+   },
+ORCID-Numbers = {Pollard, Martin/0000-0001-8738-0920
+   Marshall, John/0000-0002-1216-5457
+   Whitwham, Anew/0000-0001-8117-400X
+   Li, Heng/0000-0003-4874-2874
+   Danecek, Petr/0000-0002-4159-1666
+   McCarthy, Shane/0000-0002-2715-4187
+   Davies, Robert/0000-0002-9983-1378
+   Bonfield, James/0000-0002-6447-4112
+   Keane, Thomas/0000-0001-7532-6898},
+Funding-Acknowledgement = {Wellcome Trust {[}206194]},
+Funding-Text = {This work was supported by a Wellcome Trust grant (206194).},
+Number-of-Cited-References = {29},
+Times-Cited = {9862},
+Usage-Count-Last-180-days = {46},
+Usage-Count-Since-2013 = {476},
+Journal-ISO = {GigaScience},
+Doc-Delivery-Number = {RI8YA},
+Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
+Unique-ID = {WOS:000637191300010},
+OA = {Green Published, Green Accepted, gold},
+ESI-Highly-Cited-Paper = {Y},
+ESI-Hot-Paper = {N},
+DA = {2026-07-06},
 }
 
 @article{ DiTommaso_2015,
