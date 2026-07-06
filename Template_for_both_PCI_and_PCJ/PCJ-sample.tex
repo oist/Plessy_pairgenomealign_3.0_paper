@@ -127,6 +127,8 @@ Once computed, whole-genome alignments can be stored in formats that differ subs
 
 Dot-plot representations, last-dotplot, other export formats, the problem of filtering, the solution in LAST, ...
 
+Introduce target/query definitions
+
 \section*{Methods }
 
 \subsection*{Software deployment and versions}
@@ -156,13 +158,20 @@ bgzip v1.0.8, and xz v5.8.3.
 
 \subsection*{Software configuration}
 
-Software are modularised within containers or environments via a script containing hardcoded arguments at the discretion of the module maitainer, plus arguments tied to the pipeline's command-line options, plus standard variables allowing the users to add or override arguments via the use of nextflow configuration files.  (give example).  In addition, parameters relevant to all modules such as CPU threads are accessed through their own flags.  Finally, the maximum amount of time and memory allocated to the containers are preset for broad classes (list single, light, medium, heavy), and can also be overriden.
+Software components are modularised through script templates that combine
+hard-coded tool arguments with configurable process parameters defined by the
+module maintainer. Configurable parameters are either linked directly to
+pipeline command-line options or passed through standard nf-core module
+variables, allowing users to modify or extend the resulting tool arguments via
+Nextflow configuration files. Resource settings that apply across modules,
+such as the number of CPU threads, are controlled through dedicated
+parameters.
 
-Copilot, please standardise arguments, options, parameters in a readable way.
-
-Configurable argumnets interfaced via command-line flags.  Other arguments can be overridden if placed before \$args.  ext.args may also contain defaults and can be changed with a nextflow config file (example).
-
-Versions fixed and tested with nf-test
+Maximum execution times and memory allocations are assigned according to broad
+resource classes, ranging from lightweight to computationally intensive
+processes. These default settings can be overridden through standard Nextflow
+configuration mechanisms to match the requirements of specific computing
+environments.
 
 \subsection*{Input}
 
@@ -172,17 +181,42 @@ Genomes are read in FASTA format, optionally compressed in the gzip format.  Whe
 
 \subsection*{Alignment parameters}
 
-The ones passed by parameters, the ones passed by ext.args, the ones hardcoded.
+Prior to database construction, any existing lowercase soft masking in the
+target genome is discarded and replaced with tandem-repeat masking using the
+tantan implementation embedded in LAST (\cite{Frith_2010b}). By default,
+\texttt{lastdb} is executed with option \texttt{-R01}. This behaviour can be
+disabled with the pipeline parameter \texttt{--softmask original}, which
+preserves the masking present in the input assembly.
 
-alignment is --symmetric but this should be disabled when aligning known strand-biased sequences like mitochondrial genomes.
+The target database is indexed on both strands using the \texttt{lastdb}
+option \texttt{-S2}. This increases memory usage during indexing but accelerates
+subsequent alignments. An important consequence is that some alignments may be
+reported between the reverse-complement strand of the target and the forward
+strand of the query, a representation that is not handled consistently by all
+downstream software. Users may therefore revert to single-strand indexing with
+the pipeline parameter \texttt{--strand both}. The default seed scheme is
+\texttt{RY4}, although alternative seeds can be selected through the
+\texttt{--seed} parameter.
 
-Genome masking.  No need to mask the repeats (cite).
+Alignment parameter training is performed with symmetric substitution scores
+and gap penalties by passing the \texttt{-revsym}, \texttt{--gapsym}, and
+\texttt{--matsym} arguments to \texttt{last-train}. These constraints are
+appropriate for most nuclear genomes but may be undesirable when evolutionary
+processes differ between strands, such as in animal mitochondrial genomes. In
+such cases, advanced users can override the training arguments by redefining
+\texttt{ext.args} for the \texttt{ALIGNMENT\_TRAIN} process in a Nextflow
+configuration file. Alternatively, a predefined LAST parameter file may be
+supplied through the pipeline parameter \texttt{--lastal\_params}. The same
+parameter set is then applied to all query genomes. Such files may originate
+from a previous training run or correspond to a standard LAST scoring scheme.
 
-memory, time, cpu.
-
-Influence of theread numbers on bit-wise reproducibility.
-
-training by default but user can provide parameter file to fix them for all queries, or to use preset score matrix such as HUMSUM (HUMan oposSUM SUbstitution Matrix) in LAST since version 1600.
+Multi-threaded LAST processes are allocated up to 12 CPU cores, subject to any
+lower limit imposed by user settings or institutional execution profiles.
+Thread count is not expected to affect alignment results, but it may alter the
+order in which alignments are reported. Consequently, bitwise-identical output
+is guaranteed only when the same number of CPU cores is used. This behaviour is
+verified by the pipeline regression tests, which compare checksums of key
+output files against reference results.
 
 \subsection*{Export to SAM/BAM/BCF/CRAM formats}
 
@@ -302,6 +336,10 @@ Desined for structural variant detection, but not running this analysis because 
 Can the pipeline output used in Syri?
 
 Preprocess genomes to remove unplaced scaffolds.  (Many are junk or alternative haplotypes)
+
+Discuss why not repeat masking.  use tantan or alternatives.  Widnowmasker not faster.  -m option as alternative?
+
+Mention HUMSUM (since v1600) somewhere 
 
 \lipsum[12]
 \begin{itemize}
