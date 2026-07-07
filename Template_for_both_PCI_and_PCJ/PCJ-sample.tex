@@ -145,20 +145,7 @@ CRAM files are written in version~3.1 format by default. Users may select a diff
 
 \subsection*{Statistics and metadata collection}
 
-genome QCs.  Can be skipped
-
-Some simple alignment statistics are collected in the nf-core modules with shell or python scripts that are not part of the original LAST packages, and saved in text files in the output folder.  Some of these files are further aggregated by local subworkflows for plotting in the MultiQC report.  These statistics are blah, blah, blah, plus the nucleotide substitution matrix of the whole alignment.
-
-seqtk cutn with --maxnantoka set to a high value to enforce strictness.
-
-\subsection*{Output formats}
-
-BAM/CRAM/BCF conversion.  Read group trick.  CRAM hard-clipping trick.
-
-Cite samtools, bcftools, seqtk, ...
-
-All formats mentionned in the introduction can be produced
-directly by last or maf-convert (LAST version number), except for BAM and CRAM which are created on-the-fly from SAM output by samtools (version, citation).  The nf-core module also sorts and indexes them.  Genomes are represented by read groups.  BCF: same as above but with bcftools (version, citation).
+Assembly statistics, including sequence length and base composition, are calculated with \texttt{assembly-scan} v1.0.0 (\cite{Petit_2023}) unless disabled through the pipeline parameter \texttt{--skip\_assembly\_qc}. In addition, custom nf-core modules developed for this pipeline collect summary statistics from the alignment outputs and store them as text files within the results directory. These statistics include alignment nucleotide identity, gap frequencies, inferred insertion and extension penalties, and the nucleotide substitution matrix estimated from the whole-genome alignment. Coordinates of assembly gaps are identified with \texttt{seqtk cutN} v1.5-r133 (\cite{Li_2013}) using the arguments \texttt{-n 10 -p 100000}, to report runs of at least ten consecutive \texttt{N} bases. Optional thumbnail representations of one-to-one alignments can be generated with the pipeline parameter \texttt{--multiqc\_thumbs}. Statistics and thumbnails are then aggregated by dedicated subworkflows and consolidated in a MultiQC report (\cite{Ewels_2016}).
 
 \section*{Results }
 
