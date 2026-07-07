@@ -95,33 +95,9 @@ Why align genomes?  Why at a high throughput?
 
 What is Nextflow? What is nf-core?
 
-We used the LAST software suite (\cite{Frith_2010}) for pairwise genome alignment because it
-accommodates a wide range of sequence lengths, divergences and compositional
-biases, while implementing an efficient seed-and-extend strategy with
-successive gapless and gapped X-drop extensions. The key advantages of LAST are 1) its
-flexible seeding framework, which allows users to tune sensitivity and
-specificity through the design of exact or inexact seeds, including spaced,
-transition-constrained, and sparsely sampled seeds (\cite{Frith_2014}, \cite{Frith_2020},
-\cite{Frith_2023}), 2) its training procedure that automatically infers
-substitution scores and gap penalties from the data, enabling robust alignment
-across queries with heterogeneous evolutionary distances (\cite{Hamada_2017}), and 3) its last-split program, which selects an
-optimal set of non-overlapping alignments to produce a consistent one-to-one
-mapping between genomes, thereby resolving multi-mapping regions in a
-principled manner (\cite{Frith_2015}), which avoids the need for
-post hoc chaining and netting strategies (\cite{Kent_2003}).
+We used the LAST software suite (\cite{Frith_2010}) for pairwise genome alignment because it accommodates a wide range of sequence lengths, divergences and compositional biases, while implementing an efficient seed-and-extend strategy with successive gapless and gapped X-drop extensions. The key advantages of LAST are 1) its flexible seeding framework, which allows users to tune sensitivity and specificity through the design of exact or inexact seeds, including spaced, transition-constrained, and sparsely sampled seeds (\cite{Frith_2014}, \cite{Frith_2020}, \cite{Frith_2023}), 2) its training procedure that automatically infers substitution scores and gap penalties from the data, enabling robust alignment across queries with heterogeneous evolutionary distances (\cite{Hamada_2017}), and 3) its last-split program, which selects an optimal set of non-overlapping alignments to produce a consistent one-to-one mapping between genomes, thereby resolving multi-mapping regions in a principled manner (\cite{Frith_2015}), which avoids the need for post hoc chaining and netting strategies (\cite{Kent_2003}).
 
-Several alternative pairwise alignment tools were considered, including LASTZ (\cite{Harris_2007}),
-MUMmer4 (\cite{Marcais_2018}), Minimap2 (\cite{Li_2018}), and, more recently, FastGA (\cite{Myers_2025}). LASTZ and MUMmer4 are widely used for whole-genome
-comparison, but neither combines the flexible seeding strategies, adaptive
-parameter training, and probabilistic split-alignment framework provided by
-LAST in a single integrated workflow. Minimap2 achieves excellent performance
-for read mapping and alignment of closely related long sequences but was not
-primarily designed for sensitive alignment of more diverged genomes. FastGA
-offers substantially improved speed for genome alignment; however, it became
-available after the core design and implementation of the present pipeline. We
-therefore selected LAST because it combined broad applicability across
-evolutionary distances with configurable sensitivity, data-driven parameter
-training, and principled resolution of ambiguous alignments.
+Several alternative pairwise alignment tools were considered, including LASTZ (\cite{Harris_2007}), MUMmer4 (\cite{Marcais_2018}), Minimap2 (\cite{Li_2018}), and, more recently, FastGA (\cite{Myers_2025}). LASTZ and MUMmer4 are widely used for whole-genome comparison, but neither combines the flexible seeding strategies, adaptive parameter training, and probabilistic split-alignment framework provided by LAST in a single integrated workflow. Minimap2 achieves excellent performance for read mapping and alignment of closely related long sequences but was not primarily designed for sensitive alignment of more diverged genomes. FastGA offers substantially improved speed for genome alignment; however, it became available after the core design and implementation of the present pipeline. We therefore selected LAST because it combined broad applicability across evolutionary distances with configurable sensitivity, data-driven parameter training, and principled resolution of ambiguous alignments.
 
 Once computed, whole-genome alignments can be stored in formats that differ substantially in information content and storage efficiency. The Multiple Alignment Format (MAF), originally developed for the UCSC Genome Browser and related tools such as MULTIZ (\cite{Kent_2002a}; \cite{Blanchette_2004}), is the primary output format of LAST. In addition to alignment coordinates, MAF stores the aligned sequences and, in LAST, per-base alignment confidence values. More compact formats trade information for storage efficiency. The tabular output of LAST and the PSL format used by BLAT (\cite{Kent_2002b}) omit the alignment strings while retaining gap structure and summary statistics such as mismatch counts and gap openings. BLAST tabular output (\cite{Altschul_1990}) is more compact still, discarding the gap coordinates. At the end of the spectrum, alignments can be represented simply as paired genomic intervals in GFF or BED format with only an alignment score, providing near-maximal lossy compression in a text representation. Conversely, MAF alignments can be converted with minimal information loss to SAM/BAM (\cite{Li_2009}) and subsequently compressed in CRAM format (\cite{Bonfield_2022}), benefiting from reference-based compression. The LAST suite can directly generate or export all of these formats.
 
@@ -133,20 +109,7 @@ Introduce target/query definitions
 
 \subsection*{Software deployment and versions}
 
-The nf-core modules used in this pipeline rely on Free Software distributed through
-Bioconda (\cite{Gruening_2018}). Depending on the execution environment, these
-packages are installed automatically by Nextflow in isolated conda environments or
-provided through software containers. The default container sources are
-BioContainers (\cite{Leprevost_2017}; \cite{Bai_2021}), which maintain a one-to-one
-correspondence with Bioconda packages, and Wave containers
-(\cite{seqera_wave}), which can combine packages from both Bioconda and
-conda-forge (\cite{conda_forge_zenodo}) within a single image. Containers are
-distributed in Docker-compatible formats (\cite{DiTommaso_2015}) and can also be
-used through Singularity/Apptainer (\cite{Kurtzer_2017}), with BioContainers
-images converted and distributed by the Galaxy project (\cite{Afgan_2016}) and
-Wave images provided through Seqera. Container images may be cached locally and
-shared between users, reducing software installation overhead and improving
-reproducibility.
+The nf-core modules used in this pipeline rely on Free Software distributed through Bioconda (\cite{Gruening_2018}). Depending on the execution environment, these packages are installed automatically by Nextflow in isolated conda environments or provided through software containers. The default container sources are BioContainers (\cite{Leprevost_2017}; \cite{Bai_2021}), which maintain a one-to-one correspondence with Bioconda packages, and Wave containers (\cite{seqera_wave}), which can combine packages from both Bioconda and conda-forge (\cite{conda_forge_zenodo}) within a single image. Containers are distributed in Docker-compatible formats (\cite{DiTommaso_2015}) and can also be used through Singularity/Apptainer (\cite{Kurtzer_2017}), with BioContainers images converted and distributed by the Galaxy project (\cite{Afgan_2016}) and Wave images provided through Seqera. Container images may be cached locally and shared between users, reducing software installation overhead and improving reproducibility.
 
 The nf-core modules implementing the LAST alignment workflow use several minimal containers with partially overlapping software dependencies. To avoid repeated downloads of redundant images, the pairgenome pipeline overrides the default module configuration and provides a single shared container containing LAST v1651, samtools, htslib \cite{Bonfield_2021}, and bcftools (\cite{Danecek_2021}) v1.23.1, open-fonts v0.7.0 from conda-forge (required for rendering sequence names in dotplots), gzip v1.14, bgzip v1.0.8, and xz v5.8.3.
 
@@ -158,17 +121,7 @@ Maximum execution times and memory allocations are assigned according to broad r
 
 \subsection*{Input}
 
-Input genomes are provided in FASTA format and may optionally be compressed
-with gzip. When downstream outputs are generated in BAM, BCF, or CRAM format,
-the pipeline ensures that the corresponding reference genomes are available in
-the block-gzip (BGZF) format by recompressing them when necessary
-(\cite{Li_2011}). Existing BGZF-compressed files are reused unchanged. The use
-of BGZF enables the random-access indexing required by these output formats. The target genome is specified with the pipeline parameter
-\texttt{--target}. Query genomes are specified through a sample sheet supplied
-via \texttt{--input}. This table defines the collection of query genomes to be
-aligned against the target. As a convenience for pairwise analyses, a single
-query genome may alternatively be provided directly through the
-\texttt{--query} parameter.
+Input genomes are provided in FASTA format and may optionally be compressed with gzip. When downstream outputs are generated in BAM, BCF, or CRAM format, the pipeline ensures that the corresponding reference genomes are available in the block-gzip (BGZF) format by recompressing them when necessary (\cite{Li_2011}). Existing BGZF-compressed files are reused unchanged. The use of BGZF enables the random-access indexing required by these output formats. The target genome is specified with the pipeline parameter \texttt{--target}. Query genomes are specified through a sample sheet supplied via \texttt{--input}. This table defines the collection of query genomes to be aligned against the target. As a convenience for pairwise analyses, a single query genome may alternatively be provided directly through the \texttt{--query} parameter.
 
 \subsection*{Alignment parameters}
 
@@ -176,7 +129,9 @@ Prior to database construction, any existing lowercase soft masking in the targe
 
 The target database is indexed on both strands using the \texttt{lastdb} option \texttt{-S2}. This increases memory usage during indexing but accelerates subsequent alignments. An important consequence is that some alignments may be reported between the reverse-complement strand of the target and the forward strand of the query, a representation that is not handled consistently by all downstream software. Users may therefore revert to single-strand indexing with the pipeline parameter \texttt{--strand both}. The default seed scheme is \texttt{RY4}, although alternative seeds can be selected through the \texttt{--seed} parameter.
 
-Alignment parameter training is performed with symmetric substitution scores and gap penalties by passing the \texttt{-revsym}, \texttt{--gapsym}, and \texttt{--matsym} arguments to \texttt{last-train}. These constraints are appropriate for most nuclear genomes but may be undesirable when evolutionary processes differ between strands, such as in animal mitochondrial genomes. In such cases, advanced users can override the training arguments by redefining \texttt{ext.args} for the \texttt{ALIGNMENT\_TRAIN} process in a Nextflow configuration file. Alternatively, a predefined LAST parameter file may be supplied through the pipeline parameter \texttt{--lastal\_params}. The same parameter set is then applied to all query genomes. Such files may originate from a previous training run or correspond to a standard LAST scoring scheme.
+Alignment parameter training is performed with symmetric substitution scores and gap penalties by passing the \texttt{--revsym}, \texttt{--gapsym}, and \texttt{--matsym} arguments to \texttt{last-train}. These constraints are appropriate for most nuclear genomes but may be undesirable when evolutionary processes differ between strands, such as in animal mitochondrial genomes. In such cases, advanced users can override the training arguments by redefining \texttt{ext.args} for the \texttt{ALIGNMENT\_TRAIN} process in a Nextflow configuration file. Alternatively, a predefined LAST parameter file may be supplied through the pipeline parameter \texttt{--lastal\_params}. The same parameter set is then applied to all query genomes. Such files may originate from a previous training run or correspond to a standard LAST scoring scheme.
+
+By default, sequence alignments are computed with the \texttt{lastal} arguments \texttt{-C2 -D1e9}, configurable through the pipeline parameter \texttt{--lastal\_args}. The \texttt{-D1e9} setting specifies an effective genome size of 1~Gb for E-value calculations, whereas \texttt{-C2} prunes nested alignments in order to reduce the computational burden associated with highly repetitive regions such as centromeres. During the reduction of many-to-many alignments to one-to-one relationships, alignments with an estimated error probability greater than $10^{-5}$ are discarded. This threshold is controlled by the pipeline parameter \texttt{--last\_split\_mismap}.
 
 Multi-threaded LAST processes are allocated up to 12 CPU cores, subject to any lower limit imposed by user settings or institutional execution profiles. Thread count is not expected to affect alignment results, but it may alter the order in which alignments are reported. Consequently, bitwise-identical output is guaranteed only when the same number of CPU cores is used. This behaviour is verified by the pipeline regression tests, which compare checksums of key output files against reference results.
 
@@ -186,7 +141,7 @@ Alignments are converted from MAF to SAM format using the \texttt{maf-convert} u
 
 In BAM and CRAM files, hard-clipped regions are limited to 268,435,455~bases. Longer query sequences are therefore represented as a series of adjacent alignment records, allowing arbitrarily long chromosomes and scaffolds to be encoded without loss of information.
 
-CRAM files are written in version~3.1 format by default. Advanced users may select a different CRAM version by modifying the \texttt{ext.args2} setting of the \texttt{ALIGNMENT\_EXP} process and the \texttt{ext.args} setting of the \texttt{ALIGNMENT\_MERGE} process in a Nextflow configuration file. Index files are generated automatically for all BAM, BCF, and CRAM outputs.
+CRAM files are written in version~3.1 format by default. Users may select a different CRAM version by modifying the \texttt{ext.args2} setting of the \texttt{ALIGNMENT\_EXP} process and the \texttt{ext.args} setting of the \texttt{ALIGNMENT\_MERGE} process in a Nextflow configuration file. Index files are generated automatically for all BAM, BCF, and CRAM outputs.
 
 \subsection*{Statistics and metadata collection}
 
@@ -232,6 +187,10 @@ The CRAM format is remarkably efficient after solving the max value of hard-clip
 
 \subsection*{Use case 2: QC of a new assembly}
 
+There are cases where allowing the target genome to align multiple times on the query, while constraining the query sequences to align only once.  For instance contigs produced by an assembly software can be aligned as query to a target genome.
+
+
+
 Align a reference assembly to the new contigs in m2o: there should be two matches per reference sequence.
 
 Make a primary assembly.
@@ -241,6 +200,8 @@ Align the primary assembly to the contigs and to the reference assembly in m2o. 
 (pink lines in dotplots)
 
 multi-cram file of other assemblies (various software) aligned to primary.
+
+WGO...
 
 \subsection*{Use case 3: m2m self-alignment}
 
