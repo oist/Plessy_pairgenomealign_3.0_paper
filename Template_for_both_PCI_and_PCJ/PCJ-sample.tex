@@ -98,6 +98,8 @@ Several alternative pairwise alignment tools were considered, including LASTZ (\
 
 Once computed, whole-genome alignments can be stored in formats that differ substantially in information content and storage efficiency. The Multiple Alignment Format (MAF), originally developed for the UCSC Genome Browser and related tools such as MULTIZ (\cite{Kent_2002a}; \cite{Blanchette_2004}), is the primary output format of LAST. In addition to alignment coordinates, MAF stores the aligned sequences and, in LAST, per-base alignment confidence values. More compact formats trade information for storage efficiency. The tabular output of LAST and the PSL format used by BLAT (\cite{Kent_2002b}) omit the alignment strings while retaining gap structure and summary statistics such as mismatch counts and gap openings. BLAST tabular output (\cite{Altschul_1990}) is more compact still, discarding the gap coordinates. At the end of the spectrum, alignments can be represented simply as paired genomic intervals in GFF or BED format with only an alignment score, providing near-maximal lossy compression in a text representation. Conversely, MAF alignments can be exported with minimal information loss to SAM/BAM (\cite{Li_2009}) and subsequently to CRAM format (\cite{Bonfield_2022}), benefiting from reference-based compression. The LAST suite can directly generate or export all of these formats.
 
+TO Polish: we developped a draft of the pipeline in \cite{Plessy_2024}. It is now released as a nf-core pipeline. Here we report in details how it works and the improvements added in the meantime.
+
 \section*{Methods }
 
 \subsection*{Software deployment and versions}
@@ -146,9 +148,13 @@ The pipeline was ran using the Slurm scheduler and the Singularity virtualisatio
 
 \subsection*{How it works}
 
-We developed the nf-core/pairgenomealign pipeline to align in parallel a list of query genomes to a target genome.  The main steps of the pipeline, described in details in the methods section are 1) index the target genome, 2) compute the optimal training parameters, 3) align the query to the target and 4) reduce the alignment to one-to-one relationship where sequences of each genome are aligned at most once. The pipeline also collects assembly, alignment, and computational resource use statistics.
+\begin{figure}[ht]
+\includegraphics[scale=0.5]{Template_for_both_PCI_and_PCJ/pairgenomealign-tubemap.pdf}
+\caption{This is the title of the figure. It also contains the legend of the figure, with some math to check everything is working: $\log(\frac12)$. The caption is different from the caption of the table (see table~\ref{tab:tab1})}
+\label{fig:fig1}
+\end{figure}
 
-TODO: add the pipeline tube schema?
+We developed the nf-core/pairgenomealign pipeline to align in parallel a list of query genomes to a target genome.  The main steps of the pipeline, described in detail in the methods section, are 1) index the target genome, 2) compute the optimal training parameters, 3) align the query to the target and 4) reduce the alignment to one-to-one relationship where sequences of each genome are aligned at most once. The pipeline also collects assembly, alignment, and computational resource use statistics.
 
 \subsection*{Use case 1: multiple genome alignment}
 
@@ -344,11 +350,6 @@ Not much difference with a regular \verb+\paragraph+ \parencite{fake}.
 \\+ \frac{x^{10}}{10!} + \frac{x^{11}}{11!} + \frac{x^{12}}{12!} + \frac{x^{13}}{13!} + \frac{x^{14}}{14!} + \frac{x^{15}}{15!} + \frac{x^{16}}{16!} + o(n^{16}).
 \end{multline}
 
-\begin{figure}[ht]
-\includegraphics[scale=0.5]{pci-graph-small.png}
-\caption{This is the title of the figure. It also contains the legend of the figure, with some math to check everything is working: $\log(\frac12)$. The caption is different from the caption of the table (see table~\ref{tab:tab1})}
-\label{fig:fig1}
-\end{figure}
 
 \lipsum[19]
 
