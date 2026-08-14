@@ -142,7 +142,7 @@ Assembly statistics of the query genomes, including sequence length and base com
 
 \subsection*{Performance benchmarks}
 
-The pipeline was ran using the Slurm scheduler and the Singularity virtualisation system on OISTs HPC cluster nodes with a CPU being either an AMD EPYC 7702 (L1/2/3 cache size 32, 512 and 16,384 KB, clock frequency 2.0 GHz / 3.90 GHz) or an Intel Xeon Gold 6230 (L1/2/3 cache size 32, 1024 and 28,160 KB, clock frequency 2.1 GHz / 3.35 GHz).  Nf-core ran pipeline full tests on Amazon Web Services nodes with an Intel Xeon Platinum 8375C (L1/2/3 cache size 80, 1280 and 55296 KB, clock frequency 2.9 GHz / 3.5 GHz).  The benchmark of \cite{Myers_2025} was run with two CPUs Intel Xeon Gold 6226R (L1/2/3 cache size 32, 1024 and 22,528 KB, clock frequency 2.9 GHz / 3.9 GHz). Nextflow reports the run time, memory use and CPU usage of each module run. To match the CPU time reported by \cite{Myers_2025} we multiplied run time with CPU usage when comparing to their benchmark.
+The pipeline was ran using the Slurm scheduler and the Singularity virtualisation system on OISTs HPC cluster nodes with a CPU being either an AMD EPYC 7702 (L1/2/3 cache size 32, 512 and 16,384 KB, clock frequency 2.0 GHz / 3.90 GHz) or an Intel Xeon Gold 6230 (L1/2/3 cache size 32, 1024 and 28,160 KB, clock frequency 2.1 GHz / 3.35 GHz).  Nf-core ran pipeline full tests on Amazon Web Services nodes with an Intel Xeon Platinum 8375C (L1/2/3 cache size 80, 1280 and 55296 KB, clock frequency 2.9 GHz / 3.5 GHz).  The benchmark of \cite{Myers_2025} was run with two CPUs Intel Xeon Gold 6226R (L1/2/3 cache size 32, 1024 and 22,528 KB, clock frequency 2.9 GHz / 3.9 GHz). Nextflow reports the run time, memory use and CPU usage of each module run. To match the CPU time reported by \cite{Myers_2025} we multiplied run time with CPU usage when comparing to their benchmark. The primate alignment benchmark was run with the RY128 seed, to match the configuration of the pipeline's full test suite, which runs on the Amazon Web Services cloud with a cap in computation resources that does not allow the use of the RY4 seed.
 
 \section*{Results}
 
@@ -150,13 +150,19 @@ The pipeline was ran using the Slurm scheduler and the Singularity virtualisatio
 
 \begin{figure}[ht]
 \includegraphics[scale=0.5]{Template_for_both_PCI_and_PCJ/pairgenomealign-tubemap.pdf}
-\caption{This is the title of the figure. It also contains the legend of the figure, with some math to check everything is working: $\log(\frac12)$. The caption is different from the caption of the table (see table~\ref{tab:tab1})}
+\caption{The nf-core/pairgenomealign pipeline aligns a list of query genomes to a target genomes and produces alignments, plots, and metrics reports. The data flow is indicated by lines and the nf-core modules are indicted by circles.}
 \label{fig:fig1}
 \end{figure}
 
 We developed the nf-core/pairgenomealign pipeline to align in parallel a list of query genomes to a target genome.  The main steps of the pipeline, described in detail in the methods section, are 1) index the target genome, 2) compute the optimal training parameters, 3) align the query to the target and 4) reduce the alignment to one-to-one relationship where sequences of each genome are aligned at most once. The pipeline also collects assembly, alignment, and computational resource use statistics.
 
 \subsection*{Use case 1: multiple genome alignment}
+
+\begin{figure}[ht]
+\includegraphics[scale=0.5]{Template_for_both_PCI_and_PCJ/primates_clustering.pdf}
+\caption{All-versus-all alignment of primate genomes and outgroups produces a matrix of percent nucleotide identities, which can be clustered to recover an approximation of the taxonomic tree.}
+\label{fig:fig1}
+\end{figure}
 
 From a list of genomes, all the alignment pairs can be produced by running the pipeline with each one playing the role of the target iteratively.  We illustrate this by aligning 34 primate chromsome-level assmemblies selected to maximally span the primate phylogenetic tree. The human versus other primates iteration, which correspond to the \emph{"full"} test suite of the pipeline, took xyz and xyz time to run on the Amazon computing clound and OISTs HPC cluster respectively. In clades where the molecular clock is stable enough, hierarchical clustering of the percent nucleotide identities recovers phylogenetic trees whose topology ranges from useful to identical to the known taxonomy, as in the case of the primates (Figure XYZ).
 
