@@ -46,26 +46,22 @@ style=pcj
 \DOI{10.5802/fake.doi} % this is the DOI of the preprint on the preprint server
 \PCIcorresp{charles.plessy@oist.jp}
 
-\title[Pairwise genome alignment pipeline]{The nf-core/pairgenomealign pipeline whole-genome alignments across the whole Tree of Life}
+\title[Pairwise genome alignment pipeline]{The nf-core/pairgenomealign pipeline for whole-genome alignments across the whole Tree of Life}
 
 % Authors: me, the inerns, Nick, ask Martin, ask nf-core community, ask Nico, Jiashun?
 
 %
- \author{\firstname{Antoine} \lastname{Lavoisier}\IsEqualContrib}
- \address{Rue sans aplomb, Paris, France}
- \email[A. Lavoisier]{a-lavois@lead-free-univ.edu}
+ \author{\firstname{Charles} \lastname{Plessy}\IsEqualContrib}
+ \address{Okinawa Institute of Science and Technology 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
+ \email[Charles Plessy]{charles.plessy@oist.jp}
 %
- \author{\firstname{Mary} \middlename{P.} \lastname{Curry}\IsEqualContrib}
- \address{Center for spiced radium experiments, United Kingdom}
- \email[M.~P.~Curry]{m.p.curry@radexp.edu.uk}
+ \author{\firstname{Interns} \middlename{and} \lastname{Students}\IsEqualContrib}
+ \address{Okinawa Institute of Science and Technology 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
+ \email[TBD]{TBD@example.com}
 %
- \author{\firstname{Dick} \lastname{Darlington}}
- \address{Bruce's Bar and Grill, London (near Susan's)}
- \email[D.~Darlington]{dd@example.com}
-%
- \author{\firstname{Peter} \lastname{Curry}}
- \address{Center for spiced radium experiments, United Kingdom}
- \email[P.~Curry]{p.curry@radexp.edu.uk}
+ \author{\firstname{Nicholas} \middlename{M.} \lastname{Luscombe}}
+ \address{Okinawa Institute of Science and Technology 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
+ \email[Nichoasl M. Luscombe]{nicholas.luscombe@oist.jp}
 
  \keywords{pipline, Nextflow, nf-core, genome, alignment, synteny, ANI}
 %
@@ -120,7 +116,7 @@ Input genomes are provided in FASTA format and may optionally be compressed with
 
 \subsection*{Alignment parameters}
 
-Prior to database construction, any existing lowercase soft masking in the target genome is discarded and replaced with tandem-repeat masking using the tantan implementation embedded in LAST (\cite{Frith_2011}), using, \verb|lastdb|'s option \verb|--R01|. This behaviour can be disabled with the pipeline parameter \verb|--target|--softmask original|, which preserves the masking present in the input assembly.
+Prior to database construction, any existing lowercase soft masking in the target genome is discarded and replaced with tandem-repeat masking using the tantan implementation embedded in LAST (\cite{Frith_2011}), using, \verb|lastdb|'s option \verb|--R01|. The maximal repeat unit length is hardcoded to 400~nt instead of \verb|lastdb|'s default of 100, to accommodate mammalian centromeric regions. Mask replacement can be disabled with the pipeline parameter \verb|--target|--softmask original|, which preserves the masking present in the input assembly.
 
 The target database is indexed on both strands using the \texttt{lastdb} option \verb|--S2|. This increases memory usage during indexing but accelerates subsequent alignments. An important consequence is that some alignments may be reported between the reverse-complement strand of the target and the forward strand of the query, a representation that is not handled consistently by all downstream software. Users may therefore revert to single-strand indexing with the pipeline parameter \verb|--strand both|. The default seed scheme is \verb|RY4|, although alternative seeds can be selected through the \verb|--seed| parameter.
 
@@ -135,6 +131,10 @@ Multi-threaded LAST processes are allocated up to 12 CPU cores, subject to any l
 Alignments are converted from MAF to SAM format using the \texttt{maf-convert} utility distributed with LAST. Subsequent conversion to BAM, BCF, and CRAM is performed by shell commands encapsulated in nf-core modules developed for this pipeline. Although these formats were originally designed to store sequencing reads aligned to a reference genome, they can also represent whole-genome alignments. The pipeline exploits this capability by assigning a distinct read group to each query genome and encoding genome alignments as hard-clipped segments of the query sequence. In BAM and CRAM files, hard-clipped regions are limited to 268,435,455 ($2^{28}-1$) bases. Longer query sequences are therefore represented as a series of adjacent alignment records, allowing arbitrarily long chromosomes and scaffolds to be encoded without loss of information.
 
 BCF files representing alignment mismatches as single-nuleotide polymprphisms are produced by passing \verb|-B| to \texttt{bcftools mpileup} and \verb|--ploidy 1 -m| to \texttt{bcftools call}. CRAM files are written in version~3.1 format by default. Users may select a different CRAM version by modifying the \texttt{ext.args2} setting of the \texttt{ALIGNMENT\_EXP} process and the \texttt{ext.args} setting of the \texttt{ALIGNMENT\_MERGE} process in a Nextflow configuration file. Index files are generated automatically for all BAM, BCF, and CRAM outputs.
+
+\subsection*{Pairwise alignment plots}
+
+Bitmap alignment pairwise line plots (also called dot-plots) are produced with the \verb|last-dotplot| command. It defaults to a maximum of 100 sequences per genome, which guards against genome quality issues such as containing more than one million contigs. The target genome is plotted as a horizontal axis and the query as a vertical one, with the sequence names oriented to that they are readable in both cases. The width of the plot is fixed to the target genome size with the \verb|--dotplot_width| option, but variation of the query sequence name lengths can introuduce residual differences.  This can be fine-tuned by passing additional arguments to \verb|last-dotplot| with the \verb|--dotplot_options| parameter.  Finally, \verb|maf-filter| can be used to denoise plots with the \verb|--dotplot_filter| option.  Dotplots of many-to-many aligments can be computationally expensive as well as uninformative when repeated regions are too frequent, and their generation can be turned off with the family of \verb|--skip_dotplot_…| parameters.
 
 \subsection*{Statistics and metadata collection}
 
@@ -154,62 +154,54 @@ The pipeline was ran using the Slurm scheduler and the Singularity virtualisatio
 \label{fig:fig1}
 \end{figure}
 
-We developed the nf-core/pairgenomealign pipeline to align in parallel a list of query genomes to a target genome.  The main steps of the pipeline, described in detail in the methods section, are 1) index the target genome, 2) compute the optimal training parameters, 3) align the query to the target and 4) reduce the alignment to one-to-one relationship where sequences of each genome are aligned at most once. The pipeline also collects assembly, alignment, and computational resource use statistics.
+We developed the nf-core/pairgenomealign pipeline to align in parallel a list of query genomes to a target genome.  The main steps of the pipeline (Figure~\ref{fig:fig1}), described in detail in the methods section, are 1) index the target genome, 2) compute the optimal training parameters, 3) align the query to the target and 4) reduce the alignment to one-to-one relationship where sequences of each genome are aligned at most once. The pipeline also collects assembly, alignment, and computational resource use statistics.
 
 \subsection*{Use case 1: multiple genome alignment}
 
 \begin{figure}[ht]
 \includegraphics[scale=0.5]{Template_for_both_PCI_and_PCJ/primates_clustering.pdf}
 \caption{All-versus-all alignment of primate genomes and outgroups produces a matrix of percent nucleotide identities, which can be clustered to recover an approximation of the taxonomic tree.}
-\label{fig:fig1}
+\label{fig:fig2}
 \end{figure}
 
-From a list of genomes, all the alignment pairs can be produced by running the pipeline with each one playing the role of the target iteratively.  We illustrate this by aligning 34 primate chromsome-level assmemblies selected to maximally span the primate phylogenetic tree. The human versus other primates iteration, which correspond to the \emph{"full"} test suite of the pipeline, took xyz and xyz time to run on the Amazon computing clound and OISTs HPC cluster respectively. In clades where the molecular clock is stable enough, hierarchical clustering of the percent nucleotide identities recovers phylogenetic trees whose topology ranges from useful to identical to the known taxonomy, as in the case of the primates (Figure XYZ).
+From a list of genomes, all the alignment pairs can be produced by running the pipeline with each one playing the role of the target iteratively.  We illustrate this by aligning 34 primate chromsome-level assmemblies selected to maximally span the primate phylogenetic tree. The human versus other primates iteration, which correspond to the \emph{"full"} test suite of the pipeline, took xyz and xyz time to run on the Amazon computing clound and OISTs HPC cluster respectively. In clades where the molecular clock is stable enough, hierarchical clustering of the percent nucleotide identities recovers phylogenetic trees whose topology ranges from useful to identical to the known taxonomy, as in the case of the primates (Figure~\ref{fig:fig2}).
 
-Note: justify RY128 somewhere.
+The pipeline can combine all target-query alignments into, a single CRAM file representing all the alignments in the coordinate system of the target alignments. It is neither a pangenome graph, nor a multiple sequence alignment, but MSAs can be extracted trivially and efficiently, for instance using the \verb|pysam| interface to the HTSlib (\cite{Heger_2009}. It is also useful for inspection of phylogenetic footprints in genome browsers (Figure~\ref{fig:fig3}).
 
-The pipeline can combine all target-query alignments into, a single CRAM file representing all the alignments in the coordinate system of the target alignments.  It is neither a pangenome graph, nor a multiple sequence alignment, but MSAs can be extracted trivially.  It is also useful for inspection of phylogenetic footprints in genome browsers.
-
-
-The CRAM format is remarkably efficient after solving the max value of hard-clipping.  IGV, Pysam, …
-
-(in particular with broad diversity of evolutionary distances). UCEs. Phylogenetic trees.
-
+\begin{figure}[ht]
+\includegraphics[scale=0.2]{Template_for_both_PCI_and_PCJ/Dlx_screenshot.png}
+\caption{Human-versus-all alignment of primate genomes and outgroups compressed in CRAM format displayed in the Integrative Genome Browser. The region displayed is highlights in gray the ultraconserved elements between the DLX5/6 gene pair, through the absence of alignment mismatches or indels (color). The CRAM file used to generate this figure contains the totality of the whole-genome alignments and has a size of 4~GiB.}
+\label{fig:fig3}
+\end{figure}
 
 \subsection*{Performance benchmarks}
 
 \begin{figure}[ht]
 \includegraphics[scale=0.35]{Template_for_both_PCI_and_PCJ/benchmark.pdf}
 \caption{Performance statistics of the pairgenomealign pipeline (blue) in context of the \cite{Myers_2025} benchmark. Left panel: peak memory usage and total CPU usgae on a logarithmic scale.  Pairs of genomes aligned with the same software and parameters are linked by dots as in the example inset, with a thicker size for the human–human comparison to indicate the direction. Right panel, alignment coverage (logarithmic scale).}
-\label{fig:fig1}
+\label{fig:fig4}
 \end{figure}
 
 Human-primate alignments took an average of XYZ minutes, with most of the time, computing and memory resources being used on the alignment step.  Alignment of closer genomes require more resources than aligment of more distant genomes.
 
 Impact of CPU differences.  (accordingly, cpu difference made most difference in the alignment step)
 
-To situate the performance of the pipeline in comparison with other alignment software, we used the benchmark of \cite{Myers_2025} where 5 mammalian genomes are aligned to a human genome reference. We ran our pipeline on the same data using three different indexing seeds, RY128, RY4 and NEAR, and measured 1) the total CPU time of the indexing, training and aligning steps, 2) the maximal memory use during these steps and 3) the total coverage of the many-to-one alignment on the query genomes. In terms of memory usage, NUCmer and LastZ could align the genomes with the memory available on most computers, FastGA requires quantities found on high-end personal computer (as of 2026), and LAST, Minimap2 and Wfmash need workstation, cloud or high-performance environment. In terms of speed, FastGA was faster than all tools, followed by LAST. The alignment coverage of LAST reached levels comparable to LASTZ when using the RY4 and NEAR seeds. Altogether, our pipeline allows users to tune the speed and sensitivity of the alignments of large genomes according to their needs, outperforming most other tools except FastGA, but requires HPC or cloud platforms for pairs of large genomes.
+To situate the performance of the pipeline in comparison with other alignment software, we used the benchmark of \cite{Myers_2025} where 5 mammalian genomes are aligned to a human genome reference. We ran our pipeline on the same data using three different indexing seeds, RY128, RY4 and NEAR, and measured 1) the total CPU time of the indexing, training and aligning steps, 2) the maximal memory use during these steps and 3) the total coverage of the many-to-one alignment on the query genomes (Figure~\ref{fig:fig4}). In terms of memory usage, NUCmer and LastZ could align the genomes with the memory available on most computers, FastGA requires quantities found on high-end personal computer (as of 2026), and LAST, Minimap2 and Wfmash need workstation, cloud or high-performance environment. In terms of speed, FastGA was faster than all tools, followed by LAST. The alignment coverage of LAST reached levels comparable to LASTZ when using the RY4 and NEAR seeds. Altogether, our pipeline allows users to tune the speed and sensitivity of the alignments of large genomes according to their needs, outperforming most other tools except FastGA, but requires HPC or cloud platforms for pairs of large genomes.
 
 
 (explain that each query sequence is often split in many small regions because of x-drop and non-collinearity).
 
 
-How many joules?
 
 nucleotide identity in methods
 
 put aka ANI somewhere.
 
-
+Runtime differences between architectures were generally modest for the dominant alignment stage. Intel Cascade Lake consistently outperformed AMD EPYC, with wall-clock times typically 20-30% lower for LASTAL and SPLIT.
 
 No limit on the list of query genomes as Nextflow will chunk batches.
 
-Dot-plot representations, last-dotplot, other export formats, the problem of filtering, the solution in LAST, ...  \verb|last-dotplot| defaults to a maximum of 100 sequences per genome, which guards against genome quality issues such as containing more than one million contigs.
-
-explain lastdb repeat masking and -U parameter
-
-
-        ext.args = { "--rot1=v --rot2=h --sort2=3 --strands2=1 --width=${params.dotplot_width} --height=${params.dotplot_height} --fontsize=${params.dotplot_font_size} ${params.dotplot_options}" }
+Dot-plot representations, last-dotplot, other export formats, the problem of filtering, the solution in LAST, ...
 
 
 \subsection*{Use case 2: QC of a new assembly}
@@ -239,12 +231,9 @@ or geonomes -> m2m -> m2o / o2m -> o2o
 
 (also useful for QC)
 
-\subsection*{Use case 4 (easter egg): read alignment}
 
-Despite being designed for aligning genomes to genomes, the pipeline is also able to align reads to genomes, thank to its flexible design using LAST.  It accepts querise in FASTQ format, and its training step makes it robust to heterogeneity in input data quality and origin (different sequencing platforms have different error profiles).  The many-to-one output alignment guarantees that each base of a read is aligned at most once to the target genome (each base of the target genome can be aligned many times, but only to one base per query sequence).  While other aligners such as minimap2 may perform faster, and specialised pipelines are already available, it can be convenient for the user to just use nf-core/pairgenomealign when already familiar with it and when aligment of a long list of sequencing runs is needed.  For instance, we aligned XYX runs Nanopore and Pacbio; TODO add MiSeq to a reference Oikopleura (italics) genome containing a mitochondrial chromosome sequence, which allowed us to visualise SNPs to ....
 
 TODO give examples of other pipelines.
-Why not minimap2?
 
  - reproducible pipeline that installs the software for you
  - m2o (how about minimap2)
@@ -257,13 +246,11 @@ Why not minimap2?
 
 (Needs special config file)
 
-
 Benchmark:
 
 add LASTDB indexing time?
 add LASTTRAIN or try HUMSUM?
 keep mask or tantan?
-ask details to Gene? on indexing and masking etc?  Ask gene how coverage was calculated. (does it include gaps?)
 
 Aslo, describe teh allvsall script and its restarting of the pipeline with expensive parameters while leveraging the cache.
 
@@ -277,6 +264,9 @@ U¥HUMSUM useful with MAM8 on big genomes because last-train also slow?
 
 \section*{Discussion}
 
+How many joules?
+
+Despite being designed for aligning genomes to genomes, the pipeline is also able to align reads to genomes, thank to its flexible design using LAST.  It accepts queries in FASTQ format, and its training step makes it robust to heterogeneity in input data quality and origin (different sequencing platforms have different error profiles).  The many-to-one output alignment guarantees that each base of a read is aligned at most once to the target genome (each base of the target genome can be aligned many times, but only to one base per query sequence).  While other aligners such as minimap2 may perform faster, and specialised pipelines are already available, it can be convenient for the user to just use nf-core/pairgenomealign when already familiar with it and when aligment of a long list of sequencing runs is needed.  For instance, we aligned XYX runs Nanopore and Pacbio; TODO add MiSeq to a reference Oikopleura (italics) genome containing a mitochondrial chromosome sequence, which allowed us to visualise SNPs to ....
 
   1396160 contigs in Cercopithecus mitis GCF\_028627265.1
 
@@ -323,48 +313,6 @@ why not pangenome
 
 LAST runs well even if there are millions of contigs.  But beware downstream tools and parallelisation strategies.
 
-\lipsum[12]
-\begin{itemize}
-\item toto (see Appendix~\ref{sA} and Eq.~\ref{eq:eq1})
-\item foo (see Figure~\ref{fig:fig1})
-\item bar
-\end{itemize}
-
-\subsection*{An other subsection}
-\lipsum[13]
-\begin{enumerate}
-\item first item
-\item second item
-\begin{enumerate}
-\item \label{2a} item \ref{2a}
-\item item 2b (cf.~\cite[Thm.~3]{Ivanov_curve-complex_1997})
-\end{enumerate}
-\end{enumerate}
-
-\subsubsection*{A subsubsection}
-\lipsum[14]
-\\This is an equation:
-
-\begin{equation}
-1=1
-\label{eq:eq1}
-\end{equation}
-
-\paragraph{A paragraph}
-\lipsum[15]
-
-\subparagraph{A subparagraph}
-Not much difference with a regular \verb+\paragraph+ \parencite{fake}.
-\lipsum[16]
-
-\begin{multline}
-\exp(x) = 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \frac{x^4}{4!} + \frac{x^5}{5!} + \frac{x^6}{6!} + \frac{x^7}{7!} + \frac{x^8}{8!} + \frac{x^9}{9!}\\
-\\+ \frac{x^{10}}{10!} + \frac{x^{11}}{11!} + \frac{x^{12}}{12!} + \frac{x^{13}}{13!} + \frac{x^{14}}{14!} + \frac{x^{15}}{15!} + \frac{x^{16}}{16!} + o(n^{16}).
-\end{multline}
-
-
-\lipsum[19]
-
 \begin{table}[ht]
 \caption{This is the title of the table. It also contains the legend i.e. an explanation of what the table reveals about the problem at hand (typeset using \texttt{\textbackslash caption}).}
 \begin{tabular}{rcccc}
@@ -377,17 +325,10 @@ Not much difference with a regular \verb+\paragraph+ \parencite{fake}.
 \label{tab:tab1}
 \end{table}
 
-\begin{proof}
-This is a proof that ends with a \verb+{align}+ type of equation. The last equation should be numbered, but \verb+\qedhere+ breaks it (yet it works in most other journals?)
-\begin{align}
-&1234596748613548534863\\
-&bjklbjl\\
-&1234864 + \sum_{i=1}^{n}\frac{1}{i}\qedhere
-\end{align}
-\end{proof}
 
 \section*{Conclusion}
-\lipsum[20]
+
+TBW
 
 \section*{Acknowledgements}
 
