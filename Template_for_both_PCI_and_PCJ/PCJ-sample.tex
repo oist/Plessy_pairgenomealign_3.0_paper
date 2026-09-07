@@ -53,7 +53,7 @@ style=pcj
 % Authors: me, the inerns, Nick, ask Martin, ask nf-core community, ask Nico, Jiashun?
 
 %
- \author{\firstname{Charles} \lastname{Plessy}\IsEqualContrib}
+ \author{\firstname{Charles} \lastname{Plessy}}
  \address{Okinawa Institute of Science and Technology 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
  \email[Charles Plessy]{charles.plessy@oist.jp}
 %
@@ -65,7 +65,7 @@ style=pcj
  \address{Okinawa Institute of Science and Technology 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
  \email[Nichoasl M. Luscombe]{nicholas.luscombe@oist.jp}
 
- \keywords{pipline, Nextflow, nf-core, genome, alignment, synteny, ANI}
+ \keywords{pipeline, Nextflow, nf-core, genome, alignment, synteny, ANI}
 %
  \begin{abstract}
 
@@ -115,7 +115,7 @@ Input genomes are provided in FASTA format and may optionally be compressed with
 
 \subsection*{Alignment parameters}
 
-Prior to database construction, any existing lowercase soft masking in the target genome is discarded and replaced with tandem-repeat masking using the tantan implementation embedded in LAST (\cite{Frith_2011}), using, \verb|lastdb|'s option \verb|--R01|. The maximal repeat unit length is hardcoded to 400~nt instead of \verb|lastdb|'s default of 100, to accommodate mammalian centromeric regions. Mask replacement can be disabled with the pipeline parameter \verb|--target|--softmask original|, which preserves the masking present in the input assembly.
+Prior to database construction, any existing lowercase soft masking in the target genome is discarded and replaced with tandem-repeat masking using the tantan implementation embedded in LAST (\cite{Frith_2011}), using \verb|lastdb|'s option \verb|--R01|. The maximal repeat unit length is hardcoded to 400~nt instead of \verb|lastdb|'s default of 100, to accommodate mammalian centromeric regions. Mask replacement can be disabled with the pipeline parameter \verb|--softmask original|, which preserves the masking present in the input assembly.
 
 The target database is indexed on both strands using the \texttt{lastdb} option \verb|--S2|. This increases memory usage during indexing but accelerates subsequent alignments. An important consequence is that some alignments may be reported between the reverse-complement strand of the target and the forward strand of the query, a representation that is not handled consistently by all downstream software. Users may therefore revert to single-strand indexing with the pipeline parameter \verb|--strand both|. The default seed scheme is \verb|RY4|, although alternative seeds can be selected through the \verb|--seed| parameter.
 
@@ -137,11 +137,11 @@ Bitmap alignment pairwise line plots (also called dot-plots) are produced with t
 
 \subsection*{Statistics and metadata collection}
 
-Assembly statistics of the query genomes, including sequence length and base composition, are calculated with \texttt{assembly-scan} v1.0.0 (\cite{Petit_2023}) unless disabled through the pipeline parameter \verb|--skip\_assembly\_qc|. In addition, custom nf-core modules developed for this pipeline collect summary statistics from the alignment outputs and store them as text files within the results directory. These statistics include alignment nucleotide percent identity (ANI) computed with or without including gaps \cite{May_2004}, gap frequencies, inferred insertion and extension penalties, and the nucleotide substitution matrix estimated from the whole-genome alignment. Coordinates of assembly gaps are identified with \texttt{seqtk cutN} v1.5-r133 (\cite{Li_2013}) using the arguments \texttt{-n 10 -p 100000}, to report runs of at least ten consecutive \texttt{N} bases. Optional thumbnail representations of one-to-one alignments can be generated with the pipeline parameter \verb|--multiqc\_thumbs|. Statistics and thumbnails are then aggregated by dedicated subworkflows and consolidated in a MultiQC report (\cite{Ewels_2016}). (Figure~\ref{fig:fig5}).
+Assembly statistics of the query genomes, including sequence length and base composition, are calculated with \texttt{assembly-scan} v1.0.0 (\cite{Petit_2023}) unless disabled through the pipeline parameter \verb|--skip_assembly_qc|. In addition, custom nf-core modules developed for this pipeline collect summary statistics from the alignment outputs and store them as text files within the results directory. These statistics include alignment nucleotide percent identity (ANI) computed with or without including gaps (\cite{May_2004}), gap frequencies, inferred insertion and extension penalties, and the nucleotide substitution matrix estimated from the whole-genome alignment. Coordinates of assembly gaps are identified with \texttt{seqtk cutN} v1.5-r133 (\cite{Li_2013}) using the arguments \texttt{-n 10 -p 100000}, to report runs of at least ten consecutive \texttt{N} bases. Optional thumbnail representations of one-to-one alignments can be generated with the pipeline parameter \verb|--multiqc_thumbs|. Statistics and thumbnails are then aggregated by dedicated subworkflows and consolidated in a MultiQC report (\cite{Ewels_2016}). (Figure~\ref{fig:fig5}).
 
 \subsection*{Performance benchmarks}
 
-The pipeline was ran using the Slurm scheduler (\cite{Jette_2023}) and the Singularity virtualisation system on OISTs HPC cluster nodes with a CPU being either an AMD EPYC 7702 (L1/2/3 cache size 32, 512 and 16,384 KB, clock frequency 2.0 GHz / 3.90 GHz) or an Intel Xeon Gold 6230 (L1/2/3 cache size 32, 1024 and 28,160 KB, clock frequency 2.1 GHz / 3.35 GHz). Nf-core ran pipeline full tests on Amazon Web Services nodes with an Intel Xeon Platinum 8375C (L1/2/3 cache size 80, 1280 and 55296 KB, clock frequency 2.9 GHz / 3.5 GHz). The benchmark of \cite{Myers_2025} was run with two CPUs Intel Xeon Gold 6226R (L1/2/3 cache size 32, 1024 and 22,528 KB, clock frequency 2.9 GHz / 3.9 GHz). Nextflow reports the run time, memory use and CPU usage of each module run. To match the CPU time reported by \cite{Myers_2025} we multiplied run time with CPU usage when comparing to their benchmark. The primate alignment benchmark was run with the RY128 seed, to match the configuration of the pipeline's full test suite, which runs on the Amazon Web Services cloud with a cap in computation resources that does not allow the use of the RY4 seed.
+The pipeline was run using the Slurm scheduler (\cite{Jette_2023}) and the Singularity virtualisation system on OISTs HPC cluster nodes with a CPU being either an AMD EPYC 7702 (L1/2/3 cache size 32, 512 and 16,384 KB, clock frequency 2.0 GHz / 3.90 GHz) or an Intel Xeon Gold 6230 (L1/2/3 cache size 32, 1024 and 28,160 KB, clock frequency 2.1 GHz / 3.35 GHz). Nf-core ran pipeline full tests on Amazon Web Services nodes with an Intel Xeon Platinum 8375C (L1/2/3 cache size 80, 1280 and 55296 KB, clock frequency 2.9 GHz / 3.5 GHz). The benchmark of \cite{Myers_2025} was run with two CPUs Intel Xeon Gold 6226R (L1/2/3 cache size 32, 1024 and 22,528 KB, clock frequency 2.9 GHz / 3.9 GHz). Nextflow reports the run time, memory use and CPU usage of each module run. To match the CPU time reported by \cite{Myers_2025} we multiplied run time with CPU usage when comparing to their benchmark. The primate alignment benchmark was run with the RY128 seed, to match the configuration of the pipeline's full test suite, which runs on the Amazon Web Services cloud with a cap in computation resources that does not allow the use of the RY4 seed.
 
 \section*{Results}
 
@@ -149,27 +149,27 @@ The pipeline was ran using the Slurm scheduler (\cite{Jette_2023}) and the Singu
 
 \begin{figure}[ht]
 \includegraphics[scale=0.5]{Template_for_both_PCI_and_PCJ/pairgenomealign-tubemap.pdf}
-\caption{The nf-core/pairgenomealign pipeline aligns a list of query genomes to a target genomes and produces alignments, plots, and metrics reports. The data flow is indicated by lines and the nf-core modules are indicted by circles. The main pipeline steps are indicated by the name of their nf-core module: indexing the target genome (last/lastdb), self-learning of the alignment parameters(last/train), producing the set of many-to-one alignments were query sequences are matched at most ones to target sequences (last/lastal), and reduction to an optimal set of one-to-one alignments (last/split).  A \verb|--m2m| mode is available to produce all combinations between many- and one- relationships.}
+\caption{The nf-core/pairgenomealign pipeline aligns a list of query genomes to a target genome and produces alignments, plots, and metrics reports. The data flow is indicated by lines and the nf-core modules are indicated by circles. The main pipeline steps are indicated by the name of their nf-core module: indexing the target genome (last/lastdb), self-learning of the alignment parameters (last/train), producing the set of many-to-one alignments where query sequences are matched at most one to target sequences (last/lastal), and reduction to an optimal set of one-to-one alignments (last/split). A \texttt{--m2m} mode is available to produce all combinations between many- and one- relationships.}
 \label{fig:fig1}
 \end{figure}
 
-We developed the nf-core/pairgenomealign pipeline to align in parallel a list of query genomes to a target genome.  The main steps of the pipeline (Figure~\ref{fig:fig1}), described in detail in the methods section, are 1) index the target genome, 2) compute the optimal training parameters, 3) align each query to the target and 4) reduce the alignments to one-to-one relationship where sequences of each genome are aligned at most once. The pipeline also collects assembly, alignment, and computational resource use statistics.
+We developed the nf-core/pairgenomealign pipeline (\cite{pairgenomealign}) to align in parallel a list of query genomes to a target genome.  The main steps of the pipeline (Figure~\ref{fig:fig1}), described in detail in the methods section, are 1) index the target genome, 2) compute the optimal training parameters, 3) align each query to the target and 4) reduce the alignments to one-to-one relationship where sequences of each genome are aligned at most once. The pipeline also collects assembly, alignment, and computational resource use statistics.
 
 \subsection*{Multiple genome alignment}
 
 \begin{figure}[ht]
 \includegraphics[scale=0.5]{Template_for_both_PCI_and_PCJ/primates_clustering.pdf}
-\caption{All-versus-all alignment of primate genomes and outgroups produces a matrix of percent nucleotide identities, which were clustered to recover an approximation of the taxonomic tree.}
+\caption{All-versus-all alignment of primate genomes produces a matrix of percent nucleotide identities, plotted as a heatmap, which were clustered to recover a phylogenetic tree.}
 \label{fig:fig2}
 \end{figure}
 
-From a list of genomes, all the alignment pairs can be produced by running the pipeline in a loop with each one playing the role of the target iteratively. We illustrate this by aligning 34 primate chromosome-level assemblies selected to maximally span the primate phylogenetic tree. The human versus other primates iteration, which correspond to the \emph{"full"} test suite of the pipeline, took TBD XYZ and TBD XYZ time to run on the Amazon computing cloud and OISTs HPC cluster respectively. In clades where the molecular clock is stable enough, hierarchical clustering of the percent nucleotide identities recovers phylogenetic trees whose topology ranges from useful to identical to the known taxonomy, as in the case of the primates (Figure~\ref{fig:fig2}).
+From a list of genomes, all the alignment pairs can be produced by running the pipeline in a loop with each one playing the role of the target iteratively. We illustrate this by aligning 34 primate chromosome-level assemblies selected to maximally span the primate phylogenetic tree. The human versus other primates iteration corresponds to the \emph{"full"} test suite of the pipeline, which took 91~min and 134~min to run on the Amazon computing cloud and OISTs HPC cluster respectively. In clades where the molecular clock is stable enough, hierarchical clustering of the percent nucleotide identities recovers phylogenetic trees whose topology ranges from useful to identical to the known taxonomy, as in the case of the primates (Figure~\ref{fig:fig2}).
 
-The pipeline can combine all target-query alignments into a single CRAM file representing all the alignments in the coordinate system of the target alignments. It is neither a pangenome graph nor a multiple sequence alignment, but MSAs can be extracted trivially and efficiently, for instance using the \verb|pysam| interface to the HTSlib (\cite{Heger_2009}. It is also useful for inspecting the phylogenetic footprints in genome browsers (Figure~\ref{fig:fig3}).
+The pipeline can combine all target-query alignments into a single CRAM file representing all the alignments in the coordinate system of the target alignments. It is neither a pangenome graph nor a multiple sequence alignment, but MSAs can be extracted trivially and efficiently, for instance using the \verb|pysam| interface to the HTSlib (\cite{Heger_2009}). It is also useful for inspecting the phylogenetic footprints in genome browsers (Figure~\ref{fig:fig3}).
 
 \begin{figure}[ht]
 \includegraphics[scale=0.2]{Template_for_both_PCI_and_PCJ/Dlx_screenshot.png}
-\caption{Human-versus-all alignment of primate genomes and outgroups compressed in CRAM format displayed in the Integrative Genome Browser (\cite{Robinson_2011},\cite{Thorvaldsdottir_2013}). The region displayed is highlights in gray the ultraconserved elements between the DLX5/6 gene pair, through the absence of alignment mismatches or indels (color). The CRAM file used to generate this figure contains the totality of the whole-genome alignments and has a size of 4~GiB, whereas the space taken by the compress MAF files is 35~GiB.}
+\caption{Human-versus-all alignment of primate genomes and outgroups compressed in CRAM format displayed in the Integrative Genome Browser (\cite{Robinson_2011},\cite{Thorvaldsdottir_2013}). The region displayed highlights in gray the ultraconserved elements between the DLX5/6 gene pair, through the absence of alignment mismatches or indels (color). The CRAM file used to generate this figure contains the totality of the whole-genome alignments and has a size of 4~GiB, whereas the space taken by the compress MAF files is 35~GiB.}
 \label{fig:fig3}
 \end{figure}
 
@@ -185,7 +185,7 @@ To understand how the pipeline uses computational resources, we replicated each 
 
 \begin{figure}[ht]
 \includegraphics[scale=0.35]{Template_for_both_PCI_and_PCJ/benchmark.pdf}
-\caption{Performance statistics of the pairgenomealign pipeline (blue) in context of the \cite{Myers_2025} benchmark. Left panel: peak memory usage and total CPU usgae on a logarithmic scale.  Pairs of genomes aligned with the same software and parameters are linked by dots as in the example inset, with a thicker size for the human–human comparison to indicate the direction. Right panel, alignment coverage (logarithmic scale).}
+\caption{Performance statistics of the pairgenomealign pipeline (blue) in context of the \cite{Myers_2025} benchmark. Left panel: peak memory usage and total CPU usage on a logarithmic scale.  Pairs of genomes aligned with the same software and parameters are connected by dots in order of increasing sequence similarity; the human-human comparison is highlighted by a larger symbol and always forms the final point in each trajectory. Right panel, alignment coverage (logarithmic scale).}
 \label{fig:fig5}
 \end{figure}
 
@@ -214,11 +214,11 @@ To benchmark our pipeline against other genome alignment software, we used the d
     \label{fig:fig6}
 \end{figure}
 
-Beyond evolutionary analyses, pairwise genome alignments are routinely used for assembly quality control. Draft assemblies containing unpurged or unresolved haplotypes often fail to exhibit a one-to-one correspondence with a reference genome. Similarly, diploid, polyploid, and whole-genome-duplicated genomes naturally produce non-unique alignments. The many-to-one dot plots generated by our pipeline facilitate the detection of these features and provide an effective visual assessment of assembly quality. Homozygous regions appear as clear bands with no epeat-derived noise (Figure~\ref{fig:fig6}).
+Beyond evolutionary analyses, pairwise genome alignments are routinely used for assembly quality control. Draft assemblies containing unpurged or unresolved haplotypes often fail to exhibit a one-to-one correspondence with a reference genome. Similarly, diploid, polyploid, and whole-genome-duplicated genomes naturally produce non-unique alignments. The many-to-one dot plots generated by our pipeline facilitate the detection of these features and provide an effective visual assessment of assembly quality. Homozygous regions appear as clear bands with no repeat-derived noise (Figure~\ref{fig:fig6}).
 
 \section*{Discussion}
 
-The workflow separates computationally expensive alignment generation from downstream interpretation, allowing users to revisit filtering, visualization, and structural variation analyses without recomputing pairwise alignments. Whole-genome alignment workflows remain less common than alignment programs themselves. The closest widely adopted alternative is Cactus \cite{Armstrong_2020}, which focuses on multiple-genome alignments, ancestral reconstruction, and pangenome representations. In contrast, nf-core/pairgenomealign targets reproducible pairwise genome comparisons using LAST, emphasizing flexible sensitivity settings, standard genomics file formats, and straightforward deployment across local, cloud, and high-performance computing environments. By adopting the nf-core framework, the pipeline also benefits from community standards for documentation, testing, reproducibility, and long-term maintenance.
+We developed a workflow separates computationally expensive alignment generation from downstream interpretation, allowing users to revisit filtering, visualization, and structural variation analyses without recomputing pairwise alignments. By parallelising pairwise alignments, the pipeline scales naturally to all-versus-all genome comparisons and the construction of multiple sequence alignments. Whole-genome alignment workflows remain less common than alignment programs themselves. The closest widely adopted alternative is Cactus (\cite{Armstrong_2020}), which focuses on multiple-genome alignments, ancestral reconstruction, and pangenome representations. In contrast, nf-core/pairgenomealign targets reproducible pairwise genome comparisons using LAST, emphasizing flexible sensitivity settings, standard genomics file formats, and straightforward deployment across local, cloud, and high-performance computing environments. By adopting the nf-core framework, the pipeline also benefits from community standards for documentation, testing, reproducibility, and long-term maintenance.
 
 The workflow was designed to be customizable while retaining reproducibility. Users may replace the default container image, for example with institution-specific environments or other distributions of bioinformatics packages such as Debian Med (\cite{Moeller_2010}), pin a particular LAST version, or compile aligners with local hardware optimizations. Conversely, custom containers can preserve identical alignment software versions while benefiting from future developments of the workflow itself. The flexibility extends to execution strategies: while distributed execution through an HPC job scheduler is well suited to computationally intensive genome comparisons, analyses involving many small genome pairs may benefit from allocating a complete node and running the workflow locally within that allocation, thereby reducing scheduler overhead and improving resource sharing between tasks.
 
@@ -228,13 +228,11 @@ We found the workflow to be tolerant of assembly and scaffolding quality. LAST c
 
 \section*{Conclusion}
 
-Our primary motivation in developing nf-core/pairgenomealign was to support genome-scale comparisons across the Tree of Life. In pursuing this goal, we have already aligned more than one million pairs of genomes whose sizes span more than six orders of magnitude. The workflow has been shaped by the practical demands of this undertaking, from handling imperfect public genome assemblies to efficiently exploiting modern computing environments. We anticipate that increasingly comprehensive catalogs of biodiversity will require reproducible and scalable approaches to pairwise genome comparison, and we hope that nf-core/pairgenomealign will provide a useful foundation for these future efforts.
+Our primary motivation in developing nf-core/pairgenomealign was to support genome-scale comparisons across the Tree of Life. In pursuit of this goal, we have applied the pipeline in ongoing large-scale comparative analyses, generating more than one million pairwise genome alignments across genomes spanning over six orders of magnitude in size. The workflow has been shaped by the practical demands of this undertaking, from handling imperfect public genome assemblies to efficiently exploiting modern computing environments. We anticipate that increasingly comprehensive catalogs of biodiversity will require reproducible and scalable approaches to pairwise genome comparison, and we hope that nf-core/pairgenomealign will provide a useful foundation for these future efforts.
 
 \section*{Acknowledgements}
 
-We thank the DNA Sequencing Section and the Scientific Computing and Data Analysis Section of the Research Support Division at OIST for their support.
-
-%% This is your acknowledgments. Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the recommendation]; \cite{fake}[replace by the citation of the recommendation]).
+We thank the DNA Sequencing Section and the Scientific Computing and Data Analysis Section of the Research Support Division at OIST for their support, and Priscilla Biller for critical comments on the manuscript.  Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the recommendation]; \cite{fake}[replace by the citation of the recommendation]).
 
 \section*{Fundings}
 
@@ -247,6 +245,8 @@ The authors declare that they comply with the PCI rule of having no financial co
 \section*{Data, script, code, and supplementary information availability}
 
 % Data are available online (\url{https://doi.org/10.24072/fake1}[Replace by the DOI of the webpage hosting the data]; \cite{CharleMar_independant-trace-su2_2012}[Replace by the citation of the data])\\
+The nf-core/pairgenomealign pipeline is available at (\url{https://nf-co.re/pairgenomealign} and version 3.0.4 used in this manuscript is archived at (\url{https://doi.org/10.5281/zenodo.22119145}.
+
 Script and codes are available online (\url{https://doi.org/10.24072/fake2}[Replace by the DOI of the webpage hosting the script and code]; \cite{fixme}[Replace by the citation of the script and code])\\
 Supplementary information is available online (\url{https://doi.org/10.24072/fake3}[Replace by the DOI of the webpage hosting the Supplementary information]; \cite{fixme}[Replace by the citation of the Supplementary information])\\ \\
 The DOI hyperlinks should be active. They should also be present in the reference list and cited in the text.
