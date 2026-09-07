@@ -148,7 +148,7 @@ The pipeline was run using the Slurm scheduler (\cite{Jette_2023}) and the Singu
 \subsection*{How it works}
 
 \begin{figure}[ht]
-\includegraphics[scale=0.5]{Template_for_both_PCI_and_PCJ/pairgenomealign-tubemap.pdf}
+\includegraphics[scale=0.55]{Template_for_both_PCI_and_PCJ/pairgenomealign-tubemap.pdf}
 \caption{The nf-core/pairgenomealign pipeline aligns a list of query genomes to a target genome and produces alignments, plots, and metrics reports. The data flow is indicated by lines and the nf-core modules are indicated by circles. The main pipeline steps are indicated by the name of their nf-core module: indexing the target genome (last/lastdb), self-learning of the alignment parameters (last/train), producing the set of many-to-one alignments where query sequences are matched at most one to target sequences (last/lastal), and reduction to an optimal set of one-to-one alignments (last/split). A \texttt{--m2m} mode is available to produce all combinations between many- and one- relationships.}
 \label{fig:fig1}
 \end{figure}
