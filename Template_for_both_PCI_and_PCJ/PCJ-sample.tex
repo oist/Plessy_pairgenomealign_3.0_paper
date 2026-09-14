@@ -48,7 +48,7 @@ style=pcj
 \DOI{10.5802/fake.doi} % this is the DOI of the preprint on the preprint server
 \PCIcorresp{charles.plessy@oist.jp}
 
-\title[Pairwise genome alignment pipeline]{The nf-core/pairgenomealign pipeline for whole-genome alignments across the whole Tree of Life}
+\title[Pairwise genome alignment pipeline]{Scalable pipeline for whole-genome alignments across the whole Tree of Life}
 
 % Authors: me, the inerns, Nick, ask Martin, ask nf-core community, ask Nico, Jiashun?
 
@@ -129,7 +129,7 @@ Multi-threaded LAST processes are allocated up to 12 CPU cores, subject to any l
 
 Alignments are converted from MAF to SAM format using the \texttt{maf-convert} utility distributed with LAST. Subsequent conversion to BAM, BCF, and CRAM is performed by shell commands encapsulated in nf-core modules developed for this pipeline. Although these formats were originally designed to store sequencing reads aligned to a reference genome, they can also represent whole-genome alignments. The pipeline exploits this capability by assigning a distinct read group to each query genome and encoding genome alignments as hard-clipped segments of the query sequence. In BAM and CRAM files, hard-clipped regions are limited to 268,435,455 ($2^{28}-1$) bases. Longer query sequences are therefore represented as a series of adjacent alignment records, allowing arbitrarily long chromosomes and scaffolds to be encoded without loss of information.
 
-BCF files representing alignment mismatches as single-nuleotide polymprphisms are produced by passing \verb|-B| to \texttt{bcftools mpileup} and \verb|--ploidy 1 -m| to \texttt{bcftools call}. CRAM files are written in version~3.1 format by default. Users may select a different CRAM version by modifying the \texttt{ext.args2} setting of the \texttt{ALIGNMENT\_EXP} process and the \texttt{ext.args} setting of the \texttt{ALIGNMENT\_MERGE} process in a Nextflow configuration file. Index files are generated automatically for all BAM, BCF, and CRAM outputs.
+BCF files representing alignment mismatches as single-nuleotide polymorphisms are produced by passing \verb|-B| to \texttt{bcftools mpileup} and \verb|--ploidy 1 -m| to \texttt{bcftools call}. CRAM files are written in version~3.1 format by default. Users may select a different CRAM version by modifying the \texttt{ext.args2} setting of the \texttt{ALIGNMENT\_EXP} process and the \texttt{ext.args} setting of the \texttt{ALIGNMENT\_MERGE} process in a Nextflow configuration file. Index files are generated automatically for all BAM, BCF, and CRAM outputs.
 
 \subsection*{Pairwise alignment plots}
 
@@ -159,7 +159,7 @@ We developed the nf-core/pairgenomealign pipeline (\cite{pairgenomealign}) to al
 
 \begin{figure}[ht]
 \includegraphics[scale=0.5]{Template_for_both_PCI_and_PCJ/primates_clustering.pdf}
-\caption{All-versus-all alignment of primate genomes produces a matrix of percent nucleotide identities, plotted as a heatmap, which were clustered to recover a phylogenetic tree.}
+\caption{All-versus-all alignment of primate genomes produces a matrix of percent nucleotide identities, plotted as a heatmap, which were clustered to recover a phylogenetic tree. TODO: remember italicising the species names}
 \label{fig:fig2}
 \end{figure}
 
@@ -210,7 +210,7 @@ To benchmark our pipeline against other genome alignment software, we used the d
         \label{fig:panelB}
     \end{subfigure}
 
-    \caption{Self-alignment of one haplotype to a diploid assembly.  (a): Plot of the many-to-many alignment, illustrating the repetitive regions of the genome.  (b): Plot of the one-to-many alignment, where regions of target genome (horizontal) can be matched only once by the query genome. The off-diagonal signal is repeat movements and other translocations as well as false positives. Self-alignment of the query haplotype on the diploid target are devoid of noise, as well as regions where both haplotypes are homozygous.}
+    \caption{Self-alignment of one haplotype to a diploid assembly.  (a): Plot of the many-to-many alignment, illustrating the repetitive regions of the genome.  (b): Plot of the one-to-many alignment, where regions of target genome (horizontal) can be matched only once by the query genome. The off-diagonal signal represents mainly transpositions of repeat elements as well as false positives. Self-alignment of the query haplotype on the diploid target are devoid of noise, as well as regions where both haplotypes are homozygous. One dot represents approximately 100~kbp.}
     \label{fig:fig6}
 \end{figure}
 
@@ -218,7 +218,7 @@ Beyond evolutionary analyses, pairwise genome alignments are routinely used for 
 
 \section*{Discussion}
 
-We developed a workflow separates computationally expensive alignment generation from downstream interpretation, allowing users to revisit filtering, visualization, and structural variation analyses without recomputing pairwise alignments. By parallelising pairwise alignments, the pipeline scales naturally to all-versus-all genome comparisons and the construction of multiple sequence alignments. Whole-genome alignment workflows remain less common than alignment programs themselves. The closest widely adopted alternative is Cactus (\cite{Armstrong_2020}), which focuses on multiple-genome alignments, ancestral reconstruction, and pangenome representations. In contrast, nf-core/pairgenomealign targets reproducible pairwise genome comparisons using LAST, emphasizing flexible sensitivity settings, standard genomics file formats, and straightforward deployment across local, cloud, and high-performance computing environments. By adopting the nf-core framework, the pipeline also benefits from community standards for documentation, testing, reproducibility, and long-term maintenance.
+We developed a workflow that separates computationally expensive alignment generation from downstream interpretation, allowing users to revisit filtering, visualization, and structural variation analyses without recomputing pairwise alignments. By parallelising pairwise alignments, the pipeline scales naturally to all-versus-all genome comparisons and the construction of multiple sequence alignments. Whole-genome alignment workflows remain less common than alignment programs themselves. The closest widely adopted alternative is Cactus (\cite{Armstrong_2020}), which focuses on multiple-genome alignments, ancestral reconstruction, and pangenome representations. In contrast, nf-core/pairgenomealign targets reproducible pairwise genome comparisons using LAST, emphasizing flexible sensitivity settings, standard genomics file formats, and straightforward deployment across local, cloud, and high-performance computing environments. By adopting the nf-core framework, the pipeline also benefits from community standards for documentation, testing, reproducibility, and long-term maintenance.
 
 The workflow was designed to be customizable while retaining reproducibility. Users may replace the default container image, for example with institution-specific environments or other distributions of bioinformatics packages such as Debian Med (\cite{Moeller_2010}), pin a particular LAST version, or compile aligners with local hardware optimizations. Conversely, custom containers can preserve identical alignment software versions while benefiting from future developments of the workflow itself. The flexibility extends to execution strategies: while distributed execution through an HPC job scheduler is well suited to computationally intensive genome comparisons, analyses involving many small genome pairs may benefit from allocating a complete node and running the workflow locally within that allocation, thereby reducing scheduler overhead and improving resource sharing between tasks.
 
@@ -232,7 +232,7 @@ Our primary motivation in developing nf-core/pairgenomealign was to support geno
 
 \section*{Acknowledgements}
 
-We thank the DNA Sequencing Section and the Scientific Computing and Data Analysis Section of the Research Support Division at OIST for their support, and Priscilla Biller for critical comments on the manuscript.  Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the recommendation]; \cite{fake}[replace by the citation of the recommendation]).
+We thank the DNA Sequencing Section and the Scientific Computing and Data Analysis Section of the Research Support Division at OIST for their support, and Priscilla Biller, Simon Hellemans and Nicholas Treen for critical comments on the manuscript.  Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the recommendation]; \cite{fake}[replace by the citation of the recommendation]).
 
 \section*{Fundings}
 
