@@ -165,7 +165,7 @@ We developed the nf-core/pairgenomealign pipeline (\cite{pairgenomealign}) to al
 
 \begin{figure}[ht]
 \includegraphics[scale=0.5]{Template_for_both_PCI_and_PCJ/primates_clustering.pdf}
-\caption{All-versus-all alignment of primate genomes produces a matrix of percent nucleotide differences, plotted as a heatmap, which were clustered to recover a phylogenetic tree. TODO: remember italicising the species names}
+\caption{All-versus-all alignment of primate genomes produces a matrix of percent nucleotide differences, plotted as a heatmap, which were clustered by average linkage. Filled dots mark the clades of the tree matching the NCBI Taxonomy.}
 \label{fig:fig2}
 \end{figure}
 
@@ -174,10 +174,24 @@ From a list of genomes, all the alignment pairs can be produced by running the p
 The pipeline can combine all target-query alignments into a single CRAM file representing all the alignments in the coordinate system of the target alignments. It is neither a pangenome graph nor a multiple sequence alignment, but MSAs can be extracted trivially and efficiently, for instance using the \verb|pysam| interface to the HTSlib (\cite{Heger_2009}). It is also useful for inspecting the phylogenetic footprints in genome browsers. We illustrate it with an alignment of the human genome against all the phase 1 chromosome assemblies of the Vertebrate Genome Project \cite{Formenti_2026}, which took 166~min to compute on OISTs HPC cluster.  The resulting CRAM file takes 23~GiB of disk space and can be displayed interactively in genome browsers (Figure~\ref{fig:fig3}).
 
 \begin{figure}[ht]
-\includegraphics[scale=0.38]{Template_for_both_PCI_and_PCJ/DLX6_JBrowse.png}
-\caption{Human-versus-all alignment of 580 vertebrate genomes compressed in CRAM format displayed in the JBrowse Genome Browser (\cite{Diesh_2023}). The region displayed highlights in gray peaks the ultraconserved elements flanking the DLX6 gene pair, through the absence of alignment mismatches or indels (color).}
-%\caption{Human-versus-all alignment of primate genomes and outgroups compressed in CRAM format displayed in the Integrative Genome Browser (\cite{Robinson_2011},\cite{Thorvaldsdottir_2013}). The region displayed highlights in gray the ultraconserved elements between the DLX5/6 gene pair, through the absence of alignment mismatches or indels (color). The CRAM file used to generate this figure contains the totality of the whole-genome alignments and has a size of 4~GiB, whereas the space taken by the compress MAF files is 35~GiB.}
-\label{fig:fig3}
+    \centering
+    \begin{subfigure}{0.48\textwidth}
+        \centering   
+        \includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/DLX6_JBrowse.png}
+        \caption{}
+        \label{fig:panelA}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.18\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/DLX6_IGV.png}
+        \caption{}
+        \label{fig:panelB}
+    \end{subfigure}
+
+   \caption{Human-versus-all alignment of 580 vertebrate genomes compressed in CRAM format displayed in the JBrowse Genome Browser (\cite{Diesh_2023}). The region displayed highlights in gray peaks the ultraconserved elements flanking the DLX6 gene pair, through the absence of alignment mismatches or indels (color).}
+   %\caption{Human-versus-all alignment of primate genomes and outgroups compressed in CRAM format displayed in the Integrative Genome Browser (\cite{Robinson_2011},\cite{Thorvaldsdottir_2013}). The region displayed highlights in gray the ultraconserved elements between the DLX5/6 gene pair, through the absence of alignment mismatches or indels (color). The CRAM file used to generate this figure contains the totality of the whole-genome alignments and has a size of 4~GiB, whereas the space taken by the compress MAF files is 35~GiB.}
+   \label{fig:fig3}
 \end{figure}
 
 \subsection*{Performance and benchmark}
