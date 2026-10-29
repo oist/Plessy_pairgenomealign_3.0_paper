@@ -77,7 +77,7 @@ style=pcj
  %
  \author{\firstname{Nicholas} \middlename{M.} \lastname{Luscombe}}
  \address{Okinawa Institute of Science and Technology 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
- \email[Nichoasl M. Luscombe]{nicholas.luscombe@oist.jp}
+ \email[Nicholas M. Luscombe]{nicholas.luscombe@oist.jp}
 
  \keywords{pipeline, Nextflow, nf-core, genome, alignment, synteny, ANI}
 %
@@ -180,9 +180,9 @@ We developed the nf-core/pairgenomealign pipeline (\cite{pairgenomealign}) to al
 \label{fig:fig2}
 \end{figure}
 
-From a list of genomes, all the alignment pairs can be produced by running the pipeline in a loop with each one playing the role of the target iteratively. We illustrate this by aligning 34 primate chromosome-level assemblies selected to maximally span the primate phylogenetic tree. The human versus other primates iteration corresponds to the \emph{"full"} test suite of the pipeline, which took 91~min and 134~min to run on the Amazon computing cloud and OISTs HPC cluster respectively. In clades where the molecular clock is stable enough, hierarchical clustering of the percent nucleotide differences recovers trees consistent with the known taxonomy, as in the primates (Figure~\ref{fig:fig2}).
+From a list of genomes, all the alignment pairs can be produced by running the pipeline in a loop with each one playing the role of the target iteratively. We illustrate this by aligning 34 primate chromosome-level assemblies selected to maximally span the primate phylogenetic tree. The human versus other primates iteration corresponds to the \emph{"full"} test suite of the pipeline, which took 91~min and 134~min to run on the Amazon computing cloud and OIST's HPC cluster respectively. In clades where the molecular clock is stable enough, hierarchical clustering of the percent nucleotide differences recovers trees consistent with the known taxonomy, as in the primates (Figure~\ref{fig:fig2}).
 
-The pipeline can combine all target-query alignments into a single CRAM file representing all the alignments in the coordinate system of the target genome. It is neither a pangenome graph nor a multiple sequence alignment, but for any region, a multiple alignment projected on the target coordinates, leaving out insertions relative to the target, can be extracted efficiently, for instance with the \verb|pysam| interface to HTSlib (\cite{Heger_2009}), and the aligned sequences, insertions included, can be passed to multiple sequence alignment software.It is also useful for inspecting the phylogenetic footprints in genome browsers. We illustrate it with an alignment of the human genome against all the phase 1 chromosome assemblies of the Vertebrate Genomes Project (\cite{Formenti_2026}), which took 166~min to compute on OISTs HPC cluster.  The resulting CRAM file takes 23~GiB of disk space and can be displayed interactively in genome browsers (Figure~\ref{fig:fig3}).
+The pipeline can combine all target-query alignments into a single CRAM file representing all the alignments in the coordinate system of the target genome. It is neither a pangenome graph nor a multiple sequence alignment, but for any region, a multiple alignment projected on the target coordinates, leaving out insertions relative to the target, can be extracted efficiently, for instance with the \verb|pysam| interface to HTSlib (\cite{Heger_2009}), and the aligned sequences, insertions included, can be passed to multiple sequence alignment software.It is also useful for inspecting the phylogenetic footprints in genome browsers. We illustrate it with an alignment of the human genome against all the phase 1 chromosome assemblies of the Vertebrate Genomes Project (\cite{Formenti_2026}), which took 166~min to compute on OIST's HPC cluster.  The resulting CRAM file takes 23~GiB of disk space and can be displayed interactively in genome browsers (Figure~\ref{fig:fig3}).
 
 \newsavebox{\panelAbox}
 \newsavebox{\panelBbox}
@@ -223,7 +223,7 @@ To compare the sensitivity of the pipeline with that of other aligners where the
 
 \begin{figure}[p]
 \includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/benchmark.pdf}
-\caption{Pipeline performance with different seeds (blue) in the context of the benchmark of \citet{Myers_2025} (ochre squares). Grey marks the mouse--human comparison in both panels. Human CHM13 genome aligned five mammalian genomes including the human genome GRCh38. (A) Peak resident memory (RSS) versus total CPU time of indexing, training and alignment, on logarithmic scales. Comparisons made with the same software and parameters are connected in order of sequence divergence. (B) Length of the query genome covered by alignments (logarithmic scale); for pairgenomealign, many-to-one alignments.}
+\caption{Pipeline performance with different seeds (blue) in the context of the benchmark of \citet{Myers_2025} (ochre squares). Grey marks the mouse--human comparison in both panels. Human CHM13 genome aligned to five mammalian genomes including the human genome GRCh38. (A) Peak resident memory (RSS) versus total CPU time of indexing, training and alignment, on logarithmic scales. Comparisons made with the same software and parameters are connected in order of sequence divergence. (B) Length of the query genome covered by alignments (logarithmic scale); for pairgenomealign, many-to-one alignments.}
 \label{fig:benchmark}
 \end{figure}
 
@@ -247,7 +247,7 @@ To compare computational cost and coverage on real genomes, we used the dataset 
 \label{fig:stages}
 \end{figure}
 
-To detail how the pipeline uses computational resources, we we ran each alignment three times on nodes with Intel Xeon Gold 6230 CPUs and three times on nodes with AMD EPYC 7702 CPUs, and quantified execution time and memory usage for indexing, training, alignment, and reduction to one-to-one relationships ("split") (Figure~\ref{fig:stages}). Alignment and splitting took most of the runtime, and alignment needed the most memory, regardless of seed choice. Indexing both strands of the human genome needed 10 to 30~GiB, depending on the seed. More distantly related genome pairs completed faster. Peak memory was the same on both CPU types, but on Intel nodes the wall-clock time was a median 19\% shorter for alignment and 23\% shorter for splitting.
+To detail how the pipeline uses computational resources, we ran each alignment three times on nodes with Intel Xeon Gold 6230 CPUs and three times on nodes with AMD EPYC 7702 CPUs, and quantified execution time and memory usage for indexing, training, alignment, and reduction to one-to-one relationships ("split") (Figure~\ref{fig:stages}). Alignment and splitting took most of the runtime, and alignment needed the most memory, regardless of seed choice. Indexing both strands of the human genome needed 10 to 30~GiB, depending on the seed. More distantly related genome pairs completed faster. Peak memory was the same on both CPU types, but on Intel nodes the wall-clock time was a median 19\% shorter for alignment and 23\% shorter for splitting.
 
 These results support RY4 as the default seed. With simulated pairs, it missed only the most divergent ones and gave the same alignment ends as the denser YASS and MAM8 seeds; with the pig and mouse genomes, it covered about four fifths of the length covered by YASS, with about a third of its CPU time and memory.
 
