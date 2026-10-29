@@ -27,6 +27,7 @@ style=pcj
 \usepackage{setspace}
 
 \usepackage{subcaption}
+\renewcommand{\thesubfigure}{\Alph{subfigure}}
 
 \usepackage{wrapfig}   % Claude
 
@@ -208,7 +209,7 @@ The pipeline can combine all target-query alignments into a single CRAM file rep
         \label{fig:fig3b}
     \end{subfigure}
 
-   \caption{Human-versus-all alignment of 580 vertebrate genomes compressed in CRAM format displayed in genome browsers in the DLX6 locus, which is flanked by ultraconserved elements (UCEs, \cite{Bejerano_2004}). (a)~Coverage track in the JBrowse genome browser (\cite{Diesh_2023}): its height is the number of genomes aligned at each position, in gray where their bases match the human genome and in colours where they differ; the gray peaks show where many genomes align without differences. (b)~alignment track of the same region in the Integrative Genomics Viewer (\cite{Robinson_2011}; \cite{Thorvaldsdottir_2013}), showing that all alignments can be displayed simultaneously.}
+   \caption{Human-versus-all alignment of 580 vertebrate genomes compressed in CRAM format displayed in genome browsers in the DLX6 locus, which is flanked by ultraconserved elements (UCEs, \cite{Bejerano_2004}). (A)~Coverage track in the JBrowse genome browser (\cite{Diesh_2023}): its height is the number of genomes aligned at each position, in gray where their bases match the human genome and in colours where they differ; the gray peaks show where many genomes align without differences. (B)~alignment track of the same region in the Integrative Genomics Viewer (\cite{Robinson_2011}; \cite{Thorvaldsdottir_2013}), showing that all alignments can be displayed simultaneously.}
    \label{fig:fig3}
 \end{figure}
 
@@ -268,7 +269,7 @@ These results support RY4 as the default seed. With simulated pairs, it missed o
         \caption{}
         \label{fig:fig7b}
     \end{subfigure}
-    \caption{Alignment of one haplotype to the diploid assembly of a  male \emph{Oikopleura dioica} individual. Target (horizontal): diploid assembly, containing both haplotypes of each chromosome (suffix \texttt{\_alt} for the alternative haplotype) and the X- and Y-specific regions (XSR, YSR) of the sex chromosome. Query (vertical): its alternative haplotype. Red and blue: alignments on the same and opposite strands; pink lines: contig boundaries within scaffolds. (a)~Many-to-many alignment: repeats produce off-diagonal signal throughout. (b)~One-to-many alignment, where each region of the target is aligned at most once: each query chromosome aligns to itself and to its homologue. In the columns of the alternative haplotype, the alignment of the query to itself covers every region, leaving no room for other alignments; off-diagonal signal remains only in target regions not covered by the homologous alignment, such as the Y-specific region, which has no counterpart in the query. Each pixel represents about 100~kb.}
+    \caption{Alignment of one haplotype to the diploid assembly of a  male \emph{Oikopleura dioica} individual. Target (horizontal): diploid assembly, containing both haplotypes of each chromosome (suffix \texttt{\_alt} for the alternative haplotype) and the X- and Y-specific regions (XSR, YSR) of the sex chromosome. Query (vertical): its alternative haplotype. Red and blue: alignments on the same and opposite strands; pink lines: contig boundaries within scaffolds. (A)~Many-to-many alignment: repeats produce off-diagonal signal throughout. (B)~One-to-many alignment, where each region of the target is aligned at most once: each query chromosome aligns to itself and to its homologue. In the columns of the alternative haplotype, the alignment of the query to itself covers every region, leaving no room for other alignments; off-diagonal signal remains only in target regions not covered by the homologous alignment, such as the Y-specific region, which has no counterpart in the query. Each pixel represents about 100~kb.}
  \label{fig:fig7}
 \end{figure}
 
