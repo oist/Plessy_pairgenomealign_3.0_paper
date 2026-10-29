@@ -56,17 +56,27 @@ style=pcj
 
 \title[Pairwise genome alignment pipeline]{nf-core/pairgenomealign: a scalable pipeline for pairwise whole-genome alignment with LAST}
 
-% Authors: me, the inerns, Nick, ask Martin, ask nf-core community, ask Nico, Jiashun?
-
 %
  \author{\firstname{Charles} \lastname{Plessy}}
  \address{Okinawa Institute of Science and Technology 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
  \email[Charles Plessy]{charles.plessy@oist.jp}
 %
- \author{\firstname{Interns} \middlename{and} \lastname{Students}\IsEqualContrib}
+ \author{\firstname{Mohammed} \lastname{Mahdi}}
  \address{Okinawa Institute of Science and Technology 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
- \email[TBD]{TBD@example.com}
+ \curraddr{Business Economics Group, Wageningen University \& Research, Wageningen, The Netherlands}
+ \email[Mohammed Mahdi]{TBD@wur.nl}
+ % ORCID: https://orcid.org/0009-0001-7484-0331
 %
+ \author{\firstname{Takahiro} \lastname{Fujita}}
+ \address{Suntory Global Innovation Center Limited, 8-1-1 Seikadai, Seika-cho, Soraku-gun, Kyoto, Japan 619-0284}
+ \email[Takahiro Fujita]{takahiro-fujita@suntory.co.jp}
+%
+ \author{\firstname{Martin} \middlename{C.} \lastname{Frith}}
+ \address{Department of Computational Biology and Medical Sciences, Graduate School of Frontier Sciences, The University of Tokyo, 5-1-5 Kashiwanoha, Kashiwa, Chiba, Japan 277-8562}
+ \address{National Institute of Advanced Industrial Science and Technology (AIST), 2-4-7 Aomi, Koto-ku, Tokyo, Japan 135-0064}
+ \email[Martin C. Frith]{TBD@example.com}
+ % ORCID: https://orcid.org/0000-0003-0998-2859
+ %
  \author{\firstname{Nicholas} \middlename{M.} \lastname{Luscombe}}
  \address{Okinawa Institute of Science and Technology 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
  \email[Nichoasl M. Luscombe]{nicholas.luscombe@oist.jp}
@@ -92,13 +102,15 @@ Recent advances in sequencing technologies, laboratory automation, and genome as
 
 We used the LAST software suite (\cite{Frith_2010}) for pairwise genome alignment because it handles this diversity of lengths and divergences, as well as compositional biases, while implementing an efficient seed-and-extend strategy with successive gapless and gapped extension until similarity fades. The key advantages of LAST, which we leverage in this pipeline, are 1) its flexible seeding framework, which allows users to tune sensitivity and specificity through the design of exact or inexact seeds, including spaced, transition-constrained, and sparsely sampled seeds (\cite{Noé_2005}, \cite{Frith_2023}), 2) its training procedure that automatically infers substitution scores and gap penalties from the data, enabling robust alignment across queries with heterogeneous evolutionary distances (\cite{Hamada_2017}), and 3) its last-split program, which selects an optimal set of non-overlapping alignments to produce a consistent one-to-one mapping between genomes, thereby resolving multi-mapping regions in a principled manner (\cite{Frith_2015}), which avoids the need for post hoc chaining and netting strategies (\cite{Kent_2003}).
 
-Several alternative pairwise alignment tools were considered, including LASTZ (\cite{Harris_2007}), MUMmer4 (\cite{Marcais_2018}), Minimap2 (\cite{Li_2018}), and, more recently, FastGA (\cite{Myers_2025}). LASTZ and MUMmer4 are widely used for whole-genome comparison, but neither combines the flexible seeding strategies, adaptive parameter training, and probabilistic split-alignment framework provided by LAST in a single integrated workflow. Minimap2 achieves excellent performance for read mapping, and its genome-alignment presets target closely related genomes. FastGA, which appeared after the core of this pipeline was designed, is much faster than the other aligners; we compare it with LAST in our benchmarks. We therefore selected LAST because it combined broad applicability across evolutionary distances with configurable sensitivity, data-driven parameter training, and principled resolution of ambiguous alignments.
+Several alternative pairwise alignment tools were considered, including LASTZ (\cite{Harris_2007}), MUMmer4 (\cite{Marcais_2018}), Minimap2 (\cite{Li_2018}), and, more recently, FastGA (\cite{Myers_2025}). LASTZ and MUMmer4 are widely used for whole-genome comparison; LASTZ also offers configurable seeds and can infer scoring parameters from the data, but neither provides the probabilistic split-alignment framework of LAST. Minimap2 achieves excellent performance for read mapping, and its genome-alignment presets target closely related genomes. FastGA, which appeared after the core of this pipeline was designed, is much faster than the other aligners; we compare it with LAST in our benchmarks. We therefore selected LAST because it combined broad applicability across evolutionary distances with configurable sensitivity, data-driven parameter training, and principled resolution of ambiguous alignments.
 
 Once computed, whole-genome alignments can be stored in formats that differ substantially in information content and storage efficiency. The Multiple Alignment Format (MAF), originally developed for the UCSC Genome Browser and related tools such as MULTIZ (\cite{Kent_2002a}; \cite{Blanchette_2004}), is the primary output format of LAST. In addition to alignment coordinates, MAF stores the aligned sequences and, in LAST, per-base alignment confidence values. More compact formats trade information for storage efficiency. The tabular output of LAST and the PSL format used by BLAT (\cite{Kent_2002b}) omit the alignment strings while retaining gap structure and summary statistics such as mismatch counts and gap openings. BLAST tabular output (\cite{Altschul_1990}) is more compact still, discarding the gap coordinates. At the end of the spectrum, alignments can be represented simply as paired genomic intervals in GFF or BED format with only an alignment score, providing near-maximal lossy compression in a text representation. Conversely, MAF alignments can be exported with minimal information loss to SAM/BAM (\cite{Li_2009}) and subsequently to CRAM format (\cite{Bonfield_2022}), benefiting from reference-based compression. The LAST suite can directly generate or export all of these formats.
 
 The precursor of nf-core/pairgenomealign was developed for the genome alignment analyses of \cite{Plessy_2024}, including comparisons of extensively rearranged invertebrate genomes. We have since generalized, extended, and released this workflow as an nf-core pipeline. In this article, we describe its implementation, the improvements introduced since the original version, and its application to whole-genome comparisons across a broad range of evolutionary distances.
 
-\section*{Methods }
+\section*{Methods}
+
+Running the pipeline requires only a target genome, a list of query genomes and, optionally, the choice of a seed; all other settings have defaults suited to most comparisons. The rest of this section documents these defaults and the implementation, for users who need to adapt them.
 
 \subsection*{Software packaging, versions and documentation}
 
@@ -118,7 +130,7 @@ Input genomes are provided in FASTA format and may optionally be compressed with
 
 \subsection*{Alignment parameters}
 
-Prior to database construction, any existing lowercase soft masking in the target genome is discarded and replaced with tandem-repeat masking using the tantan implementation embedded in LAST (\cite{Frith_2011}), using \verb|lastdb|'s option \verb|-R01|. The maximal repeat unit length is hardcoded to 400~nt instead of \verb|lastdb|'s default of 100, to accommodate mammalian centromeric regions. Mask replacement can be disabled with the pipeline parameter \verb|--softmask original|, which preserves the masking present in the input assembly.
+Prior to database construction, any existing lowercase soft masking in the target genome is discarded and replaced with tandem-repeat masking using the tantan implementation embedded in LAST (\cite{Frith_2011}), using \verb|lastdb|'s option \verb|-R01|. The maximal repeat unit length is hardcoded to 400~nt instead of \verb|lastdb|'s default of 100, to accommodate primate centromeric regions. Mask replacement can be disabled with the pipeline parameter \verb|--softmask original|, which preserves the masking present in the input assembly.
 
 The target database is indexed on both strands using the \texttt{lastdb} option \verb|-S2|. This increases memory usage during indexing and alignment but accelerates subsequent alignments. An important consequence is that some alignments may be reported between the reverse-complement strand of the target and the forward strand of the query, which software that assumes the target to be always on the forward strand will mishandle. Users may therefore revert to single-strand indexing with the pipeline parameter \verb|--strand forward|. The default seed scheme is \verb|RY4| (sparse seeds that sample 1 in 4 positions), although alternative seeds can be selected through the \verb|--seed| parameter.
 
@@ -126,7 +138,7 @@ Alignment parameter training is performed with symmetric substitution scores and
 
 By default, sequence alignments are computed with the \texttt{lastal} arguments \verb|-C2 -D1e9|, configurable through the pipeline parameter \verb|--lastal_args|. The \verb|-D1e9| setting specifies a significance threshold of one random alignment per 1 Gb of query sequence, whereas \texttt{-C2} prunes nested alignments in order to reduce the computational burden associated with highly repetitive regions such as centromeres. During the reduction of many-to-many alignments to one-to-one relationships, alignments with an estimated error probability greater than $10^{-5}$ are discarded. This threshold is controlled by the pipeline parameter \verb|--last_split_mismap|. We name these relationships by the multiplicity on the target, then on the query: in many-to-one (m2o) alignments, each base of the query is aligned at most once, while bases of the target can be aligned several times; one-to-many (o2m) alignments are the converse, and in one-to-one (o2o) alignments each base of either genome is aligned at most once.
 
-Multi-threaded LAST processes are allocated up to 12 CPU cores, subject to any lower limit imposed by user settings or institutional execution profiles. Thread count is not expected to affect alignment results, but it may alter the order in which alignments are reported. Consequently, bitwise-identical output is guaranteed only when the same number of CPU cores is used. The pipeline regression tests align SARS-CoV-2 sequences and compare the checksums of key output files with reference values. 
+Multi-threaded LAST processes are allocated up to 12 CPU cores, subject to any lower limit imposed by user settings or institutional execution profiles. The number of threads does not affect the alignments, but with more than one thread, the order in which they are reported can vary between runs. Consequently, bitwise-identical output is guaranteed only when the same number of CPU cores is used. The pipeline regression tests align SARS-CoV-2 sequences and compare the checksums of key output files with reference values. 
 
 \subsection*{Export to SAM/BAM/BCF/CRAM formats}
 
@@ -196,7 +208,7 @@ The pipeline can combine all target-query alignments into a single CRAM file rep
         \label{fig:fig3b}
     \end{subfigure}
 
-   \caption{Human-versus-all alignment of 580 vertebrate genomes compressed in CRAM format displayed in genome browsers in the DLX6 locus, which is flanked by ultraconserved elements (UCEs, \cite{Bejerano_2004}). (a): coverage track in the the JBrowse Genome Browser (\cite{Diesh_2023}) highlighting in gray the absence of alignment mismatches or indels (color). (b) alignment track of the same region in the Integrative Genome Browser (\cite{Robinson_2011},\cite{Thorvaldsdottir_2013}), showing that all alignments can be displayed simultaneously.}
+   \caption{Human-versus-all alignment of 580 vertebrate genomes compressed in CRAM format displayed in genome browsers in the DLX6 locus, which is flanked by ultraconserved elements (UCEs, \cite{Bejerano_2004}). (a)~Coverage track in the JBrowse genome browser (\cite{Diesh_2023}): its height is the number of genomes aligned at each position, in gray where their bases match the human genome and in colours where they differ; the gray peaks show where many genomes align without differences. (b)~alignment track of the same region in the Integrative Genome Browser (\cite{Robinson_2011},\cite{Thorvaldsdottir_2013}), showing that all alignments can be displayed simultaneously.}
    \label{fig:fig3}
 \end{figure}
 
@@ -215,7 +227,7 @@ The pipeline can combine all target-query alignments into a single CRAM file rep
   \end{minipage}
 \end{figure}
 
-To compare the sensitivity of the pipeline with that of other aligners where the true alignment is known, we used the 164 pairs of simulated sequences of \citet{Gulhan_2025}, in which homologous regions of 1 to 10~kb at 60 to 100\% identity are flanked by random sequences (Figure~\ref{fig:simulated}A). We aligned them with the commands of the pipeline and compared the alignments with those published for the other tools. All the pairs were found by LASTZ and LAST with the YASS and MAM8 seeds; the default RY4 seed missed two pairs below 61\% identity, the sparse RY128 seed found all pairs above 86\% identity, and FastGA all pairs above 73\% (Figure~\ref{fig:simulated}B). Training produced the same alignment scores with RY4, YASS and MAM8, and where two of them found a pair, the alignment ends were the same, except at 3 of the 324 ends. These three differ only in how alignments start: where the alignment found with RY4 stopped short, YASS and MAM8 found a second alignment that covered the rest. LASTZ alignments extended into the random flanks more often and further than LAST alignments (Figure~\ref{fig:simulated}B). Both aligners overestimated the identity of the most divergent pairs (Figure~\ref{fig:simulated}C). Identity is computed without gaps, so a gap that replaces mismatches by matches raises both the alignment score and the identity; LASTZ placed more gaps than the simulation had inserted.
+To compare the sensitivity of the pipeline with that of other aligners where the true alignment is known, we used the 164 pairs of simulated sequences of \citet{Gulhan_2025}, in which homologous regions of 1 to 10~kb at 60 to 100\% identity are flanked by random sequences (Figure~\ref{fig:simulated}A). We aligned them with the commands of the pipeline and compared the alignments with those published for the other tools. All the pairs were found by LASTZ and LAST with the YASS and MAM8 seeds; the default RY4 seed missed two pairs below 61\% identity, the sparse RY128 seed found all pairs above 86\% identity, and FastGA all pairs above 73\% (Figure~\ref{fig:simulated}B). Training produced the same alignment scores with RY4, YASS and MAM8, and where two of them found a pair, the alignment ends were the same, except at 3 of the 324 ends. Seeds only determine where alignments start; from there, alignments are extended with the same scores. Where the alignment started from an RY4 seed stopped before the end of the homologous region, the denser YASS and MAM8 seeds started a second alignment beyond that point, which covered the rest. LASTZ alignments extended into the random flanks more often and further than LAST alignments (Figure~\ref{fig:simulated}B). Both aligners overestimated the identity of the most divergent pairs (Figure~\ref{fig:simulated}C). Identity is computed without gaps, so a gap that replaces mismatches by matches raises both the alignment score and the identity; LASTZ placed more gaps than the simulation had inserted. The precision of LAST's alignment ends may come from its training of scoring parameters on the aligned sequences (\cite{Hamada_2017}): with parameters trained on the most divergent pairs only, its alignments of these pairs ended closer to the boundaries and overestimated identity less.
 
 \begin{figure}[ht]
 \includegraphics[scale=1]{Template_for_both_PCI_and_PCJ/benchmark.pdf}
@@ -231,8 +243,7 @@ To compare computational cost and coverage on real genomes, we used the dataset 
 \label{fig:stages}
 \end{figure}
 
-To detail how the pipeline uses computational resources, we we ran each alignment three times on nodes with Intel Xeon Gold 6230 CPUs and three times on nodes with AMD EPYC 7702 CPUs, and quantified execution time and memory usage for indexing, training, alignment, and reduction to one-to-one relationships ("split") (Figure~\ref{fig:stages}). Alignment and splitting were consistently the most computationally demanding stages in terms of both runtime and memory, regardless of seed choice. Indexing both strands of the human genome needed 10 to 30~GiB,
-depending on the seed. More distantly related genome pairs completed faster. Peak memory was the same on both CPU types, but on Intel nodes the wall-clock time was a median 19\% shorter for alignment and 23\% shorter for splitting.
+To detail how the pipeline uses computational resources, we we ran each alignment three times on nodes with Intel Xeon Gold 6230 CPUs and three times on nodes with AMD EPYC 7702 CPUs, and quantified execution time and memory usage for indexing, training, alignment, and reduction to one-to-one relationships ("split") (Figure~\ref{fig:stages}). Alignment and splitting took most of the runtime, and alignment needed the most memory, regardless of seed choice. Indexing both strands of the human genome needed 10 to 30~GiB, depending on the seed. More distantly related genome pairs completed faster. Peak memory was the same on both CPU types, but on Intel nodes the wall-clock time was a median 19\% shorter for alignment and 23\% shorter for splitting.
 
 These results support RY4 as the default seed. With simulated pairs, it missed only the most divergent ones and gave the same alignment ends as the denser YASS and MAM8 seeds; with the pig and mouse genomes, it covered about four fifths of the length covered by YASS, with less than half of its CPU time and memory.
 
@@ -251,7 +262,7 @@ These results support RY4 as the default seed. With simulated pairs, it missed o
         \caption{}
         \label{fig:fig7b}
     \end{subfigure}
-    \caption{Alignment of one haplotype to the diploid assembly of a  male \emph{Oikopleura dioica} individual individual. Target (horizontal): diploid assembly, containing both haplotypes of each chromosome (suffix \texttt{\_alt} for the alternative haplotype) and the X- and Y-specific regions (XSR, YSR) of the sex chromosome. Query (vertical): its alternative haplotype. Red and blue: alignments on the same and opposite strands; pink lines: contig boundaries within scaffolds. (a)~Many-to-many alignment: repeats produce off-diagonal signal throughout. (b)~One-to-many alignment, where each region of the target is aligned at most once: each query chromosome aligns to itself and to its homologue. In the columns of the alternative haplotype, the alignment of the query to itself covers every region, leaving no room for other alignments; off-diagonal signal remains only in target regions not covered by the homologous alignment, such as the Y-specific region, which has no counterpart in the query. Each pixel represents about 100~kb.}
+    \caption{Alignment of one haplotype to the diploid assembly of a  male \emph{Oikopleura dioica} individual. Target (horizontal): diploid assembly, containing both haplotypes of each chromosome (suffix \texttt{\_alt} for the alternative haplotype) and the X- and Y-specific regions (XSR, YSR) of the sex chromosome. Query (vertical): its alternative haplotype. Red and blue: alignments on the same and opposite strands; pink lines: contig boundaries within scaffolds. (a)~Many-to-many alignment: repeats produce off-diagonal signal throughout. (b)~One-to-many alignment, where each region of the target is aligned at most once: each query chromosome aligns to itself and to its homologue. In the columns of the alternative haplotype, the alignment of the query to itself covers every region, leaving no room for other alignments; off-diagonal signal remains only in target regions not covered by the homologous alignment, such as the Y-specific region, which has no counterpart in the query. Each pixel represents about 100~kb.}
  \label{fig:fig7}
 \end{figure}
 
@@ -275,7 +286,7 @@ Our primary motivation in developing nf-core/pairgenomealign was to support geno
 
 \section*{Acknowledgements}
 
-We thank the DNA Sequencing Section and the Scientific Computing and Data Analysis Section of the Research Support Division at OIST for their support, Priscilla Biller, Simon Hellemans and Nicholas Treen for critical comments on the manuscript, and Christopher Cheshire and the Luscombe laboratory for the Nextflow hackathons.  Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the recommendation]; \cite{fake}[replace by the citation of the recommendation]).
+We thank the DNA Sequencing Section and the Scientific Computing and Data Analysis Section of the Research Support Division at OIST for their support, Priscilla Biller, Simon Hellemans and Nicholas Treen for critical comments on the manuscript, and Christopher Cheshire and the Luscombe laboratory for the Nextflow hackathons, Jiashun Miao and Huyen Pham for testing the pipeline on vertebrate genomes, and the nf-core community for reviewing the releases of the pipeline and running its full-size tests on Amazon Web Services.  Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the recommendation]; \cite{fake}[replace by the citation of the recommendation]).
 
 \section*{Fundings}
 
