@@ -251,7 +251,7 @@ To compare computational cost and coverage on real genomes, we used the dataset 
 
 To detail how the pipeline uses computational resources, we we ran each alignment three times on nodes with Intel Xeon Gold 6230 CPUs and three times on nodes with AMD EPYC 7702 CPUs, and quantified execution time and memory usage for indexing, training, alignment, and reduction to one-to-one relationships ("split") (Figure~\ref{fig:stages}). Alignment and splitting took most of the runtime, and alignment needed the most memory, regardless of seed choice. Indexing both strands of the human genome needed 10 to 30~GiB, depending on the seed. More distantly related genome pairs completed faster. Peak memory was the same on both CPU types, but on Intel nodes the wall-clock time was a median 19\% shorter for alignment and 23\% shorter for splitting.
 
-These results support RY4 as the default seed. With simulated pairs, it missed only the most divergent ones and gave the same alignment ends as the denser YASS and MAM8 seeds; with the pig and mouse genomes, it covered about four fifths of the length covered by YASS, with less than half of its CPU time and memory.
+These results support RY4 as the default seed. With simulated pairs, it missed only the most divergent ones and gave the same alignment ends as the denser YASS and MAM8 seeds; with the pig and mouse genomes, it covered about four fifths of the length covered by YASS, with about a third of its CPU time and memory.
 
 
 \subsection*{Pairwise plots for quality controls}
