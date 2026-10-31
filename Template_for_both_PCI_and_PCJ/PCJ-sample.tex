@@ -117,7 +117,7 @@ The nf-core modules implementing the LAST alignment workflow use several minimal
 
 \subsection*{Software configuration}
 
-Software components are modularised through script templates that combine hard-coded tool arguments with configurable process parameters defined by the module maintainer. Configurable parameters are either linked directly to pipeline command-line options or passed through standard nf-core module variables, allowing users to modify or extend the resulting tool arguments via Nextflow configuration files.
+Each module fills a command template: some tool arguments are hard-coded, and others come from generic variables (\texttt{ext.args}, \texttt{ext.args2}, \ldots), through which users can add, change or remove arguments in a Nextflow configuration file. Which arguments are hard-coded can be seen in the source code of the module.
 
 Numbers of CPU cores, maximum execution times and memory allocations are assigned according to broad resource classes, ranging from lightweight to computationally intensive processes. These default settings can be overridden through standard Nextflow configuration mechanisms to match the requirements of specific computing environments.
 
