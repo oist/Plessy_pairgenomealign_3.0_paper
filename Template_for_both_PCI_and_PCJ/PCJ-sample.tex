@@ -119,7 +119,7 @@ The nf-core modules implementing the LAST alignment workflow use several minimal
 
 Each module fills a command template: some tool arguments are hard-coded, and others come from generic variables (\texttt{ext.args}, \texttt{ext.args2}, \ldots), through which users can add, change or remove arguments in a Nextflow configuration file. Which arguments are hard-coded can be seen in the source code of the module.
 
-Numbers of CPU cores, maximum execution times and memory allocations are assigned according to broad resource classes, ranging from lightweight to computationally intensive processes. These default settings can be overridden through standard Nextflow configuration mechanisms to match the requirements of specific computing environments.
+CPU cores, memory and run time are allocated to each process according to its nf-core resource label (from \texttt{process\_single} to \texttt{process\_high}), and can be changed in a Nextflow configuration file.
 
 \subsection*{Input}
 
