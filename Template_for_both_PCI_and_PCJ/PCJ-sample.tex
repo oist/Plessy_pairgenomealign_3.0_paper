@@ -86,6 +86,8 @@ style=pcj
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Float pages may be 70% full (cedram sets 90%), so that Figures 1 and 2 share a page.
+\renewcommand{\floatpagefraction}{.7}
 \begin{document}
 
 \maketitle
@@ -167,21 +169,21 @@ The authors drafted the text as notes and paragraphs, which were edited with Mic
 
 \subsection*{How it works}
 
-\begin{figure}[ht]
+\begin{figure}[p]
 \includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/pairgenomealign-tubemap.pdf}
 \caption{The nf-core/pairgenomealign pipeline aligns a list of query genomes to a target genome and produces alignments, plots, and metrics reports. The data flow is indicated by lines and the nf-core modules are indicated by circles. The main pipeline steps are indicated by words in bold. A \texttt{-{}-m2m} mode is available to produce all combinations between many- and one- relationships.}
 \label{fig:fig1}
 \end{figure}
 
-We developed the nf-core/pairgenomealign pipeline (\cite{pairgenomealign}) to align in parallel a list of query genomes to a target genome.  The main steps of the pipeline (Figure~\ref{fig:fig1}), described in detail in the methods section, are 1) index the target genome, 2) train the alignment parameters, 3) align each query to the target and 4) refine the alignments to one-to-one relationships where sequences of each genome are aligned at most once. The pipeline also collects assembly, alignment, and computational resource use statistics.
-
-\subsection*{Multiple genome alignment}
-
-\begin{figure}[ht]
+\begin{figure}[p]
 \includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/primates_clustering.pdf}
 \caption{All-versus-all alignment of primate genomes produces a matrix of percent nucleotide differences, plotted as a heatmap, which were clustered by average linkage. Filled dots mark the clades of the tree matching the NCBI Taxonomy.}
 \label{fig:fig2}
 \end{figure}
+
+We developed the nf-core/pairgenomealign pipeline (\cite{pairgenomealign}) to align in parallel a list of query genomes to a target genome.  The main steps of the pipeline (Figure~\ref{fig:fig1}), described in detail in the methods section, are 1) index the target genome, 2) train the alignment parameters, 3) align each query to the target and 4) refine the alignments to one-to-one relationships where sequences of each genome are aligned at most once. The pipeline also collects assembly, alignment, and computational resource use statistics.
+
+\subsection*{Multiple genome alignment}
 
 From a list of genomes, all the alignment pairs can be produced by running the pipeline in a loop with each one playing the role of the target iteratively. We illustrate this by aligning 34 primate chromosome-level assemblies selected to maximally span the primate phylogenetic tree. The human versus other primates iteration corresponds to the \emph{"full"} test suite of the pipeline, which took 91~min and 134~min to run on the Amazon computing cloud and OIST's HPC cluster respectively. In clades where the molecular clock is stable enough, hierarchical clustering of the percent nucleotide differences recovers trees consistent with the known taxonomy, as in the primates (Figure~\ref{fig:fig2}).
 
