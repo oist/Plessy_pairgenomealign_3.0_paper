@@ -1,0 +1,406 @@
+---
+output:
+  html_document:
+    keep_md: true
+editor_options:
+  chunk_output_type: console
+---
+
+## Load session
+
+See the data load template in the parent directory.
+
+Also used, by namespace: `ape`, `cba`, `pheatmap`, `gtable`, `jsonlite`
+(download of the NCBI lineages only) and `GenomicBreaks` (last section).
+
+```{r load}
+library(ScrambledTreeBuilder)
+library(ggplot2)
+library(patchwork)
+load("primates.benchmark.RData")
+```
+
+## Define clades of interest
+
+### Pick some clades of interest and color them on the tree
+
+Clade information is stored in a list.  A `colorClades` object is created, and
+can be added to tree plots to color them.
+
+```{r clades}
+makeCladeList <- function(Tibble) FocalCladeList(
+  Cercopithecidae = focalClade(Tibble, "29_Papio_anubis_GCF_000264685",       "29_Nasalis_larvatus_GCF_000772465",   "#377EB8", "Cercopithecidae"),
+  Hominidae       = focalClade(Tibble, "00_Homo_sapiens_GCF_000001405",       "15_Pongo_abelii_GCF_028885655",       "#4DAF4A", "Hominidae"),
+  Hylobatidae     = focalClade(Tibble, "19_Hoolock_leuconedys_GCF_047372625", "19_Hylobates_pileatus_GCF_021498465", "#984EA3", "Hylobatidae"),
+  Platyrrhini     = focalClade(Tibble, "43_Saguinus_midas_GCF_021498475",     "43_Pithecia_pithecia_GCF_028551515",  "#FF7F00", "Platyrrhini"),
+  Strepsirrhini   = focalClade(Tibble, "74_Lemur_catta_GCF_020740605",        "74_Nycticebus_coucang_GCF_027406575", "#A65628", "Strepsirrhini")
+)
+
+allFocalCladeLists <- lapply(trees, makeCladeList) |> S4Vectors::SimpleList()
+clades <- allFocalCladeLists$P
+
+visualizeTree(Tibble) +
+  ggplot2::ggtitle(paste("Tree built with 100 - Percent Identity and labelled with node ID")) + clades
+
+results$focalClade <- results$focalColor <- NULL
+results <- recordClades(results, clades)
+```
+
+## Heat map and comparison with the NCBI Taxonomy (Figure 2)
+
+### Heat map
+
+Rows and columns ordered by UPGMA (average linkage) on the distance matrix,
+with the leaf order optimised by `cba::order.optimal`.  Row labels: species
+name in italics and assembly accession.  `GC[AF]`: the IDs of GenBank-only
+assemblies may start with either prefix.
+
+```{r heatmap_functions}
+species_name <- function(ids) gsub("_", " ", sub("_GC[AF]_[0-9.]+$", "", sub("^[0-9]+_", "", ids)))
+accession_of <- function(ids) sub("^.*_(GC[AF]_[0-9.]+)$", "\\1", ids)
+
+# plotmath expressions, which pheatmap passes to grid
+pretty_labels <- function(ids)
+  as.expression(Map(function(s, a) bquote(italic(.(s)) ~ .(paste0("(", a, ")"))),
+                    species_name(ids), accession_of(ids)))
+
+treeHeatMap_ <- function(pairwise_matrix, clades, treeheight_row = 100, ...) {
+  d  <- as.dist(pairwise_matrix)
+  hc <- hclust(d, method = "average")
+  co <- cba::order.optimal(d, hc$merge)
+  hc$merge <- co$merge
+  hc$order <- co$order
+
+  annot <- data.frame(row.names = rownames(pairwise_matrix))
+  for (clade in names(clades)) {
+    annot[clades[[clade]]@genomeIDs, "clade"] <- clades[[clade]]@displayName
+    annot[clades[[clade]]@genomeIDs, "color"] <- clades[[clade]]@color
+  }
+  annot <- annot[order(annot$clade), ]
+  color_annot <- na.omit(unique(annot[, c("clade", "color")]))
+  color_list  <- list(clade = color_annot$color)
+  names(color_list$clade) <- color_annot$clade
+
+  pheatmap::pheatmap(pairwise_matrix, cluster_rows = hc, cluster_cols = hc,
+    annotation_row = annot[, "clade", drop = FALSE], annotation_names_row = FALSE,
+    annotation_colors = color_list, labels_row = pretty_labels(rownames(pairwise_matrix)),
+    show_colnames = FALSE, treeheight_row = treeheight_row, treeheight_col = 0,
+    cellwidth = 12, cellheight = 12, border_color = NA, ...)
+}
+```
+
+### NCBI Taxonomy lineages
+
+Taxon of each genome from its assembly accession, and full lineage of the
+taxon, from the NCBI Datasets v2 API.  The table is downloaded only when
+`primates_ncbi_lineages.tsv` is absent or lacks a genome of the matrix; delete
+the file to update it to the current state of the NCBI Taxonomy.  Columns:
+`genome_id`; `accession`, as found at NCBI; `taxid`; `lineage`, `name [rank]`
+joined by ` > `, root excluded.
+
+```{r lineages}
+ncbi_lineages <- function(ids, api = "https://api.ncbi.nlm.nih.gov/datasets/v2") {
+  get <- function(path) {
+    Sys.sleep(0.4)                                    # NCBI: at most 3 requests per second without a key
+    jsonlite::fromJSON(paste0(api, path), simplifyVector = FALSE)
+  }
+  batches <- function(x, size) split(x, ceiling(seq_along(x) / size))
+
+  # Neither the GCF/GCA prefix written in the IDs (GCF is also written for
+  # GenBank-only assemblies) nor the version (some do not exist at NCBI) is
+  # reliable: ask for both prefixes without version (NCBI returns the latest
+  # version), and match on the digits, preferring the same version.
+  stopifnot(all(grepl("_GC[AF]_[0-9]+\\.[0-9]+$", ids)))
+  digits  <- sub("^.*_GC[AF]_([0-9]+)\\.[0-9]+$", "\\1", ids)
+  dig_ver <- sub("^.*_GC[AF]_([0-9]+\\.[0-9]+)$", "\\1", ids)
+  queries <- sort(unique(c(paste0("GCA_", digits), paste0("GCF_", digits))))
+  found <- character()                              # taxid, named by accession
+  for (b in batches(queries, 20))
+    for (r in get(paste0("/genome/accession/", paste(b, collapse = ","), "/dataset_report?page_size=100"))$reports)
+      found[r$accession] <- as.character(r$organism$tax_id)
+  acc_dig_ver <- sub("^GC[AF]_", "", names(found))
+  accession <- vapply(seq_along(ids), function(i) {
+    hit <- c(names(found)[acc_dig_ver == dig_ver[i]], names(found)[sub("\\..*$", "", acc_dig_ver) == digits[i]])
+    if (length(hit)) hit[1] else NA_character_
+  }, "")
+  if (anyNA(accession)) stop("no genome report for ", paste(ids[is.na(accession)], collapse = ", "))
+  taxid <- found[accession]
+
+  tax <- list()                                     # taxonomy reports, named by taxid
+  fetch_taxa <- function(taxids) {
+    for (b in batches(sort(setdiff(taxids, names(tax))), 50))
+      for (r in get(paste0("/taxonomy/taxon/", paste(b, collapse = ","), "/dataset_report"))$reports)
+        tax[[as.character(r$taxonomy$tax_id)]] <<- r$taxonomy
+  }
+  fetch_taxa(unique(taxid))
+  fetch_taxa(setdiff(unique(as.character(unlist(lapply(tax, `[[`, "parents")))), "1"))
+
+  lineage <- vapply(taxid, function(t) {
+    path <- c(setdiff(as.character(unlist(tax[[t]]$parents)), "1"), t)
+    paste(vapply(path, function(p) sprintf("%s [%s]", tax[[p]]$current_scientific_name$name,
+                                           tolower(if (is.null(tax[[p]]$rank)) "no rank" else tax[[p]]$rank)), ""),
+          collapse = " > ")
+  }, "")
+  data.frame(genome_id = ids, accession = accession, taxid = as.integer(taxid), lineage = unname(lineage))
+}
+
+lineage_file <- "primates_ncbi_lineages.tsv"
+genomes <- rownames(matrices_symmetric$percent_difference_global)
+if (!file.exists(lineage_file) || !all(genomes %in% read.delim(lineage_file)$genome_id))
+  write.table(ncbi_lineages(genomes), lineage_file, sep = "\t", quote = FALSE, row.names = FALSE)
+lin <- read.delim(lineage_file)
+file.mtime(lineage_file)                            # date of the NCBI Taxonomy snapshot
+```
+
+### Comparison of the UPGMA tree with the NCBI Taxonomy
+
+NCBI taxa are compared with the UPGMA tree as sets of genomes.  Only the taxa
+with at least 2 of the genomes, but not all, are informative; taxa with the
+same genomes are merged under one name (`A [rank] = B [rank]`).  A taxon is
+recovered when its genomes form a clade of the tree (`ape::is.monophyletic`).
+Each clade of the tree (root excluded) is classified as:
+
+- `ncbi`: it is an NCBI taxon;
+- `contradicts`: it shares genomes with an NCBI taxon but neither contains the
+  other;
+- `resolves`: neither; it resolves a node that the NCBI Taxonomy leaves
+  unresolved (for example _Homo_ + _Pan_).
+
+```{r ncbi_functions}
+compare_ncbi <- function(m, lin) {
+  stopifnot(all(rownames(m) %in% lin$genome_id))
+  lineage <- strsplit(lin$lineage, " > ", fixed = TRUE)[match(rownames(m), lin$genome_id)]
+  names(lineage) <- rownames(m)
+  n <- length(lineage)
+
+  upgma <- ape::as.phylo(hclust(as.dist(m), method = "average"))
+
+  taxa    <- unique(unlist(lineage))
+  members <- lapply(setNames(taxa, taxa), function(t) names(lineage)[vapply(lineage, function(l) t %in% l, TRUE)])
+  members <- members[lengths(members) >= 2 & lengths(members) < n]
+  set_id  <- vapply(members, function(x) paste(sort(x), collapse = ","), "")
+  ncbi    <- members[!duplicated(set_id)]
+  names(ncbi) <- tapply(names(members), set_id, paste, collapse = " = ")[set_id[!duplicated(set_id)]]
+
+  compatible <- function(a, b) { k <- length(intersect(a, b)); k == 0 || k == length(a) || k == length(b) }
+  status <- function(x) {
+    if (any(vapply(ncbi, setequal, TRUE, x))) "ncbi"
+    else if (!all(vapply(ncbi, compatible, TRUE, x))) "contradicts"
+    else "resolves"
+  }
+  clades <- lapply(ape::prop.part(upgma), function(i) upgma$tip.label[i])
+  clades <- clades[lengths(clades) >= 2 & lengths(clades) < n]
+
+  list(upgma = upgma, ncbi = ncbi,
+       recovered = vapply(ncbi, function(x) ape::is.monophyletic(upgma, x), TRUE),
+       status = status, clades = clades, clade_status = vapply(clades, status, ""))
+}
+
+print_ncbi_comparison <- function(cmp) {
+  s <- table(factor(cmp$clade_status, levels = c("ncbi", "resolves", "contradicts")))
+  cat(sprintf("NCBI taxa with at least 2 genomes (all genomes excepted): %d; recovered as UPGMA clades: %d\n",
+              length(cmp$ncbi), sum(cmp$recovered)))
+  if (any(!cmp$recovered)) cat("Not recovered:", paste(names(cmp$ncbi)[!cmp$recovered], collapse = "; "), "\n")
+  cat(sprintf("UPGMA clades: %d; NCBI taxa: %d; resolving NCBI polytomies: %d; contradicting NCBI taxa: %d\n",
+              length(cmp$clades), s[["ncbi"]], s[["resolves"]], s[["contradicts"]]))
+}
+```
+
+```{r ncbi_comparison}
+cmp <- compare_ncbi(matrices_symmetric$percent_difference_global, lin)
+print_ncbi_comparison(cmp)
+
+# NCBI taxa
+data.frame(taxon = names(cmp$ncbi), genomes = lengths(cmp$ncbi), recovered = cmp$recovered, row.names = NULL)
+
+# Clades of the tree that are not NCBI taxa
+other <- cmp$clade_status != "ncbi"
+data.frame(status = cmp$clade_status[other],
+           species = vapply(cmp$clades[other], function(x) paste(unique(species_name(x)), collapse = ", "), ""))
+
+# Same topology with the other distance matrices?
+distances <- c("percent_difference_global", "percent_difference_local", "P", "P_raw", "JC69", "K80",
+               "K80_gap_distance", "F81", "HKY85", "T92", "TN93", "LogDet")
+vapply(distances, function(k) isTRUE(ape::all.equal.phylo(
+  cmp$upgma, ape::as.phylo(hclust(as.dist(matrices_symmetric[[k]]), method = "average")),
+  use.edge.length = FALSE)), TRUE)
+```
+
+### Figure 2
+
+On the row dendrogram (the UPGMA tree): filled circle, the clade is an NCBI
+taxon, named when its rank is above genus (genus and species names are in the
+row labels); open circle, the clade is not an NCBI taxon (it resolves a node
+that the NCBI Taxonomy leaves unresolved); red cross, the clade contradicts an
+NCBI taxon, drawn only when there is one.  The symbols are explained in the
+legend on the right, which replaces the annotation legend of pheatmap and
+follows its style (`pheatmap:::draw_annotation_legend`).  Node positions follow
+`pheatmap:::draw_dendrogram` (no gaps): x = 1 − height / maximum height / 1.05,
+y = 1 − leaf position.
+
+```{r figure2_functions}
+treeHeatMap_ncbi <- function(pairwise_matrix, clades, cmp, treeheight_row = 200, fontsize_nodes = 8, ...) {
+  fig <- treeHeatMap_(pairwise_matrix, clades, treeheight_row = treeheight_row,
+                      annotation_legend = FALSE, silent = TRUE, ...)
+  hc  <- fig$tree_row
+
+  # Genomes under each merge of hc, and position of the merge in the row-tree cell
+  n   <- length(hc$order)
+  pos <- numeric(2 * n - 1)
+  pos[1:n] <- 1 / n / 2 + (1 / n) * (match(1:n, hc$order) - 1)
+  tips <- vector("list", n - 1)
+  for (i in seq_len(n - 1)) {
+    kids <- hc$merge[i, ]
+    tips[[i]] <- unlist(lapply(kids, function(k) if (k < 0) hc$labels[-k] else tips[[k]]))
+    pos[n + i] <- mean(pos[ifelse(kids < 0, -kids, n + kids)])
+  }
+  h <- hc$height / max(hc$height) / 1.05
+  node  <- data.frame(x = 1 - h, y = 1 - pos[n + seq_len(n - 1)], size = lengths(tips))
+  inner <- which(node$size < n)                                  # root: not tested
+  node  <- node[inner, ]
+
+  # cmp must describe the same tree
+  key <- function(x) paste(sort(x), collapse = ",")
+  stopifnot(setequal(vapply(tips[inner], key, ""), vapply(cmp$clades, key, "")))
+  node$status <- vapply(tips[inner], cmp$status, "")
+
+  # Names of NCBI taxa above genus: the most inclusive name of the merged ones
+  node$label <- ""
+  for (k in which(node$status == "ncbi")) {
+    hit  <- names(cmp$ncbi)[vapply(cmp$ncbi, setequal, TRUE, tips[[inner[k]]])]
+    name <- strsplit(hit, " = ", fixed = TRUE)[[1]][1]
+    rank <- sub("^.*\\[(.*)\\]$", "\\1", name)
+    if (!rank %in% c("genus", "species", "subspecies")) node$label[k] <- sub(" \\[.*$", "", name)
+  }
+
+  # Symbols of the nodes, on the tree and in the legend; only the classes present
+  symbols <- list(
+    ncbi        = list(label = "NCBI taxon",                pch = 21, size = 5, gp = grid::gpar(fill = "black", col = "black")),
+    resolves    = list(label = "Not an NCBI taxon",         pch = 21, size = 5, gp = grid::gpar(fill = "white", col = "black")),
+    contradicts = list(label = "Contradicts an NCBI taxon", pch = 4,  size = 6, gp = grid::gpar(col = "#D7191C", lwd = 2)))
+  shown <- intersect(names(symbols), node$status)
+
+  lab <- node$label != ""
+  marks <- do.call(grid::gList, Filter(Negate(is.null), c(
+    lapply(shown, function(st) grid::pointsGrob(node$x[node$status == st], node$y[node$status == st],
+                                                pch = symbols[[st]]$pch, size = grid::unit(symbols[[st]]$size, "pt"),
+                                                gp = symbols[[st]]$gp)),
+    list(if (any(lab)) grid::rectGrob(                                # white box behind each name
+      x = grid::unit(node$x[lab], "npc") - grid::unit(3, "pt"),
+      y = grid::unit(node$y[lab], "npc") + grid::unit(1.5, "pt"),
+      width  = grid::unit(1, "strwidth",  as.list(node$label[lab])) + grid::unit(2, "pt"),
+      height = grid::unit(1, "strheight", as.list(node$label[lab])) + grid::unit(2, "pt"),
+      just = c("right", "bottom"), gp = grid::gpar(fill = "white", col = NA, fontsize = fontsize_nodes)),
+    if (any(lab)) grid::textGrob(node$label[lab],
+      x = grid::unit(node$x[lab], "npc") - grid::unit(4, "pt"),
+      y = grid::unit(node$y[lab], "npc") + grid::unit(2.5, "pt"),
+      just = c("right", "bottom"), gp = grid::gpar(fontsize = fontsize_nodes))))))
+
+  gt <- fig$gtable
+
+  # Legend on the right of the colour scale, in the column of the annotation
+  # legend, in its style: clade colours, then node symbols.
+  fontsize <- if (is.null(list(...)$fontsize)) 10 else list(...)$fontsize   # pheatmap's default
+  gp   <- grid::gpar(fontsize = fontsize)
+  gp_b <- grid::gpar(fontsize = fontsize, fontface = "bold")
+  th   <- grid::unit(1, "grobheight", grid::textGrob("FGH", gp = gp))
+  clade_colors <- character()
+  for (clade in names(clades)) clade_colors[clades[[clade]]@displayName] <- clades[[clade]]@color
+  clade_colors <- clade_colors[order(names(clade_colors))]
+  key <- list()
+  y <- grid::unit(1, "npc")
+  for (section in c("clade", "tree node")) {
+    key <- c(key, list(grid::textGrob(section, x = 0, y = y, hjust = 0, vjust = 1, gp = gp_b)))
+    y <- y - 1.5 * th
+    for (it in if (section == "clade") names(clade_colors) else shown) {
+      symbol <- if (section == "clade")
+        grid::rectGrob(x = 0, y = y, hjust = 0, vjust = 1, width = 2 * th, height = 2 * th,
+                       gp = grid::gpar(col = NA, fill = clade_colors[[it]]))
+      else
+        grid::pointsGrob(x = th, y = y - th, pch = symbols[[it]]$pch,
+                         size = grid::unit(symbols[[it]]$size, "pt"), gp = symbols[[it]]$gp)
+      text <- if (section == "clade") it else symbols[[it]]$label
+      key <- c(key, list(symbol, grid::textGrob(text, x = 2.4 * th, y = y - th, hjust = 0, vjust = 0.5, gp = gp)))
+      y <- y - 2 * th
+    }
+    y <- y - 1.5 * th
+  }
+  width_of <- function(txt, gp)                        # one grob per label: grobWidth of a vector is the first's
+    do.call(grid::unit.c, lapply(txt, function(t) grid::grobWidth(grid::textGrob(t, gp = gp))))
+  texts <- c(names(clade_colors), vapply(symbols[shown], `[[`, "", "label"))
+  at <- gt$layout[gt$layout$name == "legend", ]        # colour scale; the next column is for annotation legends
+  gt$widths[at$l + 1] <- max(2.4 * th + max(width_of(texts, gp)),
+                             max(width_of(c("clade", "tree node"), gp_b))) + grid::unit(4, "pt")
+  gt <- gtable::gtable_add_grob(gt, grid::gTree(children = do.call(grid::gList, key)),
+                                t = at$t, b = at$b, l = at$l + 1, clip = "off", name = "legend_clade_node")
+
+  cell <- gt$layout[gt$layout$name == "row_tree", ]
+
+  # Room on the left for the names of the deepest nodes
+  if (any(lab)) {
+    widest <- node$label[lab][which.max(nchar(node$label[lab]))]
+    gt <- gtable::gtable_add_cols(gt, grid::unit(1, "grobwidth",
+            grid::textGrob(widest, gp = grid::gpar(fontsize = fontsize_nodes))), pos = 0)
+    cell$l <- cell$l + 1
+  }
+  gt <- gtable::gtable_add_grob(gt, grid::gTree(children = marks), t = cell$t, l = cell$l,
+                                clip = "off", name = "ncbi_marks")
+
+  fig$gtable <- gt
+  fig
+}
+
+# Size of the figure in inches (all widths and heights of the layout are
+# absolute when cellwidth and cellheight are set), to open a device that fits it.
+figure_size <- function(fig) {
+  grDevices::pdf(NULL); on.exit(grDevices::dev.off())
+  c(width  = grid::convertWidth(sum(fig$gtable$widths), "in", valueOnly = TRUE),
+    height = grid::convertHeight(sum(fig$gtable$heights), "in", valueOnly = TRUE))
+}
+```
+
+```{r figure2_build}
+fig2 <- treeHeatMap_ncbi(matrices_symmetric$percent_difference_global, clades, cmp,
+                         main = "Percent nucleotide difference")
+(fig2_size <- figure_size(fig2))
+```
+
+```{r ANI_Matrix, fig.width=fig2_size[["width"]], fig.height=fig2_size[["height"]], dev=c("png", "svg")}
+grid::grid.newpage()
+grid::grid.draw(fig2$gtable)
+
+pdf("primates_clustering.pdf", width = fig2_size[["width"]], height = fig2_size[["height"]])
+grid::grid.draw(fig2$gtable)
+invisible(dev.off())
+```
+
+### Benchmark with million-contig genomes
+
+Alignment of _Cercopithecus mitis_ (GCF_028627265.1) to the human genome
+(GCF_000001405.29), seed RY128.  When either genome has more than 250 sequence
+levels, only the alignments between the 250 sequences of each genome with the
+largest aligned width are kept.
+
+```{r million_contigs}
+library(GenomicBreaks)
+gb <- load_genomic_breaks("/bucket/LuscombeU/common/ScramblingInTheTree/AlignedGenomes/3.0/RY128/pairgenomealign_benchmark/results_29_Cercopithecus_mitis_GCF_028627265.1/alignment/29_Cercopithecus_mitis_GCF_028627265.1___00_Homo_sapiens_GCF_000001405.29.blasttabplus.gz")
+
+alignment_counts <- function(gb)
+  c(alignments = length(gb), target_seqs = length(seqlevels(gb)), query_seqs = length(seqlevels(gb$query)))
+alignment_counts(gb)
+
+top_by_aligned_width <- function(gr, n = 250) {
+  w <- rowsum(width(gr), as.character(seqnames(gr)))[, 1]
+  names(sort(w, decreasing = TRUE))[seq_len(min(n, length(w)))]
+}
+
+if (length(seqlevels(gb)) > 250 || length(seqlevels(gb$query)) > 250) {
+  keep_target <- top_by_aligned_width(gb)
+  keep_query  <- top_by_aligned_width(gb$query)
+  gb <- gb[as.character(seqnames(gb)) %in% keep_target & as.character(seqnames(gb$query)) %in% keep_query]
+  seqlevels(gb)       <- seqlevelsInUse(gb)
+  seqlevels(gb$query) <- seqlevelsInUse(gb$query)
+}
+alignment_counts(gb)
+seqinfo(gb)
+```
