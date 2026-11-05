@@ -3,11 +3,11 @@
   "title": "Scripts and data for “nf-core/pairgenomealign: a scalable pipeline for pairwise whole-genome alignment”",
   "description": "<p>Manuscript, scripts and data supporting the article “nf-core/pairgenomealign: a scalable pipeline for pairwise whole-genome alignment”: the LaTeX source of the manuscript and its figures, the scripts that run the benchmarks and draw the figures, the tables derived from the pipeline outputs and execution traces, and the accession lists of the genomes. See README.md and analyses/README.md.</p><p>Scripts and code: GNU GPL version 3 or later. Text, figures and data tables: CC BY 4.0.</p>",
   "creators": [
-    {"name": "Plessy, Charles", "affiliation": "Okinawa Institute of Science and Technology", "orcid": "0000-0001-7410-6295"},
-    {"name": "Mahdi, Mohammed", "affiliation": "Okinawa Institute of Science and Technology", "orcid": "0009-0001-7484-0331"},
-    {"name": "Fujita, Takahiro", "affiliation": "Suntory Global Innovation Center; Okinawa Institute of Science and Technology"},
+    {"name": "Plessy, Charles", "affiliation": "Okinawa Institute of Science and Technology Graduate University", "orcid": "0000-0001-7410-6295"},
+    {"name": "Mahdi, Mohammed", "affiliation": "Okinawa Institute of Science and Technology Graduate University", "orcid": "0009-0001-7484-0331"},
+    {"name": "Fujita, Takahiro", "affiliation": "Suntory Global Innovation Center; Okinawa Institute of Science and Technology Graduate University"},
     {"name": "Frith, Martin C.", "affiliation": "The University of Tokyo; National Institute of Advanced Industrial Science and Technology (AIST)", "orcid": "0000-0003-0998-2859"},
-    {"name": "Luscombe, Nicholas M.", "affiliation": "Okinawa Institute of Science and Technology", "orcid": "0000-0001-5293-4778"}
+    {"name": "Luscombe, Nicholas M.", "affiliation": "Okinawa Institute of Science and Technology Graduate University", "orcid": "0000-0001-5293-4778"}
   ],
   "license": "cc-by-4.0",
   "access_right": "open",

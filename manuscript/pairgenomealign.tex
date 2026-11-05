@@ -57,17 +57,17 @@ style=pcj
 
 %
  \author{\firstname{Charles} \lastname{Plessy}\CDRorcid{0000-0001-7410-6295}}
- \address{Genomics and Regulatory Systems Unit, Okinawa Institute of Science and Technology, 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
+ \address{Genomics and Regulatory Systems Unit, Okinawa Institute of Science and Technology Graduate University, 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
  \email[Charles Plessy]{charles.plessy@oist.jp}
 %
  \author{\firstname{Mohammed} \lastname{Mahdi}\CDRorcid{0009-0001-7484-0331}}
- \address{Genomics and Regulatory Systems Unit, Okinawa Institute of Science and Technology, 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
+ \address{Genomics and Regulatory Systems Unit, Okinawa Institute of Science and Technology Graduate University, 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
  \curraddr{Business Economics Group, Wageningen University \& Research, Wageningen, The Netherlands}
  \email[Mohammed Mahdi]{mohammed.mahdi@wur.nl}
 %
  \author{\firstname{Takahiro} \lastname{Fujita}}
  \address{Suntory Global Innovation Center Limited, 8-1-1 Seikadai, Seika-cho, Soraku-gun, Kyoto, Japan 619-0284}
- \address{Genomics and Regulatory Systems Unit, Okinawa Institute of Science and Technology, 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
+ \address{Genomics and Regulatory Systems Unit, Okinawa Institute of Science and Technology Graduate University, 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
  \email[Takahiro Fujita]{takahiro-fujita@suntory.co.jp}
 %
  \author{\firstname{Martin} \middlename{C.} \lastname{Frith}\CDRorcid{0000-0003-0998-2859}}
@@ -76,7 +76,7 @@ style=pcj
  \email[Martin C. Frith]{TBD@example.com}
  %
  \author{\firstname{Nicholas} \middlename{M.} \lastname{Luscombe}\CDRorcid{0000-0001-5293-4778}}
- \address{Genomics and Regulatory Systems Unit, Okinawa Institute of Science and Technology, 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
+ \address{Genomics and Regulatory Systems Unit, Okinawa Institute of Science and Technology Graduate University, 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
  \email[Nicholas M. Luscombe]{nicholas.luscombe@oist.jp}
 
  \keywords{pipeline, Nextflow, nf-core, genome, alignment, synteny, average nucleotide identity}
@@ -156,7 +156,7 @@ Assembly statistics of the query genomes, including sequence length and base com
 
 \subsection*{Hardware, datasets and benchmark procedures}
 
-All analyses were run with releases 3.0.2 to 3.0.4 of the pipeline, which run the same version of LAST (1652) with the same commands as the current release, 3.0.5, and therefore produce the same alignments. The pipeline was run with the Slurm scheduler (\cite{Jette_2023}) and Singularity on the high-performance computing (HPC) cluster of the Okinawa Institute of Science and Technology (OIST), on nodes with Intel Xeon Gold 6230 CPUs (Figures~\ref{fig:benchmark} and~\ref{fig:stages}) or AMD EPYC 7702 CPUs (comparison of CPU architectures), and by nf-core on Amazon Web Services nodes with Intel Xeon Platinum 8375C CPUs (full test). \citet{Myers_2025} aligned the human genome CHM13 (GCF\_\allowbreak 009914755.1) to five mammalian genomes (human GRCh38 (GCF\_\allowbreak 000001405.40), chimpanzee (GCF\_\allowbreak 028858775.2), siamang (GCF\_\allowbreak 028878055.3), pig (Jinhua\_\allowbreak pig\_\allowbreak T2T) and mouse (GCA\_\allowbreak 964188535.1)) on two Intel Xeon Gold 6226R CPUs, of the same generation (Cascade Lake) as the Xeon Gold 6230, with the same maximum clock frequency (3.9~GHz) and cache per core, and a higher base frequency (2.9 instead of 2.1~GHz). Nextflow reports the run time, memory use and CPU usage of each module run; to match the CPU time reported by \citet{Myers_2025}, we multiplied run time by CPU usage. For Figure~\ref{fig:fig2}, each of the 34 primate genomes was aligned to each of the others (1,122 ordered pairs) with the RY128 seed, to match the configuration of the pipeline's full test suite, which runs on the Amazon Web Services cloud with a cap in computation resources that does not allow the use of the RY4 seed. The distance between two genomes was 100 minus the percent identity of their one-to-one alignment, counting gaps, averaged over the two alignment directions. Genomes were clustered with the  average-linkage method (UPGMA).
+All analyses were run with releases 3.0.2 to 3.0.4 of the pipeline, which run the same version of LAST (1652) with the same commands as the current release, 3.0.5, and therefore produce the same alignments. The pipeline was run with the Slurm scheduler (\cite{Jette_2023}) and Singularity on the high-performance computing (HPC) cluster of the Okinawa Institute of Science and Technology Graduate University (OIST), on nodes with Intel Xeon Gold 6230 CPUs (Figures~\ref{fig:benchmark} and~\ref{fig:stages}) or AMD EPYC 7702 CPUs (comparison of CPU architectures), and by nf-core on Amazon Web Services nodes with Intel Xeon Platinum 8375C CPUs (full test). \citet{Myers_2025} aligned the human genome CHM13 (GCF\_\allowbreak 009914755.1) to five mammalian genomes (human GRCh38 (GCF\_\allowbreak 000001405.40), chimpanzee (GCF\_\allowbreak 028858775.2), siamang (GCF\_\allowbreak 028878055.3), pig (Jinhua\_\allowbreak pig\_\allowbreak T2T) and mouse (GCA\_\allowbreak 964188535.1)) on two Intel Xeon Gold 6226R CPUs, of the same generation (Cascade Lake) as the Xeon Gold 6230, with the same maximum clock frequency (3.9~GHz) and cache per core, and a higher base frequency (2.9 instead of 2.1~GHz). Nextflow reports the run time, memory use and CPU usage of each module run; to match the CPU time reported by \citet{Myers_2025}, we multiplied run time by CPU usage. For Figure~\ref{fig:fig2}, each of the 34 primate genomes was aligned to each of the others (1,122 ordered pairs) with the RY128 seed, to match the configuration of the pipeline's full test suite, which runs on the Amazon Web Services cloud with a cap in computation resources that does not allow the use of the RY4 seed. The distance between two genomes was 100 minus the percent identity of their one-to-one alignment, counting gaps, averaged over the two alignment directions. Genomes were clustered with the  average-linkage method (UPGMA).
 
 To repeat the coverage benchmark of \citet{Gulhan_2025}, we retrieved from the authors' public Galaxy history (\url{https://usegalaxy.org/u/cartman/h/fga-mm2-lz-last-comparison}) 213,124 merged coding-exon intervals of the hg38 human genome, and the hg38 coordinates of their mm39 alignments made with KegAlign (a reimplementation of much of LASTZ accelerated on graphics processing units), LAST, FastGA and minimap2. We then ran nf-core/pairgenomealign 3.0.4 (LAST 1652) with default parameters in many-to-many alignment mode for each of the seeds RY128, RY4, YASS and MAM8, and counted the exons overlapped by an alignment and the coding bases covered on hg38. Running their LAST commands in the pipeline (LAST 1608; \texttt{lastdb -uRY128}; \texttt{last-train -{}-revsym -C2}; \texttt{lastal -C2}; no last-split) overlapped the same exons as their LAST alignment. The benchmark scripts are archived on Zenodo (\cite{pairgenomealign_paper_data}).
 

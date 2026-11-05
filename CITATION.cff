@@ -6,14 +6,14 @@ authors:
   - family-names: Plessy
     given-names: Charles
     orcid: "https://orcid.org/0000-0001-7410-6295"
-    affiliation: Okinawa Institute of Science and Technology
+    affiliation: Okinawa Institute of Science and Technology Graduate University
   - family-names: Mahdi
     given-names: Mohammed
     orcid: "https://orcid.org/0009-0001-7484-0331"
-    affiliation: Okinawa Institute of Science and Technology
+    affiliation: Okinawa Institute of Science and Technology Graduate University
   - family-names: Fujita
     given-names: Takahiro
-    affiliation: "Suntory Global Innovation Center; Okinawa Institute of Science and Technology"
+    affiliation: "Suntory Global Innovation Center; Okinawa Institute of Science and Technology Graduate University"
   - family-names: Frith
     given-names: Martin C.
     orcid: "https://orcid.org/0000-0003-0998-2859"
@@ -21,7 +21,7 @@ authors:
   - family-names: Luscombe
     given-names: Nicholas M.
     orcid: "https://orcid.org/0000-0001-5293-4778"
-    affiliation: Okinawa Institute of Science and Technology
+    affiliation: Okinawa Institute of Science and Technology Graduate University
 license:
   - GPL-3.0-or-later
   - CC-BY-4.0
