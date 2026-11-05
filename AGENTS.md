@@ -1,20 +1,64 @@
-You are an AI agent assisting a researcher.  We are writing a scientific
-manuscript reporting the development of a bioinformatics pipeline.
+Instructions for AI agents
+==========================
 
-Most of the novelty is the pipeline, not the software itself.  The manuscript
-introduces the software and some of the alternative choices, describes how the
-pipeline operates, informs the users about the default parameters selected by
-the authors, and then reports and discusses the innovative parts of the
-development.
+You are assisting the authors of a scientific article on a bioinformatics
+pipeline, nf-core/pairgenomealign.  Most of the novelty is the pipeline, not the
+aligner (LAST) that it runs.  The article introduces the pipeline and the
+alternatives, describes how it works and its defaults, and reports benchmarks
+and applications.
 
-Bibliographic references are given through BibTeX IDs linking to
-`Template_for_both_PCI_and_PCJ/PCJ-sample.bib`.  It is essential to not change
-them, and it is essential to read this file before generating text, as it
-contains abstracts that will further your understanding of why the reference is
-cited here.
+Files
+-----
 
-The format of this file is Markdown, but the desired output format is LaTeX.
-Please also read the current manuscript draft
-`Template_for_both_PCI_and_PCJ/PCJ-sample.tex` before generating output.  You
-are given access to these files either because they are attached to the prompt,
-or because you have access to the repository that contains the files.
+- `Template_for_both_PCI_and_PCJ/PCJ-sample.tex`: the manuscript, in the
+  PCI/PCJ LaTeX template (cedram class).  Read it before writing anything.
+- `Template_for_both_PCI_and_PCJ/PCJ-sample.bib`: the bibliography.  Its
+  entries contain abstracts; read them to understand why a reference is cited.
+- `Template_for_both_PCI_and_PCJ/*.pdf`, `*.png`: the figures.
+- `Template_for_both_PCI_and_PCJ/initial_drafts/`: notes and prompts used for
+  the first draft.  Historical; not maintained.
+- The template's own files (`cedram*`, `pcj.*`, `*.cfg`, `*.clo`,
+  `README.txt`): do not modify.
+
+Overleaf
+--------
+
+The manuscript is edited in Overleaf, which is synchronised with this
+repository through GitHub (its commits are called "Updates from Overleaf").
+Pull before editing, and push small commits soon after.  Do not rename or move
+files used by the manuscript without the authors' agreement, because the
+Overleaf project must be updated at the same time.
+
+Editing rules
+-------------
+
+- Never change BibTeX IDs.  Journal names are written in title case.
+- Make minimal changes: no reformatting or unrelated fixes in a commit.
+- British spelling (-ise forms, colour, grey, analyse).
+- "Target" is the indexed genome; "reference" means a species' canonical
+  assembly, as explained in the Methods.
+- `\citet{}` when the citation is part of the sentence, `(\cite{})` otherwise,
+  several citations separated by semicolons.
+- Refer to figures with `\ref`; panel letters are capitals: (A), (B).
+- Check statements about the pipeline against its source code (version 3.0.4),
+  and statements about LAST against its documentation and source code.
+- Prefer few numbers in the text when the figures show them, and plain-language
+  qualifications that do not disfavour the compared tools.
+
+Building the PDF locally
+------------------------
+
+Overleaf compiles with pdfLaTeX and Biber.  With TeX Live 2023,
+`\DocumentMetadata` is not supported: comment it out in a copy of the file.
+Then, from the repository root, with `TEXINPUTS=./Template_for_both_PCI_and_PCJ//:`,
+run `pdflatex`, `biber --input-directory Template_for_both_PCI_and_PCJ`, and
+`pdflatex` twice.  On Debian, the class needs the packages lmodern,
+texlive-latex-extra, texlive-plain-generic, texlive-lang-french,
+texlive-fonts-extra and biber.
+
+Use of AI
+---------
+
+The Methods section "Use of artificial intelligence" discloses how AI was used.
+If your work adds a new kind of contribution, tell the authors so that this
+section can be updated.
