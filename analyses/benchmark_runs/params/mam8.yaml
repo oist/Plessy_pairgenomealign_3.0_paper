@@ -1,0 +1,5 @@
+# P-MAM8: pipeline 3.0.4 defaults except the seed; m2m, m2o, o2m and o2o are all published.
+# Resources of the LAST steps are raised in conf/mam8.config.
+seed: MAM8
+m2m: true
+skip_dotplot_m2m: true

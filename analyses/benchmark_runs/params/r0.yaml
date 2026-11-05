@@ -1,0 +1,7 @@
+# R0: Gulhan et al.'s LAST commands; conf/r0.config sets the actual arguments.
+# target, query, their names and outdir are given on the command line by bin/02_run.sh.
+m2m: true                # lastal without --split: many-to-many output, as in R0
+skip_dotplot_m2m: true
+# Recorded in params.json for provenance only.
+seed: RY128
+lastal_args: '-C2'

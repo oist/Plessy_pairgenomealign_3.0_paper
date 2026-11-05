@@ -1,0 +1,4 @@
+# P-YASS: pipeline 3.0.4 defaults except the seed; m2m, m2o, o2m and o2o are all published.
+seed: YASS
+m2m: true
+skip_dotplot_m2m: true

@@ -1,0 +1,53 @@
+== /bucket/LuscombeU/live/charles-plessy/pairalignbenchmark/analysis/merged_with_mam8
+== /bucket/LuscombeU/live/charles-plessy/pairalignbenchmark/analysis/20261015-134006_49309570
+date: 2026-10-15T04:40:06Z
+slurm_job: 49309570
+runs: r0 ry128 ry4
+bedtools image: https://depot.galaxyproject.org/singularity/bedtools:2.31.1--hf5e1c6e_0
+LAST image: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/62/62292ffa3ecc9230d6ad20b2537a2f4434a08908864c4c2c66f2d8667f031924/data
+inputs:
+1c9dcaddfa41027f17cd8f7a82c7293b  ./hg38.fa.gz
+b8e91d9c616a2dd0283916157c686a42  ./knownGene.txt.gz
+41ace1b7157b98b393746aef5d1287a8  ./mm39.fa.gz
+c4e88a1a1e6a526fa7c5155521a513fe  ./ncbiRefSeq.txt.gz
+3a283252cd9d1902ad15edeaf878cf6c  ./refGene.txt.gz
+downloaded: 2026-10-14T00:37:08Z
+== /bucket/LuscombeU/live/charles-plessy/pairalignbenchmark/analysis/20261015-144323_49309571
+date: 2026-10-15T05:43:23Z
+slurm_job: 49309571
+runs: near
+bedtools image: https://depot.galaxyproject.org/singularity/bedtools:2.31.1--hf5e1c6e_0
+LAST image: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/62/62292ffa3ecc9230d6ad20b2537a2f4434a08908864c4c2c66f2d8667f031924/data
+inputs:
+1c9dcaddfa41027f17cd8f7a82c7293b  ./hg38.fa.gz
+b8e91d9c616a2dd0283916157c686a42  ./knownGene.txt.gz
+41ace1b7157b98b393746aef5d1287a8  ./mm39.fa.gz
+c4e88a1a1e6a526fa7c5155521a513fe  ./ncbiRefSeq.txt.gz
+3a283252cd9d1902ad15edeaf878cf6c  ./refGene.txt.gz
+downloaded: 2026-10-14T00:37:08Z
+== /bucket/LuscombeU/live/charles-plessy/pairalignbenchmark/analysis/20261018-105030_50214060
+date: 2026-10-18T01:50:30Z
+slurm_job: 50214060
+runs: mam8
+bedtools image: https://depot.galaxyproject.org/singularity/bedtools:2.31.1--hf5e1c6e_0
+LAST image: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/62/62292ffa3ecc9230d6ad20b2537a2f4434a08908864c4c2c66f2d8667f031924/data
+inputs:
+1c9dcaddfa41027f17cd8f7a82c7293b  ./hg38.fa.gz
+b8e91d9c616a2dd0283916157c686a42  ./knownGene.txt.gz
+41ace1b7157b98b393746aef5d1287a8  ./mm39.fa.gz
+c4e88a1a1e6a526fa7c5155521a513fe  ./ncbiRefSeq.txt.gz
+3a283252cd9d1902ad15edeaf878cf6c  ./refGene.txt.gz
+downloaded: 2026-10-14T00:37:08Z
+== /bucket/LuscombeU/live/charles-plessy/pairalignbenchmark/analysis/20261024-001720_51521963
+date: 2026-10-23T15:17:20Z
+slurm_job: 51521963
+runs: yass
+bedtools image: https://depot.galaxyproject.org/singularity/bedtools:2.31.1--hf5e1c6e_0
+LAST image: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/62/62292ffa3ecc9230d6ad20b2537a2f4434a08908864c4c2c66f2d8667f031924/data
+inputs:
+1c9dcaddfa41027f17cd8f7a82c7293b  ./hg38.fa.gz
+b8e91d9c616a2dd0283916157c686a42  ./knownGene.txt.gz
+41ace1b7157b98b393746aef5d1287a8  ./mm39.fa.gz
+c4e88a1a1e6a526fa7c5155521a513fe  ./ncbiRefSeq.txt.gz
+3a283252cd9d1902ad15edeaf878cf6c  ./refGene.txt.gz
+downloaded: 2026-10-14T00:37:08Z
