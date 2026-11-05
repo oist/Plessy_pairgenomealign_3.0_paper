@@ -46,7 +46,7 @@ style=pcj
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Declare your BibTeX file here (keep the .bib extension):
-\addbibresource{PCJ-sample.bib}
+\addbibresource{pairgenomealign.bib}
 
 % Article metadata: these are useless when transferring your article to PCJ because they only appear on the cover page and article headers/footers after publication, and you are not asked/expected to generate these elements (there is a separate web interface to fill them in during the submission process).
 
@@ -171,13 +171,13 @@ The pipeline was developed without AI agents that edit code or run commands; con
 \subsection*{How it works}
 
 \begin{figure}[p]
-\includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/pairgenomealign-tubemap.pdf}
+\includegraphics[width=\linewidth]{manuscript/pairgenomealign-tubemap.pdf}
 \caption{The nf-core/pairgenomealign pipeline aligns a list of query genomes to a target genome and produces alignments, plots, and metrics reports. The data flow is indicated by lines and the nf-core modules are indicated by circles. The main pipeline steps are indicated by words in bold. A \texttt{-{}-m2m} mode is available to produce all combinations between many- and one- relationships.}
 \label{fig:fig1}
 \end{figure}
 
 \begin{figure}[p]
-\includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/primates_clustering.pdf}
+\includegraphics[width=\linewidth]{manuscript/primates_clustering.pdf}
 \caption{All-versus-all alignment of primate genomes produces a matrix of percent nucleotide differences, plotted as a heatmap, which were clustered by average linkage. Filled dots mark the clades of the tree matching the NCBI Taxonomy.}
 \label{fig:fig2}
 \end{figure}
@@ -196,8 +196,8 @@ The pipeline can combine all target-query alignments into a single CRAM file rep
     \centering
     % Same height for both panels, filling the line width minus a 1em gap:
     % the images are boxed at a common height, then scaled by the same factor.
-    \sbox{\panelAbox}{\includegraphics[height=100pt]{Template_for_both_PCI_and_PCJ/DLX6_JBrowse.png}}%
-    \sbox{\panelBbox}{\includegraphics[height=100pt]{Template_for_both_PCI_and_PCJ/DLX6_IGV.png}}%
+    \sbox{\panelAbox}{\includegraphics[height=100pt]{manuscript/DLX6_JBrowse.png}}%
+    \sbox{\panelBbox}{\includegraphics[height=100pt]{manuscript/DLX6_IGV.png}}%
     \edef\panelscale{\fpeval{round((\linewidth - 1em) / (\wd\panelAbox + \wd\panelBbox), 6)}}%
     \begin{subfigure}[b]{\panelscale\wd\panelAbox}
         \centering
@@ -219,7 +219,7 @@ The pipeline can combine all target-query alignments into a single CRAM file rep
 \subsection*{Performance and benchmark}
 
 \begin{figure}[tbp]
-    \includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/simulated.pdf}
+    \includegraphics[width=\linewidth]{manuscript/simulated.pdf}
     \caption{Alignment of simulated sequence pairs. (A)~Each pair consists of a homologous region of 1 to 10~kb flanked by 1~kb of random sequence (\cite{Gulhan_2025}). $d$ is the distance from the boundary of the homologous region to the end of the alignments, measured on the first sequence: negative when the alignments stop inside the homologous region, positive when they extend into random sequence. (B)~$d$ as a function of the true identity of the pair, for alignments published by \citet{Gulhan_2025} (ochre) and for LAST run with the RY4 or RY128 seed (blue). Arcsinh scale. Panel titles give the number of pairs found; ticks on the lower edge mark the pairs not found. YASS and MAM8 seeds (not shown) found all pairs, with nearly the same alignments as RY4. (C)~Identity (without gaps) of the alignments minus true identity, in percentage points, for LASTZ and LAST (RY4). Grey levels: length of the homologous region. Lines: robust
     loess trends.}
     \label{fig:simulated}
@@ -228,7 +228,7 @@ The pipeline can combine all target-query alignments into a single CRAM file rep
 To compare the sensitivity of the pipeline with that of other aligners where the true alignment is known, we used the 164 pairs of simulated sequences of \citet{Gulhan_2025}, in which homologous regions of 1 to 10~kb at 60 to 100\% identity are flanked by random sequences (Figure~\ref{fig:simulated}A). We aligned them with the commands of the pipeline and compared the alignments with those published for the other tools. All the pairs were found by LASTZ and LAST with the YASS and MAM8 seeds; the default RY4 seed missed two pairs below 61\% identity, the sparse RY128 seed found all pairs above 86\% identity, and FastGA all pairs above 73\% (Figure~\ref{fig:simulated}B). Training produced the same substitution and gap scores with RY4, YASS and MAM8, and where two of them found a sequence pair, the alignment ends were the same, except at 3 of the 324 ends. Seeds only determine where alignments start; from there, alignments are extended in both directions with the same scores. Where the alignment started from an RY4 seed stopped before the end of the homologous region, the denser YASS and MAM8 seeds started a second alignment beyond that point, which covered the rest. LASTZ alignments extended into the random flanks more often and further than LAST alignments (Figure~\ref{fig:simulated}B). Both aligners overestimated the identity of the most divergent pairs (Figure~\ref{fig:simulated}C). Identity is computed without gaps, so a gap that replaces mismatches by matches raises both the alignment score and the identity; LASTZ placed more gaps than the simulation had inserted. The precision of LAST's alignment ends may come from its training of scoring parameters on the aligned sequences (\cite{Hamada_2017}): with parameters trained on the most divergent pairs only, its alignments of these pairs ended closer to the boundaries and overestimated identity less.
 
 \begin{figure}[p]
-\includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/benchmark.pdf}
+\includegraphics[width=\linewidth]{manuscript/benchmark.pdf}
 \caption{Pipeline performance with different seeds (blue) in the context of the benchmark of \citet{Myers_2025} (ochre squares). Grey marks the mouse--human comparison in both panels. Human CHM13 genome aligned to five mammalian genomes including the human genome GRCh38. (A) Peak resident memory (RSS) versus total CPU time of indexing, training and alignment, on logarithmic scales. Comparisons made with the same software and parameters are connected in order of sequence divergence. (B) Length of the query genome covered by alignments (logarithmic scale); for pairgenomealign, many-to-one alignments.}
 \label{fig:benchmark}
 \end{figure}
@@ -236,7 +236,7 @@ To compare the sensitivity of the pipeline with that of other aligners where the
 \begin{figure}[p]
   \begin{minipage}[t]{80mm}
     \vspace{0pt}% aligns the tops of the two halves
-    \includegraphics[width=80mm]{Template_for_both_PCI_and_PCJ/exons.pdf}
+    \includegraphics[width=80mm]{manuscript/exons.pdf}
   \end{minipage}\hfill
   \begin{minipage}[t]{\dimexpr\linewidth-85mm\relax}
     \vspace{0pt}
@@ -248,7 +248,7 @@ To compare the sensitivity of the pipeline with that of other aligners where the
 To compare computational cost and coverage on real genomes, we used the dataset of \citet{Myers_2025}, in which five mammalian genomes are aligned to a human genome. Using the same data, we ran our pipeline with three indexing seeds (RY128, RY4, and YASS) and measured (1) total CPU time, (2) peak memory usage, and (3) genomic coverage (Figure~\ref{fig:benchmark}). Our CPUs were of the same generation as those of \citet{Myers_2025} and at most as fast; on the logarithmic scale of Figure~\ref{fig:benchmark}A, even a 2-fold difference in speed would change none of these comparisons except between nearly tied points. NUCmer and LASTZ completed the analysis within the memory available on most desktop computers, whereas FastGA required high-end consumer hardware. LAST, Minimap2, and Wfmash required workstation-, cloud-, or HPC-class resources. With a human genome as target, the pipeline needed up to about 40, 65 and 220~GiB of memory with the RY128, RY4 and YASS seeds, respectively (Figure~\ref{fig:benchmark}A). LAST with the RY128 and RY4 seeds used less CPU time than all the other tools except FastGA (Figure~\ref{fig:benchmark}A). Differences in coverage were largest for the most distant genome, mouse, for which coverage increased from FastGA to LAST with the RY128 and RY4 seeds, FastGA with gap filling, and LAST with the YASS seed (Figure~\ref{fig:benchmark}B). Thus, gap filling restored the coverage of FastGA, but made it slower than LAST with the default RY4 seed, which covered nearly as much. On human coding sequences, the LASTZ (KegAlign) alignments of the mouse genome covered the most, followed closely by LAST with the MAM8 and YASS seeds (Figure~\ref{fig:exons}). Coverage measures sensitivity only: alignments extending into non-homologous sequence also increase it, as LASTZ alignments did with the simulated pairs (Figure~\ref{fig:simulated}B). Overall, by changing a single parameter, the seed, the pipeline spans the range of speed and sensitivity covered here by several distinct tools.
 
 \begin{figure}[ht]
-\includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/timeline.pdf}
+\includegraphics[width=\linewidth]{manuscript/timeline.pdf}
 \caption{Wall-clock time and peak memory of each stage of the pipeline. Each panel shows the median for three replicate runs, aligning one of the five genomes of the benchmark of \citet{Myers_2025} (Figure~\ref{fig:benchmark}) to the human CHM13 genome with one seed on Intel Xeon nodes. Rows: seeds, in order of increasing sensitivity. Columns: aligned genomes, in order of increasing sequence divergence from human. Each stage is drawn as a block whose width is its wall-clock time and whose height is its peak resident memory (RSS). The dashed line marks the end of the run.}
 \label{fig:stages}
 \end{figure}
@@ -263,12 +263,12 @@ These results support RY4 as the default seed. With simulated pairs, it missed o
 \begin{figure}[ht]
     \centering
     \begin{subfigure}{\linewidth}
-        \includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/I25_diploid___I25_alternate.m2m.png}
+        \includegraphics[width=\linewidth]{manuscript/I25_diploid___I25_alternate.m2m.png}
         \caption{}
         \label{fig:fig7a}
     \end{subfigure}
     \begin{subfigure}{\linewidth}
-        \includegraphics[width=\linewidth]{Template_for_both_PCI_and_PCJ/I25_diploid___I25_alternate.o2m.png}
+        \includegraphics[width=\linewidth]{manuscript/I25_diploid___I25_alternate.o2m.png}
         \caption{}
         \label{fig:fig7b}
     \end{subfigure}

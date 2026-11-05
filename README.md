@@ -8,10 +8,10 @@ Mohammed Mahdi, Takahiro Fujita, Martin C. Frith and Nicholas M. Luscombe.
 Contents
 --------
 
-- `Template_for_both_PCI_and_PCJ/`: the LaTeX manuscript, its bibliography and
+- `manuscript/`: the LaTeX manuscript, its bibliography and
   its figures, edited with Overleaf in the template of Peer Community In and
   Peer Community Journal.
-- `Template_for_both_PCI_and_PCJ/initial_drafts/`: notes and prompts used to
+- `manuscript/initial_drafts/`: notes and prompts used to
   write the first draft.
 - `AGENTS.md`: instructions for AI agents working on this repository.
 
@@ -26,6 +26,10 @@ them and/or modify them under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.  See `LICENSE`.
 
+The text of the manuscript, its figures and the data tables are distributed
+under the Creative Commons Attribution 4.0 International licence (CC BY 4.0,
+<https://creativecommons.org/licenses/by/4.0/>).
+
 The files of the LaTeX template (`cedram*`, `pcj.*` and the other files listed
-in `Template_for_both_PCI_and_PCJ/README.txt`) are distributed by Centre
+in `manuscript/README.txt`) are distributed by Centre
 Mersenne under their own terms.

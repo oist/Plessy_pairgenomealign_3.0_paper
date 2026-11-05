@@ -10,12 +10,12 @@ and applications.
 Files
 -----
 
-- `Template_for_both_PCI_and_PCJ/PCJ-sample.tex`: the manuscript, in the
+- `manuscript/pairgenomealign.tex`: the manuscript, in the
   PCI/PCJ LaTeX template (cedram class).  Read it before writing anything.
-- `Template_for_both_PCI_and_PCJ/PCJ-sample.bib`: the bibliography.  Its
+- `manuscript/pairgenomealign.bib`: the bibliography.  Its
   entries contain abstracts; read them to understand why a reference is cited.
-- `Template_for_both_PCI_and_PCJ/*.pdf`, `*.png`: the figures.
-- `Template_for_both_PCI_and_PCJ/initial_drafts/`: notes and prompts used for
+- `manuscript/*.pdf`, `*.png`: the figures.
+- `manuscript/initial_drafts/`: notes and prompts used for
   the first draft.  Historical; not maintained.
 - The template's own files (`cedram*`, `pcj.*`, `*.cfg`, `*.clo`,
   `README.txt`): do not modify.
@@ -50,8 +50,8 @@ Building the PDF locally
 
 Overleaf compiles with pdfLaTeX and Biber.  With TeX Live 2023,
 `\DocumentMetadata` is not supported: comment it out in a copy of the file.
-Then, from the repository root, with `TEXINPUTS=./Template_for_both_PCI_and_PCJ//:`,
-run `pdflatex`, `biber --input-directory Template_for_both_PCI_and_PCJ`, and
+Then, from the repository root, with `TEXINPUTS=./manuscript//:`,
+run `pdflatex`, `biber --input-directory manuscript`, and
 `pdflatex` twice.  On Debian, the class needs the packages lmodern,
 texlive-latex-extra, texlive-plain-generic, texlive-lang-french,
 texlive-fonts-extra and biber.
