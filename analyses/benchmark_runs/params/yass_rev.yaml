@@ -1,0 +1,8 @@
+# Negative control for P-YASS: lastal reverses the query (mm39) without
+# complementing it, which removes its homology to the target but keeps its
+# length, base composition and simple repeats.  bin/02_run.sh adds
+# --lastal_params with the scores trained in run yass.
+seed: YASS
+m2m: true
+skip_dotplot_m2m: true
+lastal_extr_args: '--reverse'    # passed to lastal only, not to last-train

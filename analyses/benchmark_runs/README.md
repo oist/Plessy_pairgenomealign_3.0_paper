@@ -197,3 +197,39 @@ Numbers for Figure 5C (Benchmark.Rmd, `exon` table, YASS row):
 
 columns: exons, alignment, exons_total, exons_hit, fraction_exons_hit, cds_bp,
 cds_bp_covered, fraction_bp_covered.
+
+## Reversed-query controls (ry4_rev, yass_rev)
+
+Negative controls for false-positive alignments.  `params/ry4_rev.yaml` and
+`params/yass_rev.yaml` repeat the ry4 and yass runs with `lastal --reverse`, which
+reverses the query (mm39) without complementing it: the reversed genome keeps its length,
+base composition and simple repeats, but has no homology to the target.  For a run named
+`BASE_rev`, `bin/02_run.sh` adds `--lastal_params` with the scores trained in run `BASE`
+(`$BUCKET_DIR/runs/BASE/alignment/hg38___mm39.train`), so the control differs from its
+base run only by the reversal.  Training is skipped: on a reversed query, last-train would
+find few alignments, and the pipeline skips a query whose training fails.
+
+The aligned bases of a control are an upper bound of the false positives of its base run:
+- the reversed query contains reversals of sequences homologous to the target, and their
+  approximate palindromes give alignments (Glidden-Handgis and Wheeler 2024, Bioinformatics
+  Advances 4:vbae052);
+- no true alignment competes with the chance alignments in last-split.
+
+    ml purge; ml bioinfo-ugrp-modules; ml Nextflow3
+    bin/02_run.sh ry4_rev              # login node, inside tmux; run ry4 must be on Bucket
+    bin/03_check.sh ry4_rev            # lastal: --reverse and -p .../runs/ry4/alignment/hg38___mm39.train
+    bin/06_coverage.sh ry4 ry4_rev     # prints nothing; wait for the job to finish
+    source settings.sh
+    D=$(ls -d "$BUCKET_DIR"/analysis/[0-9]*_* | tail -n 1)    # the newest coverage directory
+    bin/11_aligned_bp.sh "$D"          # target bases covered, per alignment set
+    awk -F'\t' '$1 == "ry4.o2o" { a = $2 } $1 == "ry4_rev.o2o" { b = $2 }
+        END { printf "reversed / real, o2o: %.4f%%\n", 100 * b / a }' "$D/tables/aligned_bp.tsv"
+    awk -F'\t' '$1 == "other.gulhan2025_knownGene" && $2 ~ /^ry4(_rev)?\.(m2m|o2o)$/' \
+        "$D/tables/coverage_genome.tsv"   # coding exons covered by real and reversed alignments
+    bin/04_cleanup.sh ry4_rev          # once the check is done
+
+Replace `ry4` by `yass` for the YASS control.  `conf/yass.config` is not loaded for
+`yass_rev`: its raised memory is for splitting the many alignments of the real run.
+
+`bin/11_aligned_bp.sh DIR` also works on earlier analysis directories, including merged
+ones, whose `alignments/` hold links to the BED files.
