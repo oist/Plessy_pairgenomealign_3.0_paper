@@ -1,0 +1,12 @@
+date: 2026-11-08T10:02:55Z
+slurm_job: 52755930
+runs: ry4 ry4_rev
+bedtools image: https://depot.galaxyproject.org/singularity/bedtools:2.31.1--hf5e1c6e_0
+LAST image: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/62/62292ffa3ecc9230d6ad20b2537a2f4434a08908864c4c2c66f2d8667f031924/data
+inputs:
+1c9dcaddfa41027f17cd8f7a82c7293b  ./hg38.fa.gz
+b8e91d9c616a2dd0283916157c686a42  ./knownGene.txt.gz
+41ace1b7157b98b393746aef5d1287a8  ./mm39.fa.gz
+c4e88a1a1e6a526fa7c5155521a513fe  ./ncbiRefSeq.txt.gz
+3a283252cd9d1902ad15edeaf878cf6c  ./refGene.txt.gz
+downloaded: 2026-10-14T00:37:08Z

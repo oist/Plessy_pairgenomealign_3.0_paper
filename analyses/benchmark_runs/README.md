@@ -233,3 +233,7 @@ Replace `ry4` by `yass` for the YASS control.  `conf/yass.config` is not loaded 
 
 `bin/11_aligned_bp.sh DIR` also works on earlier analysis directories, including merged
 ones, whose `alignments/` hold links to the BED files.
+
+Result of `ry4_rev` (8 November 2026): one many-to-many alignment covering 178 target
+bases, no many-to-one or one-to-one alignment; tables and report in
+`analyses/exons/reversed_control/`.
