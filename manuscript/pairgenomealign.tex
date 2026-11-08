@@ -172,13 +172,13 @@ The pipeline was developed without AI agents that edit code or run commands; con
 
 \begin{figure}[p]
 \includegraphics[width=\linewidth]{manuscript/pairgenomealign-tubemap.pdf}
-\caption{The nf-core/pairgenomealign pipeline aligns a list of query genomes to a target genome and produces alignments, plots, and metrics reports. The data flow is indicated by lines and the nf-core modules are indicated by circles. The main pipeline steps are indicated by words in bold. A \texttt{-{}-m2m} mode is available to produce all combinations between many- and one- relationships.}
+\caption{The nf-core/pairgenomealign pipeline aligns a list of query genomes to a target genome and produces alignments, plots, and metrics reports. The data flow is indicated by lines and the nf-core modules are indicated by circles. The main pipeline steps are indicated by words in bold. By default, the pipeline produces many-to-one alignments, where each region of the query genome is aligned at most once, and reduces them to one-to-one alignments, where each region of either genome is aligned at most once. The \texttt{-{}-m2m} mode keeps the many-to-many alignments, where regions of both genomes can be aligned several times, and also produces one-to-many alignments, where each region of the target genome is aligned at most once.}
 \label{fig:fig1}
 \end{figure}
 
 \begin{figure}[p]
 \includegraphics[width=\linewidth]{manuscript/primates_clustering.pdf}
-\caption{All-versus-all alignment of primate genomes produces a matrix of percent nucleotide differences, plotted as a heatmap, which were clustered by average linkage. Filled dots mark the clades of the tree matching the NCBI Taxonomy.}
+\caption{All-versus-all one-to-one alignment of primate genomes produces a matrix of percent nucleotide differences, plotted as a heatmap, which were clustered by average linkage. Filled dots mark the clades of the tree matching the NCBI Taxonomy.}
 \label{fig:fig2}
 \end{figure}
 
@@ -212,7 +212,7 @@ To combine the one-to-one alignments of all query genomes into a single indexed 
         \label{fig:fig3b}
     \end{subfigure}
 
-   \caption{Human-versus-all alignment of 580 vertebrate genomes compressed in CRAM format displayed in genome browsers in the DLX6 locus, which is flanked by ultraconserved elements (UCEs, \cite{Bejerano_2004}). (A)~Coverage track in the JBrowse genome browser (\cite{Diesh_2023}): its height is the number of genomes aligned at each position, in grey where their bases match the human genome and in colours where they differ; the grey peaks show where many genomes align without differences. (B)~Alignment track of the same region in the Integrative Genomics Viewer (\cite{Robinson_2011}; \cite{Thorvaldsdottir_2013}), showing that all alignments can be displayed simultaneously.}
+   \caption{Human-versus-all one-to-one alignment of 580 vertebrate genomes compressed in CRAM format displayed in genome browsers in the DLX6 locus, which is flanked by ultraconserved elements (UCEs, \cite{Bejerano_2004}). (A)~Coverage track in the JBrowse genome browser (\cite{Diesh_2023}): its height is the number of genomes aligned at each position, in grey where their bases match the human genome and in colours where they differ; the grey peaks show where many genomes align without differences. (B)~Alignment track of the same region in the Integrative Genomics Viewer (\cite{Robinson_2011}; \cite{Thorvaldsdottir_2013}), showing that all alignments can be displayed simultaneously.}
    \label{fig:fig3}
 \end{figure}
 
@@ -220,7 +220,7 @@ To combine the one-to-one alignments of all query genomes into a single indexed 
 
 \begin{figure}[tbp]
     \includegraphics[width=\linewidth]{manuscript/simulated.pdf}
-    \caption{Alignment of simulated sequence pairs. (A)~Each pair consists of a homologous region of 1 to 10~kb flanked by 1~kb of random sequence (\cite{Gulhan_2025}). $d$ is the distance from the boundary of the homologous region to the end of the alignments, measured on the first sequence: negative when the alignments stop inside the homologous region, positive when they extend into random sequence. (B)~$d$ as a function of the true identity of the pair, for alignments published by \citet{Gulhan_2025} (ochre) and for LAST run with the RY4 or RY128 seed (blue). Arcsinh scale. Panel titles give the number of pairs found; ticks on the lower edge mark the pairs not found. YASS and MAM8 seeds (not shown) found all pairs, with nearly the same alignments as RY4. (C)~Identity (without gaps) of the alignments minus true identity, in percentage points, for LASTZ and LAST (RY4). Grey levels: length of the homologous region. Lines: robust
+    \caption{Alignment of simulated sequence pairs. (A)~Each pair consists of a homologous region of 1 to 10~kb flanked by 1~kb of random sequence (\cite{Gulhan_2025}). $d$ is the distance from the boundary of the homologous region to the end of the alignments, measured on the first sequence: negative when the alignments stop inside the homologous region, positive when they extend into random sequence. (B)~$d$ as a function of the true identity of the pair, for alignments published by \citet{Gulhan_2025} (ochre) and for the many-to-many alignments of LAST run with the RY4 or RY128 seed (blue). Arcsinh scale. Panel titles give the number of pairs found; ticks on the lower edge mark the pairs not found. YASS and MAM8 seeds (not shown) found all pairs, with nearly the same alignments as RY4. (C)~Identity (without gaps) of the alignments minus true identity, in percentage points, for LASTZ and LAST (RY4). Grey levels: length of the homologous region. Lines: robust
     loess trends.}
     \label{fig:simulated}
 \end{figure}
@@ -240,7 +240,7 @@ To compare the sensitivity of the pipeline with that of other aligners where the
   \end{minipage}\hfill
   \begin{minipage}[t]{\dimexpr\linewidth-85mm\relax}
     \vspace{0pt}
-    \caption{Pipeline performance with different seeds (blue) in the context of the benchmark of \citet{Gulhan_2025} (ochre triangles). Mouse genome (mm39) aligned to the human genome (hg38). Human coding sequence covered by many-to-many alignments, counted in bases (left axis) and in exons overlapped by at least one aligned base (right axis). Lines connect the two measures of the same aligner.}
+    \caption{Pipeline performance with different seeds (blue) in the context of the benchmark of \citet{Gulhan_2025} (ochre triangles). Mouse genome (mm39) aligned to the human genome (hg38). Human coding sequence covered by many-to-many alignments (\texttt{-{}-m2m} mode), counted in bases (left axis) and in exons overlapped by at least one aligned base (right axis). Lines connect the two measures of the same aligner.}
     \label{fig:exons}
   \end{minipage}
 \end{figure}
@@ -249,7 +249,7 @@ To compare computational cost and coverage on real genomes, we used the dataset 
 
 \begin{figure}[ht]
 \includegraphics[width=\linewidth]{manuscript/timeline.pdf}
-\caption{Wall-clock time and peak memory of each stage of the pipeline. Each panel shows the median for three replicate runs, aligning one of the five genomes of the benchmark of \citet{Myers_2025} (Figure~\ref{fig:benchmark}) to the human CHM13 genome with one seed on Intel Xeon nodes. Rows: seeds, in order of increasing sensitivity. Columns: aligned genomes, in order of increasing sequence divergence from human. Each stage is drawn as a block whose width is its wall-clock time and whose height is its peak resident memory (RSS). The dashed line marks the end of the run.}
+\caption{Wall-clock time and peak memory of each stage of the pipeline. Each panel shows the median for three replicate runs, aligning one of the five genomes of the benchmark of \citet{Myers_2025} (Figure~\ref{fig:benchmark}) to the human CHM13 genome with one seed on Intel Xeon nodes. Rows: seeds, in order of increasing sensitivity. Columns: aligned genomes, in order of increasing sequence divergence from human. Each stage is drawn as a block whose width is its wall-clock time and whose height is its peak resident memory (RSS). The dashed line marks the end of the run. In the default mode used here, ALIGN produces many-to-one alignments and SPLIT reduces them to one-to-one alignments.}
 \label{fig:stages}
 \end{figure}
 
