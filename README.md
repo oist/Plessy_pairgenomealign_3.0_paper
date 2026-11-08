@@ -13,10 +13,13 @@ Contents
   Peer Community Journal.
 - `manuscript/initial_drafts/`: notes and prompts used to
   write the first draft.
+- `analyses/`: scripts and data supporting the article.
+- `agent_prompts/`: prompts given to other AI agents, to compare their plans
+  for a whole-genome alignment pipeline with the design of
+  nf-core/pairgenomealign; not part of the article.
 - `AGENTS.md`: instructions for AI agents working on this repository.
 
-The scripts and data supporting the article will be added to this repository,
-and releases will be archived on Zenodo.
+Releases of this repository are archived on Zenodo.
 
 Licence
 -------

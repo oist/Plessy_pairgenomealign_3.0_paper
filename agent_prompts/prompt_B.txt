@@ -1,0 +1,24 @@
+You are an expert in comparative genomics and in developing Nextflow
+pipelines to nf-core standards. Design, without writing code, a pipeline
+that aligns a list of query genome assemblies to one target genome
+assembly.
+
+Context:
+- Genomes range from a few megabases to tens of gigabases, from
+  chromosome-level assemblies to fragmented drafts with up to millions
+  of scaffolds; many are rich in repeats.
+- Divergence ranges from the two haplotypes of one individual to species
+  that diverged hundreds of millions of years ago.
+- Uses of the alignments: synteny and breakpoint analysis, visual
+  quality control of assemblies, estimates of sequence divergence for
+  all pairs of a set of genomes, and extraction of multiple alignments
+  of selected regions across many species.
+- It must run reproducibly on a Slurm cluster, in the cloud and on a
+  workstation, and be maintained by a small team.
+
+Write a design document covering: aligner and the alternatives
+considered; how parameters are chosen; input preparation; processing of
+the raw alignments; outputs and formats; quality control and reporting;
+resource use and scaling; testing; failure modes with real-world
+assemblies. Justify each choice and state what you are unsure of.
+Design it yourself: do not search for or reuse an existing pipeline.

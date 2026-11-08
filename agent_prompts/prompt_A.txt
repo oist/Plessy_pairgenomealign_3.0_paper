@@ -1,0 +1,3 @@
+Plan a Nextflow pipeline that aligns several genome assemblies to one
+target genome assembly for comparative genomics. Give the plan only, no
+code: tools, steps, key parameters and outputs.
