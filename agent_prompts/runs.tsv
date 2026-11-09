@@ -1,1 +1,12 @@
 run_id	prompt	agent	model	model_version	date	account	web_search	extended_reasoning	replicate	names_pairgenomealign	output_file	notes
+A_copilot_gpt5	A	M365 Copilot	GPT-5	NA	2026-11-09 13:38:07 +0900	NA	NA	NA	1	no	prompt_A/M365_Copilot_2026-11-09.txt	minimap2, SyRI, QUAST
+A_duckai_gpt6	A	duck.ai	GPT-6	NA	2026-11-09 12:01:51 +0900	NA	NA	yes	1	no	prompt_A/duckduckgo.com_2026-11-09.txt	minimap2, SyRI, QUAST
+A_google	A	Google (google.com)	NA	NA	2026-11-09 11:58:11 +0900	NA	NA	NA	1	no	prompt_A/google.com_2026-11-09.txt	minimap2, then UCSC chain/net
+A_sakana_namazu	A	Sakana (chat.sakana.ai)	Namazu	NA	2026-11-09 11:56:40 +0900	NA	NA	yes	1	no	prompt_A/sakana.ai_2026-11-09.txt	minimap2, SyRI
+A_seqera	A	Seqera AI (seqera.io)	NA	NA	2026-11-09	NA	NA	NA	1	yes	prompt_A/sequera.io_2026-11-09.txt	recommends nf-core/pairgenomealign; date and time not recorded in the file
+B_copilot_gpt5	B	M365 Copilot	GPT-5	NA	2026-11-09 13:38:07 +0900	NA	NA	NA	1	no	prompt_B/M365_Copilot_2026-11-09.txt	minimap2
+B_duckai_gemma4	B	duck.ai ("second opinion")	Gemma 4	NA	2026-11-09 12:36:29 +0900	NA	NA	NA	1	no	prompt_B/duckduckgo.com_2026-11-09-2.txt	minimap2
+B_duckai_gpt6	B	duck.ai	GPT-6	NA	2026-11-09 12:33:50 +0900	NA	NA	yes	1	no	prompt_B/duckduckgo.com_2026-11-09.txt	minimap2; Cactus for deep divergence
+B_google	B	Google (google.com)	NA	NA	2026-11-09 12:38:15 +0900	NA	NA	NA	1	no	prompt_B/google.com_2026-11-09.txt	minimap2, Cactus, GSAlign; UCSC chain/net
+B_sakana_namazu	B	Sakana (chat.sakana.ai)	Namazu	NA	2026-11-09 12:53:16 +0900	NA	NA	yes	1	no	prompt_B/sakana.ai_2026-11-09.txt	LASTZ, UCSC chain/net; minimap2 for close genomes
+B_seqera	B	Seqera AI (seqera.io)	NA	NA	2026-11-09 12:35:33 +0900	NA	NA	NA	1	no	prompt_B/sequera.io_2026-11-09.txt	LAST design matching nf-core/pairgenomealign, which it named in its answer to prompt A

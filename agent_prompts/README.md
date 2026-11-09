@@ -3,13 +3,15 @@ Prompts for AI agents
 
 Two prompts to compare the plans that AI agents write for a whole-genome
 alignment pipeline with the design choices of nf-core/pairgenomealign.  The
-answers are collected for the authors' information; they are not part of the
-article.
+results are summarised in the Methods of the article, section "Use of artificial
+intelligence", and in `summary.md`.
 
 - `prompt_A.txt`: a short request, as a user might type it.
 - `prompt_B.txt`: a detailed request that states the uses the pipeline was built
   for, with generic headings that do not hint at its design.
 - `runs.tsv`: one line per answer (agent, model and version, date, settings).
+- `prompt_A/`, `prompt_B/`: the answers, one text file per agent.
+- `summary.md`: the answers scored against the checklist below.
 
 Procedure
 ---------
@@ -19,8 +21,8 @@ Procedure
 - Turn web search off where possible: the pipeline documentation and this
   repository, including this directory, are public.  Use an account without
   memory or project context related to this work.
-- Save each full answer as `answers/<run_id>.md` and fill a line of `runs.tsv`,
-  including whether the answer names nf-core/pairgenomealign.
+- Save each full answer in `prompt_A/` or `prompt_B/` and fill a line of
+  `runs.tsv`, including whether the answer names nf-core/pairgenomealign.
 
 Checklist
 ---------
