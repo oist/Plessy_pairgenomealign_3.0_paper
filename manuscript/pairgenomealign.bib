@@ -1826,6 +1826,25 @@ OA = {Green Submitted, gold},
 DA = {2026-07-01},
 }
 
+@article{Glidden-Handgis_2024,
+    author = {Glidden-Handgis, George and Wheeler, Travis J},
+    title = {WAS IT A MATch I SAW? Approximate palindromes lead to overstated false match rates in benchmarks using reversed sequences},
+    journal = {Bioinformatics Advances},
+    volume = {4},
+    number = {1},
+    pages = {vbae052},
+    year = {2024},
+    month = {01},
+    abstract = {Software for labeling biological sequences typically produces a theory-based statistic for each match (the E-value) that indicates the likelihood of seeing that match’s score by chance. E-values accurately predict false match rate for comparisons of random (shuffled) sequences, and thus provide a reasoned mechanism for setting score thresholds that enable high sensitivity with low expected false match rate. This threshold-setting strategy is challenged by real biological sequences, which contain regions of local repetition and low sequence complexity that cause excess matches between non-homologous sequences. Knowing this, tool developers often develop benchmarks that use realistic-seeming decoy sequences to explore empirical tradeoffs between sensitivity and false match rate. A recent trend has been to employ reversed biological sequences as realistic decoys, because these preserve the distribution of letters and the existence of local repeats, while disrupting the original sequence’s functional properties. However, we and others have observed that sequences appear to produce high scoring alignments to their reversals with surprising frequency, leading to overstatement of false match risk that may negatively affect downstream analysis.We demonstrate that an alignment between a sequence S and its (possibly mutated) reversal tends to produce higher scores than alignment between truly unrelated sequences, even when S is a shuffled string with no notable repetitive or low-complexity regions. This phenomenon is due to the unintuitive fact that (even randomly shuffled) sequences contain palindromes that are on average longer than the longest common substrings (LCS) shared between permuted variants of the same sequence. Though the expected palindrome length is only slightly larger than the expected LCS, the distribution of alignment scores involving reversed sequences is strongly right-shifted, leading to greatly increased frequency of high-scoring alignments to reversed sequences.Overestimates of false match risk can motivate unnecessarily high score thresholds, leading to potentially reduced true match sensitivity. Also, when tool sensitivity is only reported up to the score of the first matched decoy sequence, a large decoy set consisting of reversed sequences can obscure sensitivity differences between tools. As a result of these observations, we advise that reversed biological sequences be used as decoys only when care is taken to remove positive matches in the original (un-reversed) sequences, or when overstatement of false labeling is not a concern. Though the primary focus of the analysis is on sequence annotation, we also demonstrate that the prevalence of internal palindromes may lead to an overstatement of the rate of false labels in protein identification with mass spectrometry.},
+    issn = {2635-0041},
+    doi = {10.1093/bioadv/vbae052},
+    url = {https://doi.org/10.1093/bioadv/vbae052},
+    eprint = {https://academic.oup.com/bioinformaticsadvances/article-pdf/4/1/vbae052/57721937/vbae052.pdf},
+}
+
+
+
+
 @article{ Gruening_2018,
 Author = {Gruening, Bjoern and Dale, Ryan and Sjoedin, Andreas and Chapman, Brad
    A. and Rowe, Jillian and Tomkins-Tinch, Christopher H. and Valieris,
@@ -2095,6 +2114,220 @@ better platform for continued experimentation},
   }
 }
 
+@article{Herrero_2016,
+Author = {Herrero, Javier and Muffato, Matthieu and Beal, Kathryn and Fitzgerald,
+   Stephen and Gordon, Leo and Pignatelli, Miguel and Vilella, Albert J.
+   and Searle, Stephen M. J. and Amode, Ridwan and Brent, Simon and
+   Spooner, William and Kulesha, Eugene and Yates, Andrew and Flicek, Paul},
+Title = {Ensembl comparative genomics resources},
+Journal = {DATABASE-THE JOURNAL OF BIOLOGICAL DATABASES AND CURATION},
+Year = {2016},
+Month = {FEB 20},
+Abstract = {Evolution provides the unifying framework with which to understand
+   biology. The coherent investigation of genic and genomic data often
+   requires comparative genomics analyses based on whole-genome alignments,
+   sets of homologous genes and other relevant datasets in order to
+   evaluate and answer evolutionary-related questions. However, the
+   complexity and computational requirements of producing such data are
+   substantial: this has led to only a small number of reference resources
+   that are used for most comparative analyses. The Ensembl comparative
+   genomics resources are one such reference set that facilitates
+   comprehensive and reproducible analysis of chordate genome data. Ensembl
+   computes pairwise and multiple whole-genome alignments from which
+   large-scale synteny, per-base conservation scores and constrained
+   elements are obtained. Gene alignments are used to define Ensembl
+   Protein Families, GeneTrees and homologies for both protein-coding and
+   non-coding RNA genes. These resources are updated frequently and have a
+   consistent informatics infrastructure and data presentation across all
+   supported species. Specialized web-based visualizations are also
+   available including synteny displays, collapsible gene tree plots, a
+   gene family locator and different alignment views. The Ensembl
+   comparative genomics infrastructure is extensively reused for the
+   analysis of non-vertebrate species by other projects including Ensembl
+   Genomes and Gramene and much of the information here is relevant to
+   these projects. The consistency of the annotation across species and the
+   focus on vertebrates makes Ensembl an ideal system to perform and
+   support vertebrate comparative genomic analyses. We use robust software
+   and pipelines to produce reference comparative data and make it freely
+   available.},
+Publisher = {OXFORD UNIV PRESS},
+Address = {GREAT CLARENDON ST, OXFORD OX2 6DP, ENGLAND},
+Type = {Article},
+Language = {English},
+Affiliation = {Herrero, J; Muffato, M; Flicek, P (Corresponding Author), European Bioinformat Inst, European Mol Biol Lab, Wellcome Trust Genome Campus, Hinxton CB10 1SD, England.
+   Herrero, J (Corresponding Author), UCL, UCL Canc Inst, Bill Lyons Informat Ctr, London WC1E 6DD, England.
+   Flicek, P (Corresponding Author), Wellcome Trust Sanger Inst, Wellcome Trust Genome Campus, Hinxton CB10 1SA, Cambs, England.
+   Herrero, Javier; Muffato, Matthieu; Beal, Kathryn; Fitzgerald, Stephen; Gordon, Leo; Pignatelli, Miguel; Vilella, Albert J.; Amode, Ridwan; Kulesha, Eugene; Yates, Andrew; Flicek, Paul, European Bioinformat Inst, European Mol Biol Lab, Wellcome Trust Genome Campus, Hinxton CB10 1SD, England.
+   Herrero, Javier, UCL, UCL Canc Inst, Bill Lyons Informat Ctr, London WC1E 6DD, England.
+   Searle, Stephen M. J.; Amode, Ridwan; Brent, Simon; Kulesha, Eugene; Flicek, Paul, Wellcome Trust Sanger Inst, Wellcome Trust Genome Campus, Hinxton CB10 1SA, Cambs, England.
+   Spooner, William, Eagle Genom Ltd, Babraham Res Campus, Cambridge CB22 3AT, England.
+   Spooner, William, Cold Spring Harbor Lab, 1 Bungtown Rd, Cold Spring Harbor, NY 11724 USA.},
+DOI = {10.1093/database/bav096},
+Article-Number = {bav096},
+ISSN = {1758-0463},
+Keywords-Plus = {SEQUENCE ALIGNMENT; GENE-FUNCTION; MULTIPLE; EVOLUTION; DATABASE;
+   IDENTIFICATION; SUBSTITUTION; DUPLICATION; VERTEBRATE; CONSTRAINT},
+Research-Areas = {Mathematical \& Computational Biology},
+Web-of-Science-Categories  = {Mathematical \& Computational Biology},
+Author-Email = {javier.herrero@ucl.ac.uk
+   muffato@ebi.ac.uk
+   flicek@ebi.ac.uk},
+Affiliations = {Wellcome Trust Sanger Institute; European Molecular Biology Laboratory
+   (EMBL); European Bioinformatics Institute; University of London;
+   University College London; Wellcome Trust Sanger Institute; UK Research
+   \& Innovation (UKRI); Biotechnology and Biological Sciences Research
+   Council (BBSRC); Babraham Institute; Cold Spring Harbor Laboratory},
+ResearcherID-Numbers = {Flicek, Paul/JOZ-9351-2023
+   Herrero, Javier/H-6971-2019
+   Muffato, Matthieu/AFW-4467-2022
+   /B-6121-2011
+   /A-8586-2008
+   Pignatelli, Miguel/H-9972-2017},
+ORCID-Numbers = {Flicek, Paul/0000-0002-3897-7955
+   Kulesha, Eugene/0000-0002-4285-6232
+   Herrero, Javier/0000-0001-7313-717X
+   Muffato, Matthieu/0000-0002-7860-3560
+   },
+Funding-Acknowledgement = {Wellcome Trust {[}WT095908, WT098051]; National Human Genome Research
+   Institute at the National Institutes of Health {[}U01HG004695,
+   U54HG004563, U41HG006104]; Biotechnology and Biological Sciences
+   Research Council {[}BB/I025506/1, BB/I025360/1, BB/I025360/2]; European
+   Molecular Biology Laboratory; UCL Cancer Institute Research Trust;
+   European Union {[}HEALTH-F4-2010-241504]; European Community {[}223210
+   CISSTEM, 222664]; Biotechnology and Biological Sciences Research Council
+   {[}BB/E011640/1, BB/I025506/1, BB/I025360/1, BB/I025360/2] Funding
+   Source: researchfish},
+Funding-Text = {Wellcome Trust (WT095908 and WT098051), which provides majority funding
+   to Ensembl; the National Human Genome Research Institute at the National
+   Institutes of Health (U01HG004695, U54HG004563 and U41HG006104), the
+   Biotechnology and Biological Sciences Research Council (BB/I025506/1,
+   BB/I025360/1 and BB/I025360/2), the European Molecular Biology
+   Laboratory and the UCL Cancer Institute Research Trust (J.H.). The
+   research leading to these results has received funding from the European
+   Union's Seventh Framework Programme (FP7/2007-2013) under grant
+   agreement no. HEALTH-F4-2010-241504 (EURATRANS). The research leading to
+   these results has received funding from the European Community's Seventh
+   Framework Programme (FP7/2007-2013) under the grant agreement no. 223210
+   CISSTEM. The research leading to these results has received funding from
+   the European Community's Seventh Framework Programme (FP7/2007-2013)
+   under grant agreement no. 222664. ('Quantomics'). This Publication
+   reflects only the author's views and the European Community is not
+   liable for any use that may be made of the information contained herein.
+   Funding for open access charge: The Wellcome Trust.},
+Number-of-Cited-References = {68},
+Times-Cited = {321},
+Usage-Count-Last-180-days = {0},
+Usage-Count-Since-2013 = {31},
+Journal-ISO = {Database},
+Doc-Delivery-Number = {DE9AF},
+Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
+Unique-ID = {WOS:000370927100001},
+OA = {Green Published, gold},
+DA = {2026-11-09},
+}
+
+@article{ Heumos_2024,
+Author = {Heumos, Simon and Heuer, Michael L. and Hanssen, Friederike and Heumos,
+   Lukas and Guarracino, Andrea and Heringer, Peter and Ehmele, Philipp and
+   Prins, Pjotr and Garrison, Erik and Nahnsen, Sven},
+Title = {Cluster-efficient pangenome graph construction with nf-core/pangenome},
+Journal = {BIOINFORMATICS},
+Year = {2024},
+Volume = {40},
+Number = {11},
+Month = {NOV},
+Abstract = {Motivation: Pangenome graphs offer a comprehensive way of capturing
+   genomic variability across multiple genomes. However, current
+   construction methods often introduce biases, excluding complex sequences
+   or relying on references. The PanGenome Graph Builder (PGGB) addresses
+   these issues. To date, though, there is no state-of-the-art pipeline
+   allowing for easy deployment, efficient and dynamic use of available
+   resources, and scalable usage at the same time.
+   Results: To overcome these limitations, we present nf-core/pangenome, a
+   reference-unbiased approach implemented in Nextflow following nf-core's
+   best practices. Leveraging biocontainers ensures portability and
+   seamless deployment in High-Performance Computing (HPC) environments.
+   Unlike PGGB, nf-core/pangenome distributes alignments across cluster
+   nodes, enabling scalability. Demonstrating its efficiency, we
+   constructed pangenome graphs for 1000 human chromosome 19 haplotypes and
+   2146 Escherichia coli sequences, achieving a two to threefold speedup
+   compared to PGGB without increasing greenhouse gas emissions.},
+Publisher = {OXFORD UNIV PRESS},
+Address = {GREAT CLARENDON ST, OXFORD OX2 6DP, ENGLAND},
+Type = {Article},
+Language = {English},
+Affiliation = {Heumos, S; Nahnsen, S (Corresponding Author), Univ Tubingen, Quantitat Biol Ctr QBiC Tubingen, Otfried Muller Str 37, D-72076 Tubingen, Germany.
+   Heumos, Simon; Hanssen, Friederike; Heringer, Peter; Nahnsen, Sven, Univ Tubingen, Quantitat Biol Ctr QBiC Tubingen, Otfried Muller Str 37, D-72076 Tubingen, Germany.
+   Heumos, Simon; Hanssen, Friederike; Heringer, Peter; Nahnsen, Sven, Univ Tubingen, Dept Comp Sci, Biomed Data Sci, D-72076 Tubingen, Germany.
+   Heumos, Simon; Hanssen, Friederike; Heringer, Peter; Nahnsen, Sven, Univ Hosp Tubingen, Res Ctr M3, D-72076 Tubingen, Germany.
+   Heumos, Simon; Hanssen, Friederike; Heringer, Peter; Nahnsen, Sven, Eberhard Karls Univ Tubingen, Inst Bioinformat \& Med Informat IBMI, D-72076 Tubingen, Germany.
+   Heuer, Michael L., Univ Calif Berkeley, Berkeley, CA 94720 USA.
+   Heumos, Lukas; Ehmele, Philipp, Helmholtz Munich, Dept Computat Hlth, Inst Computat Biol, D-85764 Munich, Germany.
+   Heumos, Lukas, Helmholtz Zentrum Munich, German Ctr Lung Res DZL, Comprehens Pneumol Ctr CPC M BioArch, D-81377 Munich, Germany.
+   Heumos, Lukas, Tech Univ Munich, TUM Sch Life Sci Weihenstephan, D-81377 Freising Weihenstephan, Germany.
+   Guarracino, Andrea; Prins, Pjotr; Garrison, Erik, Univ Tennessee, Dept Genet Genom \& Informat, Hlth Sci Ctr, Memphis, TN 38163 USA.
+   Guarracino, Andrea, Human Technopole, I-20157 Milan, Italy.},
+DOI = {10.1093/bioinformatics/btae609},
+Article-Number = {btae609},
+ISSN = {1367-4803},
+EISSN = {1367-4811},
+Research-Areas = {Biochemistry \& Molecular Biology; Biotechnology \& Applied
+   Microbiology; Computer Science; Mathematical \& Computational Biology;
+   Mathematics},
+Web-of-Science-Categories  = {Biochemical Research Methods; Biotechnology \& Applied Microbiology;
+   Computer Science, Interdisciplinary Applications; Mathematical \&
+   Computational Biology; Statistics \& Probability},
+Author-Email = {simon.heumos@qbic.uni-tuebingen.de
+   sven.nahnsen@qbic.uni-tuebingen.de},
+Affiliations = {Eberhard Karls University of Tubingen; Eberhard Karls University of
+   Tubingen; Eberhard Karls University of Tubingen; Eberhard Karls
+   University Hospital; Eberhard Karls University of Tubingen; University
+   of California System; University of California Berkeley; Helmholtz
+   Association; Helmholtz-Center Munich - German Research Center for
+   Environmental Health; Technical University of Munich; University of
+   Tennessee System; University of Tennessee Health Science Center; Human
+   Technopole},
+ResearcherID-Numbers = {Guarracino, Andrea/ABI-5879-2022
+   Heumos, Simon/AFP-1517-2022},
+ORCID-Numbers = {Heringer, Peter Julius/0009-0005-5985-2317
+   Prins, Pjotr/0000-0002-8021-9162
+   Heuer, Michael/0000-0002-9052-6000
+   Guarracino, Andrea/0000-0001-9744-131X
+   Heumos, Lukas/0000-0002-8937-3457
+   Hanssen, Friederike/0009-0001-9875-5262
+   Nahnsen, Sven/0000-0002-4375-0691
+   },
+Funding-Acknowledgement = {Central Innovation Programme (ZIM) for SMEs of the Federal Ministry for
+   Economic Affairs and Energy of Germany; BMBF {[}031A532B, 031A533A,
+   031A533B, 031A534A, 031A535A, 031A537A, 031A537B, 031A537C, 031A537D,
+   031A538A]; Deutsche Forschungsgemeinschaft (DFG, German Research
+   Foundation) under Germany's Excellence Strategy {[}EXC 2180-390900677,
+   EXC 2124-390838134]; NIH/NIDA {[}U01DA047638]; NIH/NIGMS
+   {[}R01GM123489]; NSF PPoSS Award {[}2118709]; CITG},
+Funding-Text = {S.H. acknowledges funding from the Central Innovation Programme (ZIM)
+   for SMEs of the Federal Ministry for Economic Affairs and Energy of
+   Germany. This work was supported by the BMBF-funded de.NBI Cloud within
+   the German Network for Bioinformatics Infrastructure (de.NBI) (031A532B,
+   031A533A, 031A533B, 031A534A, 031A535A, 031A537A, 031A537B, 031A537C,
+   031A537D, and 031A538A). A.G. acknowledges support from the Human
+   Technopole. S.N. acknowledges support from iFIT funded by the Deutsche
+   Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's
+   Excellence Strategy-EXC 2180-390900677 and CMFI under EXC
+   2124-390838134. We gratefully acknowledge support from NIH/NIDA
+   U01DA047638 (E.G.), NIH/NIGMS R01GM123489 (E.G. and P.P.), and NSF PPoSS
+   Award \#2118709 (E.G. and P.P.), and the CITG (E.G.).},
+Number-of-Cited-References = {41},
+Times-Cited = {17},
+Usage-Count-Last-180-days = {1},
+Usage-Count-Since-2013 = {3},
+Journal-ISO = {Bioinformatics},
+Doc-Delivery-Number = {P0B0E},
+Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
+Unique-ID = {WOS:001374659300001},
+OA = {Green Published, Green Submitted, Green Accepted, gold},
+DA = {2026-11-09},
+}
+
 @InProceedings{Jette_2023,
 doi="10.1007/978-3-031-43943-8_1",
 author="Jette, Morris A.
@@ -2318,6 +2551,101 @@ Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
 Unique-ID = {WOS:000185685700057},
 OA = {Green Submitted},
 DA = {2026-07-01},
+}
+
+@article{ Kirilenko_2023,
+Author = {Kirilenko, Bogdan M. and Munegowda, Chetan and Osipova, Ekaterina and
+   Jebb, David and Sharma, Virag and Blumer, Moritz and Morales, Ariadna E.
+   and Ahmed, Alexis-Walid and Kontopoulos, Dimitrios-Georgios and Hilgers,
+   Leon and Lindblad-Toh, Kerstin and Karlsson, Elinor K. and Hiller,
+   Michael and Zoonomia Consortium},
+Title = {Integrating gene annotation with orthology inference at scale},
+Journal = {SCIENCE},
+Year = {2023},
+Volume = {380},
+Number = {6643},
+Pages = {368+},
+Month = {APR 28},
+Abstract = {Annotating coding genes and inferring orthologs are two classical
+   challenges in genomics and evolutionary biology that have traditionally
+   been approached separately, limiting scalability. We present TOGA (Tool
+   to infer Orthologs from Genome Alignments), a method that integrates
+   structural gene annotation and orthology inference. TOGA implements a
+   different paradigm to infer orthologous loci, improves ortholog
+   detection and annotation of conserved genes compared with
+   state-of-the-art methods, and handles even highly fragmented assemblies.
+   TOGA scales to hundreds of genomes, which we demonstrate by applying it
+   to 488 placental mammal and 501 bird assemblies, creating the largest
+   comparative gene resources so far. Additionally, TOGA detects gene
+   losses, enables selection screens, and automatically provides a superior
+   measure of mammalian genome quality. TOGA is a powerful and scalable
+   method to annotate and compare genes in the genomic era.},
+Publisher = {AMER ASSOC ADVANCEMENT SCIENCE},
+Address = {1200 NEW YORK AVE, NW, WASHINGTON, DC 20005 USA},
+Type = {Article},
+Language = {English},
+Affiliation = {Hiller, M (Corresponding Author), Max Planck Inst Mol Cell Biol \& Genet, D-01307 Dresden, Germany.
+   Hiller, M (Corresponding Author), Max Planck Inst Phys Komplexer Syst, D-01187 Dresden, Germany.
+   Hiller, M (Corresponding Author), Ctr Syst Biol Dresden, D-01307 Dresden, Germany.
+   Hiller, M (Corresponding Author), LOEWE Ctr Translat Biodivers Genom, D-60325 Frankfurt, Germany.
+   Hiller, M (Corresponding Author), Senckenberg Res Inst, D-60325 Frankfurt, Germany.
+   Hiller, M (Corresponding Author), Goethe Univ Frankfurt, Fac Biosci, D-60438 Frankfurt, Germany.
+   Kirilenko, Bogdan M.; Munegowda, Chetan; Osipova, Ekaterina; Jebb, David; Sharma, Virag; Blumer, Moritz; Hiller, Michael, Max Planck Inst Mol Cell Biol \& Genet, D-01307 Dresden, Germany.
+   Kirilenko, Bogdan M.; Munegowda, Chetan; Osipova, Ekaterina; Jebb, David; Sharma, Virag; Blumer, Moritz; Hiller, Michael, Max Planck Inst Phys Komplexer Syst, D-01187 Dresden, Germany.
+   Kirilenko, Bogdan M.; Munegowda, Chetan; Osipova, Ekaterina; Jebb, David; Sharma, Virag; Blumer, Moritz; Hiller, Michael, Ctr Syst Biol Dresden, D-01307 Dresden, Germany.
+   Kirilenko, Bogdan M.; Munegowda, Chetan; Osipova, Ekaterina; Morales, Ariadna E.; Ahmed, Alexis-Walid; Kontopoulos, Dimitrios-Georgios; Hilgers, Leon; Hiller, Michael, LOEWE Ctr Translat Biodivers Genom, D-60325 Frankfurt, Germany.
+   Kirilenko, Bogdan M.; Munegowda, Chetan; Osipova, Ekaterina; Morales, Ariadna E.; Ahmed, Alexis-Walid; Kontopoulos, Dimitrios-Georgios; Hilgers, Leon; Hiller, Michael, Senckenberg Res Inst, D-60325 Frankfurt, Germany.
+   Kirilenko, Bogdan M.; Munegowda, Chetan; Osipova, Ekaterina; Morales, Ariadna E.; Ahmed, Alexis-Walid; Kontopoulos, Dimitrios-Georgios; Hilgers, Leon; Hiller, Michael, Goethe Univ Frankfurt, Fac Biosci, D-60438 Frankfurt, Germany.
+   Lindblad-Toh, Kerstin, Uppsala Univ, Dept Med Biochem \& Microbiol, Sci Life Lab, S-75132 Uppsala, Sweden.
+   Lindblad-Toh, Kerstin; Karlsson, Elinor K., Broad Inst \& Harvard, Cambridge, MA 02139 USA.
+   Karlsson, Elinor K., UMass Chan Med Sch, Program Bioinformat \& Integrat Biol, Worcester, MA 01605 USA.
+   Karlsson, Elinor K., UMass Chan Med Sch, Program Mol Med, Worcester, MA 01605 USA.
+   Sharma, Virag, Univ Limerick, Sch Nat Sci, Dept Chem Sci, Limerick V94 T9PX, Ireland.},
+DOI = {10.1126/science.abn3107},
+Article-Number = {eabn3107},
+ISSN = {0036-8075},
+EISSN = {1095-9203},
+Keywords-Plus = {EVOLUTIONARY; DUPLICATION; ALIGNMENTS; PREDICTION; IMPROVES; DATABASE;
+   GENOMES; EGGNOG},
+Research-Areas = {Science \& Technology - Other Topics},
+Web-of-Science-Categories  = {Multidisciplinary Sciences},
+Author-Email = {michael.hiller@senckenberg.de},
+Affiliations = {Max Planck Society; Max Planck Society; Leibniz Association; Senckenberg
+   Gesellschaft fur Naturforschung (SGN); Goethe University Frankfurt;
+   Uppsala University; Harvard University; Massachusetts Institute of
+   Technology (MIT); Broad Institute; University of Massachusetts System;
+   UMass Chan Medical School; University of Massachusetts Worcester;
+   University of Massachusetts System; UMass Chan Medical School;
+   University of Massachusetts Worcester; University of Limerick},
+ResearcherID-Numbers = {Navarro, Arcadi/F-1592-2011
+   Blumer, L. Moritz/MGA-8798-2025
+   Morales, Ariadna/KHD-8975-2024
+   Kontopoulos, Dimitrios - Georgios/H-5822-2019
+   Kirilenko, Bogdan/PFI-6779-2025},
+ORCID-Numbers = {Navarro, Arcadi/0000-0003-2162-8246
+   Osipova, Ekaterina/0000-0002-6769-7223
+   Munegowda, Chetan/0000-0002-3790-2185
+   Hilgers, Leon/0000-0002-3539-2513
+   Sharma, Virag/0000-0003-4086-4105
+   Kontopoulos, Dimitrios - Georgios/0000-0002-5082-1929
+   Kirilenko, Bogdan/0000-0002-9394-4275},
+Funding-Acknowledgement = {German Research Foundation {[}HI1423/4-1, HI1423/5-1]; Max Planck
+   Society; LOEWE-Centre for Translational Biodiversity Genomics (TBG)},
+Funding-Text = {This work was supported by the LOEWE-Centre for Translational
+   Biodiversity Genomics (TBG), the German Research Foundation (grants
+   HI1423/4-1 and HI1423/5-1) , and the Max Planck Society.},
+Number-of-Cited-References = {61},
+Times-Cited = {166},
+Usage-Count-Last-180-days = {2},
+Usage-Count-Since-2013 = {50},
+Journal-ISO = {Science},
+Doc-Delivery-Number = {G4ZS3},
+Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
+Unique-ID = {WOS:000989260500004},
+OA = {Green Submitted, Green Accepted},
+ESI-Highly-Cited-Paper = {Y},
+ESI-Hot-Paper = {N},
+DA = {2026-11-09},
 }
 
 @article{ Kumar_2022,
@@ -3497,6 +3825,61 @@ Doc-Delivery-Number = {704JQ},
 Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
 Unique-ID = {WOS:000286048900013},
 DA = {2026-08-20},
+}
+
+@article{ Talenti_2021,
+Author = {Talenti, Andrea and Prendergast, James},
+Title = {nf-LO: A Scalable, Containerized Workflow for Genome-to-Genome Lift Over},
+Journal = {GENOME BIOLOGY AND EVOLUTION},
+Year = {2021},
+Volume = {13},
+Number = {9},
+Month = {SEP},
+Abstract = {The increasing availability of new genome assemblies often comes with a
+   paucity of associated genomic annotations, limiting the range of studies
+   that can be performed. A common workaround is to lift over annotations
+   from better annotated genomes. However, generating the files required to
+   perform a lift over is computationally and labor intensive and only a
+   limited number are currently publicly available.
+   Here we present nf-LO (nextflow-LiftOver), a containerized and scalable
+   Nextflow pipeline that enables lift overs within and between any species
+   for which assemblies are available. nf-LO will consequently facilitate
+   data interpretation across a broad range of genomic studies.},
+Publisher = {OXFORD UNIV PRESS},
+Address = {GREAT CLARENDON ST, OXFORD OX2 6DP, ENGLAND},
+Type = {Article},
+Language = {English},
+Affiliation = {Talenti, A (Corresponding Author), Univ Edinburgh, Roslin Inst, Edinburgh, Midlothian, Scotland.
+   Talenti, Andrea; Prendergast, James, Univ Edinburgh, Roslin Inst, Edinburgh, Midlothian, Scotland.},
+DOI = {10.1093/gbe/evab183},
+EarlyAccessDate = {AUG 2021},
+Article-Number = {evab183},
+ISSN = {1759-6653},
+Keywords = {liftover; assembly; Nextflow; workflow},
+Keywords-Plus = {DIVERGENCE},
+Research-Areas = {Evolutionary Biology; Genetics \& Heredity},
+Web-of-Science-Categories  = {Evolutionary Biology; Genetics \& Heredity},
+Author-Email = {andrea.talenti@ed.ac.uk},
+Affiliations = {University of Edinburgh; UK Research \& Innovation (UKRI); Biotechnology
+   and Biological Sciences Research Council (BBSRC); Roslin Institute},
+ResearcherID-Numbers = {Talenti, Andrea/Q-1403-2019},
+ORCID-Numbers = {Prendergast, James/0000-0001-8916-018X
+   Talenti, Andrea/0000-0003-1309-3667},
+Funding-Acknowledgement = {BBSRC {[}BB/T019468/1, BBS/E/D/10002070]; BBSRC {[}BB/T019468/1] Funding
+   Source: UKRI; Biotechnology and Biological Sciences Research Council
+   {[}BBS/E/D/10002070] Funding Source: researchfish},
+Funding-Text = {This work was supported by BBSRC (Grant Nos. BB/T019468/1 and
+   BBS/E/D/10002070).},
+Number-of-Cited-References = {20},
+Times-Cited = {15},
+Usage-Count-Last-180-days = {0},
+Usage-Count-Since-2013 = {1},
+Journal-ISO = {Genome Biol. Evol.},
+Doc-Delivery-Number = {UQ1EA},
+Web-of-Science-Index = {Science Citation Index Expanded (SCI-EXPANDED)},
+Unique-ID = {WOS:000695813200004},
+OA = {Green Accepted, Green Published, Green Submitted, gold},
+DA = {2026-11-09},
 }
 
 @article{ Thorvaldsdottir_2013,
