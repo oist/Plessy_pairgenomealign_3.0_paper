@@ -50,7 +50,7 @@ style=pcj
 
 % Article metadata: these are useless when transferring your article to PCJ because they only appear on the cover page and article headers/footers after publication, and you are not asked/expected to generate these elements (there is a separate web interface to fill them in during the submission process).
 
-\DOI{10.5802/fake.doi} % this is the DOI of the preprint on the preprint server
+%\DOI{10.5802/fake.doi} % this is the DOI of the preprint on the preprint server
 \PCIcorresp{charles.plessy@oist.jp}
 
 \title[Pairwise genome alignment pipeline]{nf-core/pairgenomealign: a scalable pipeline for pairwise whole-genome alignment}
@@ -73,7 +73,7 @@ style=pcj
  \author{\firstname{Martin} \middlename{C.} \lastname{Frith}\CDRorcid{0000-0003-0998-2859}}
  \address{Department of Computational Biology and Medical Sciences, Graduate School of Frontier Sciences, The University of Tokyo, 5-1-5 Kashiwanoha, Kashiwa, Chiba, Japan 277-8562}
  \address{National Institute of Advanced Industrial Science and Technology (AIST), 2-4-7 Aomi, Koto-ku, Tokyo, Japan 135-0064}
- \email[Martin C. Frith]{TBD@example.com}
+ \email[Martin C. Frith]{mcfrith@edu.k.u-tokyo.ac.jp}
  %
  \author{\firstname{Nicholas} \middlename{M.} \lastname{Luscombe}\CDRorcid{0000-0001-5293-4778}}
  \address{Genomics and Regulatory Systems Unit, Okinawa Institute of Science and Technology Graduate University, 1919-1 Tancha, Onna-son, Kunigami-gun Okinawa, Japan 904-0495}
@@ -298,7 +298,8 @@ Our primary motivation in developing nf-core/pairgenomealign was to support geno
 
 \section*{Acknowledgements}
 
-We thank the DNA Sequencing Section and the Scientific Computing and Data Analysis Section of the Research Support Division at OIST for their support; Priscila Biller, Simon Hellemans, Roger Huerlimann and Nicholas Treen for critical comments on the manuscript; Christopher Cheshire and the Luscombe laboratory for the Nextflow hackathons; Jiashun Miao and Huyen Pham for testing the pipeline on vertebrate genomes; and the nf-core community for reviewing the releases of the pipeline and running its full-size tests on Amazon Web Services.  Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the recommendation]; \cite{fake}[replace by the citation of the recommendation]).
+We thank the DNA Sequencing Section and the Scientific Computing and Data Analysis Section of the Research Support Division at OIST for their support; Priscila Biller, Simon Hellemans, Roger Huerlimann and Nicholas Treen for critical comments on the manuscript; Christopher Cheshire and the Luscombe laboratory for the Nextflow hackathons; Jiashun Miao and Huyen Pham for testing the pipeline on vertebrate genomes; and the nf-core community for reviewing the releases of the pipeline and running its full-size tests on Amazon Web Services.
+% Preprint version xxx[change to the correct number] of this article has been peer-reviewed and recommended by Peer Community In XYZ[change to the name of the PCI] (\url{https://doi.org/10.24072/pci.xxx}[replace by the doi of the recommendation]; \cite{fake}[replace by the citation of the recommendation]).
 
 \section*{Fundings}
 
@@ -310,7 +311,6 @@ The authors declare that they comply with the PCI rule of having no financial co
 
 \section*{Data, script, code, and supplementary information availability}
 
-% Data are available online (\url{https://doi.org/10.24072/fake1}[Replace by the DOI of the webpage hosting the data]; \cite{CharleMar_independant-trace-su2_2012}[Replace by the citation of the data])\\
 The nf-core/pairgenomealign pipeline is available at \url{https://nf-co.re/pairgenomealign}, and version 3.0.4, used in this manuscript, is archived on Zenodo (\url{https://doi.org/10.5281/zenodo.22119145}; \cite{pairgenomealign}).
 
 Scripts and data supporting this article are archived on Zenodo (\url{https://doi.org/10.5281/zenodo.TODO}; \cite{pairgenomealign_paper_data}): the scripts that run the benchmarks and draw the figures, with a README; the tables derived from the pipeline outputs and execution traces behind Figures~\ref{fig:fig2} and~\ref{fig:simulated} to~\ref{fig:stages}; the MultiQC report of the full-size test of version 3.0.4; and the accession lists of the 34 primate and 580 vertebrate assemblies.
