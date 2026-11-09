@@ -11,6 +11,9 @@ Query genomes of the alignment of the human genome to the vertebrate genomes
   cluster.  The run used the same list without the target (580 queries).
 - `run/`: parameters, execution trace, software versions and MultiQC report and
   tables of the run.
+- `nf-params--vgp-rerun.conf`: configuration for a rerun in one go, with the
+  pipeline defaults except where the trace of the first run shows they would
+  fail.
 
 Provenance
 ----------
