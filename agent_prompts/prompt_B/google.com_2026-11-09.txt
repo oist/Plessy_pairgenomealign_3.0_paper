@@ -1,0 +1,127 @@
+Chat: google.com
+Date: Mon, 09 Nov 2026 12:38:15 +0900
+----
+
+Architectural Design Document: nf-core/assemblyalign
+
+This document outlines the architectural design for a production-ready, nf-core-compliant Nextflow pipeline (nf-core/assemblyalign) optimized for aligning heterogeneous query genome assemblies against a single reference target.
+
+1. Aligner Selection & Architectural Trade-offs
+
+To handle extreme variations in genome size (Mb to Gb), assembly quality (chromosome to fragmented scaffolds), and evolutionary divergence (haplotypes to hundreds of millions of years), a single aligner is insufficient. We will implement a modular framework supporting three core alignment engines, selected via a runtime parameter (--aligner).
+
+Chosen Aligners
+
+• wga-minimap2 (Default for Close Divergence): Minimap2 optimized for whole-genome alignments (using the -x asm5, -x asm10, or -x asm20 presets).
+	• Justification: Blazing fast, memory efficient, and natively handles large, repetitive genomes. Excellent for intra-species, haplotype-resolved, or genus-level alignments.
+• Cactus / ProgressiveCactus (Default for Deep Divergence & Ref-Free Output): Though traditionally a multiple-genome aligner, running Cactus in a pairwise reference-based configuration handles deep evolutionary distances and heavy repeat regions gracefully using soft-masking and ancestral reconstruction concepts.
+	• Justification: Superior at handling complex structural rearrangements and deep divergence (>50-100 MYA) where linear aligners fail due to orthology ambiguity.
+• GSAlign / MashMap + Mummer4 (For Ultra-Fragmented or High-Throughput Drafts):
+	• Justification: When processing thousands of highly fragmented draft assemblies against a target, Minimap2 can suffer from excessive seed chaining overhead. GSAlign or a ultra-fast anchor-and-extend approach provides rapid screening.
+
+Alternatives Considered & Rejected
+
+• LASTZ: Traditionally the gold standard for UCSC genome browser tracks. Rejected as default because it is notoriously slow on multi-gigabase genomes and difficult to parallelize natively without heavy, brittle pre-chunking scripts. It will be kept as a secondary legacy option.
+• Blat: Rejected due to severe scaling limitations on genomes larger than a few hundred megabases.
+
+2. Dynamic Parameter Selection Framework
+
+Hardcoded alignment parameters fail when divergence spans from 0% to >30%. The pipeline will implement an automated Parameter Tuning Engine based on estimated or user-defined evolutionary distances.
+
+The Estimation Strategy
+
+If the user does not specify divergence, the pipeline triggers a lightweight pre-flight check using Mash or Sourmash to calculate a MinHash distance (D) between the target and each query.
+                  [ Input Target & Query ]
+                             │
+                             ▼
+                 [ Mash Distance Screen ]
+                             │
+            ┌────────────────┼────────────────┐
+            ▼                ▼                ▼
+     Identical/Haploid    Close Divergence   Deep Divergence
+        (D < 0.01)         (0.01 ≤ D < 0.1)     (D ≥ 0.1)
+            │                │                │
+            ▼                ▼                ▼
+     minimap2 -x asm5     minimap2 -x asm10   Cactus / LASTZ
+
+Repeat Handling Strategy
+
+• WindowMasker / Dust: Integrated as an optional preprocessing step.
+• Soft-masking over Hard-masking: The pipeline strictly enforces soft-masking (lowercase ACGT). Hard-masking (Ns) destroys mapability in divergent species, whereas soft-masking allows aligners to skip seeding in high-frequency repeats but still extend alignments through them.
+
+3. Input Specification & Preprocessing
+
+Following nf-core standards, inputs are supplied via a structured samplesheet CSV.
+
+Input Channels
+
+• target_fasta: Path to the single reference assembly.
+• samplesheet.csv: Contains columns: sample_id, query_fasta, estimated_divergence (optional), ploidy.
+
+Preprocessing and Validation (Input QC)
+
+1. Sanitization: Custom Groovy/Python processes strip problematic characters from FASTA headers (e.g., spaces, pipes, commas) which routinely break downstream alignment tools like Samtools or Liftover.
+2. Size-ordered Chunking (Scatter-Gather): Fragmented drafts with millions of scaffolds stall aligners. The pipeline uses an intelligent chunking module that combines tiny scaffolds into size-balanced bins (e.g., target chunks of ~500MB) to ensure uniform cluster node utilization.
+
+4. Downstream Alignment Processing & Refinement
+
+Raw alignments (PAF/BAM/MAF) require standardization and polishing to be useful for synteny and downstream multiple sequence alignments (MSA).
+[ Raw Alignment ] ──► [ Chain & Net ] ──► [ Anchor Filtering ] ──► [ Multiz / HAL Conversion ]
+1. Kent-Tooling Lineage (Chain & Net): Raw alignments are converted to .chain format, sorted, and processed via axtChain, chainPreNet, and chainNet to generate explicit orthologous blocks, filtering out low-scoring random hits.
+2. Syntenic Filtering: An explicit module runs singleCover or custom syntenic anchor filters to retain only the best reciprocal or one-to-many orthologous mappings, stripping out transposon-driven spurious alignments.
+3. Coordinate Indexing: Alignments are converted to standardized, sorted, and indexed BAM files for structural variant callers and PAF files for fast genomic calculations.
+
+5. Outputs, Formats, & Downstream Interoperability
+
+To satisfy all four use cases specified in the context, the pipeline generates a tiered output directory structure:
+
+Use Case	Core Output Format	Directory Destination	Key Files
+Synteny & Breakpoints	PAF, Chain, MCScanX anchor files	outputs/synteny/	*.paf, *.chain, *.anchors
+Visual Quality Control	BigWig coverage tracks, BAM/BAI	outputs/visualization/	*.bw, *.bam, *.bai
+Sequence Divergence	Distance Matrix (CSV), ANI reports	outputs/divergence/	matrix_ani.csv, summary.txt
+Regional MSA Extraction	HAL (Hierarchical Alignment), MAF	outputs/msa/	genomes.hal, *.maf
+
+• HAL Format Justification: HAL stores multiple genome alignments efficiently and allows users to instantly extract regional MSAs via hal2maf or track variants across all queries simultaneously without rebuilding the entire alignment.
+
+6. Quality Control, Reporting, & Metadata Tracking
+
+• MultiQC Integration: A custom nf-core MultiQC module aggregates statistics from the alignment process.
+• Key Metrics Tracked:
+	• Genome Coverage: Percentage of the target genome covered by each query.
+	• Identity Histogram: Distribution of nucleotide identity across aligned blocks.
+	• Fragmentation Penalty: Ratio of alignment blocks to the number of input scaffolds.
+• Metadata Provenance: Every execution outputs a software_versions.yml file recording the exact semantic version and container hash of every tool used, ensuring strict reproducibility.
+
+7. Compute Resource Architecture & Scaling Strategy
+
+Genome alignments can easily cause Out-Of-Memory (OOM) errors or stall cluster queues. We isolate compute profiles based on task semantics:
+• Memory-Bound Tasks (Target Indexing, HAL Generation): Allocated to high-memory nodes using Nextflow's dynamic retry logic:nextflow
+memory = { 64.GB * task.attempt }
+cpus = { 16 * task.attempt }
+Use code with caution.
+• CPU-Bound Tasks (Alignment Scatter Phase): Distributed across many smaller tasks. If a query assembly has 100,000 scaffolds, the scatter phase splits them into batches of 5,000, running concurrently across hundreds of Slurm slots or Cloud VMs.
+• I/O Optimization: Intermediate chain/net files generate millions of small disk writes. The pipeline utilizes local scratch space ($TMPDIR or local SSD cloud storage) for all intermediate alignments, staging back to central deployment storage only at the final phase.
+
+8. Continuous Integration & Testing Framework
+
+Following nf-core guidelines, testing is tiered to ensure low maintenance overhead for a small team:
+1. nf-core/test-datasets (Minimal Matrix): A tiny GitHub Actions matrix running on two synthetic, heavily masked 10Mb assemblies (one chromosome, one 50-scaffold draft) to test syntax, parameters, and basic engine mechanics on every pull request.
+2. Full-Scale Profiling (AWS/Slurm): A quarterly integration test utilizing real-world benchmarking data (e.g., human CHM13 vs. HG002 haplotypes, and Arabidopsis thaliana vs. Arabidopsis lyrata). This profiles memory consumption, walltime scaling, and ensures no regressions sneak into the alignment refinement modules.
+
+9. Real-World Failure Modes & Mitigation Strategies
+
+
+Failure Mode	Root Cause	Pipeline Mitigation Strategy
+Scaffold-Explosion Memory Stall	Unfiltered raw drafts with millions of 100bp contigs overwhelm the aligner's memory allocator.	Pre-filter Module: Automatically drops scaffolds below a user-defined threshold (default: 1kb) before alignment, routing dropped metrics to MultiQC.
+Gigabase Self-Homology Loop	Massive line-element or satellite expansions cause aligners to hang indefinitely on a single thread.	Timeouts & Iterative Masking: Implements Nextflow time limits on individual chunks. If a chunk times out, it triggers a fallback branch that applies stricter WindowMasker soft-masking to that specific chunk.
+Chaining Integer Overflow	Genomes >10 Gb with millions of alignment blocks overflow standard 32-bit coordinate structures in legacy Kent tools.	64-bit Tool Compilation: The pipeline explicitly packages 64-bit variants of the UCSC Kent utilities within the Docker/Singularity containers (axtChain compiled with bigCluster).
+
+
+10. Design Uncertainties & Open Technical Questions
+
+1. Optimal HAL Graph Scaling: While HAL is highly performant for downstream MSA extraction, appending highly fragmented, low-quality query assemblies into a single HAL file can cause exponential metadata bloat. We need to evaluate whether a collection of MAF/MAF-indexes might be more stable for small teams to maintain over long periods than a centralized HAL graph.
+2. Mash Distance Reliability on Repetitive Gigabase Drafts: It is uncertain if raw MinHash distance screens accurately capture true evolutionary divergence when one genome is 80% unmasked transposons and the other is a clean chromosome assembly. We may need to incorporate a rapid, k-mer based repeat-content check prior to calculating the Mash distance.
+To tailor this architectural design further, could you share:
+• What is the approximate number of query assemblies you expect to process in a single execution loop?
+• Are the downstream multiple sequence alignments (MSAs) intended for specific gene loci, or do you need genome-wide coordinate lookups?
+

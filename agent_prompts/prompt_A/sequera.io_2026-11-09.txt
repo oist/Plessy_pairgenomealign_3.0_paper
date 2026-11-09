@@ -1,0 +1,65 @@
+----
+
+Thinking
+Plan: aligning several query assemblies to one target genome
+
+Before you build anything, look at nf-core/pairgenomealign. It already does this job with LAST: one target, many queries, alignment training, one-to-one filtering and dot plots. It isn't in the showcase Launchpad yet. If it covers your needs, adding it and launching it is faster than writing a new pipeline. The plan below is for a custom build, and it maps onto nf-core modules that exist today.
+Inputs
+Input	Form	Notes
+--target	One FASTA (.fa or .fa.gz)	The reference everything is aligned to. It is indexed once.
+--input	Samplesheet: sample,fasta	One row per query assembly. sample becomes meta.id.
+--outdir	Path	Where results are published.
+Steps
+#	Step	Tool / nf-core module	Runs	Key parameters
+1	Assembly QC	seqkit stats or assembly-scan (optional)	Target and each query	Records N50, size and GC, for the report and as a sanity check.
+2	Repeat masking	Use the input's soft-masking, or windowmasker/tantan if it isn't masked (optional)	Target	Mask repeats in lowercase. Unmasked repeats inflate run time and spurious hits.
+3	Index the target	last/lastdb	Once, then broadcast to all queries	-u seeding scheme picked by divergence: NEAR (same species), RY4/RY8 (balanced), MAM8/MAM4 (most sensitive, more memory). -c or -R01 makes LAST respect lowercase masking.
+4	Train scoring	last/train	Per query	--revsym, -D1e9, --sample-number=5000. This learns substitution and gap scores for each pair, which matters a lot for distant species.
+5	Align	last/lastal	Per query, with the trained .par	-p <train.par>, -D1e9 (E-value-like threshold), -m (seed multiplicity, e.g. 100; higher is more sensitive), --split-f=MAF+. Gives many-to-one alignments: each query base is aligned to at most one target location.
+6	One-to-one filtering	last/split (with maf-swap on both sides)	Per query	Gives one-to-one alignments, which is what synteny and ortholog analyses need. -m sets the mismap probability cutoff (e.g. 1e-5).
+7	Dot plots	last/dotplot	Per query, for both the m2o and o2o outputs	Shows rearrangements, inversions and duplications at a glance. Useful options: --sort1/--sort2 (contig ordering), --strands, --rot1/--rot2, and -1/-2 to select or limit sequences in fragmented assemblies.
+8	Format conversion	last/mafconvert	Per query	Choose formats with --export_aln_to: psl, bed/gff (aligned blocks), sam/bam (genome browsers), axt/chain (UCSC liftOver), tab.
+9	Alignment statistics	Small local module (maf → TSV)	Per query	Aligned bases, % of the target and query covered, % identity, number of blocks.
+10	Report	multiqc	Collected	Combines assembly stats and per-pair alignment stats in one table.
+Data flow
+
+The target index is a single value channel that every query uses. Each query becomes a [meta, fasta] tuple and goes through train → align → split → plot/convert on its own. Only the stats and report steps gather all queries back together.
+
+target ─► lastdb ─────────────┐ (value channel)
+queries ─► [meta, fa] ─► last-train ─► lastal ─► m2o.maf ─► last-split ─► o2o.maf
+                                          │                      │
+                                          ├─► dotplot            ├─► dotplot
+                                          └─► mafconvert         └─► mafconvert
+                                    all stats ─► collect ─► MultiQC
+
+Pipeline parameters
+Param	Default	Purpose
+--seed	RY4	Seeding scheme for lastdb -u; trades speed against sensitivity.
+--m	100	lastal -m; more sensitive at higher values.
+--skip_train	false	Use default scores (faster, but worse for distant species).
+--export_aln_to	''	Comma-separated list of extra output formats.
+--skip_dotplot_m2o / --skip_dotplot_o2o	false	Turn off individual plot sets.
+--dotplot_options	''	Passed straight through to last-dotplot.
+Outputs
+
+outdir/
+├── assembly_stats/        # per-genome N50, size, GC
+├── train/                 # <id>.train (learned score matrices)
+├── alignment/
+│   ├── <id>.m2o.maf.gz    # many-to-one
+│   └── <id>.o2o.maf.gz    # one-to-one
+├── dotplots/              # <id>.m2o.png, <id>.o2o.png
+├── converted/             # psl / bam / chain / gff, as requested
+├── stats/                 # per-pair coverage and identity TSV
+├── multiqc/multiqc_report.html
+└── pipeline_info/         # trace, timeline, versions
+
+Design notes
+
+    Why LAST: for genomes that are tens of millions of years apart or more, trained LAST alignments are much more sensitive than minimap2. If all your genomes are the same species or very close, minimap2/align with -x asm5, asm10 or asm20 and --cs is much faster and writes PAF. It works as a switch (--aligner minimap2) on the same channel structure.
+    Resources: lastdb and lastal memory grows with target size and seed density, and MAM8 on a mammal-sized target needs tens of GB. Give these steps a process_high label and use lastal -P for threads. Training is cheap.
+    Fragmented queries: draft assemblies with thousands of contigs give unreadable dot plots. Limit or sort the sequences with the dot-plot options.
+    Testing: set up an nf-test with two small bacterial or yeast assemblies against one target. Snapshot the MAF line counts and stats TSVs rather than the PNGs, because images can vary between runs.
+
+If you want, I can either add nf-core/pairgenomealign to the showcase Launchpad or start building this as a custom pipeline.
+

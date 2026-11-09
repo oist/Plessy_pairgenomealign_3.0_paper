@@ -1,0 +1,32 @@
+Chat: duck.ai
+Model: GPT-6
+Effort: Reasonning
+Date: Mon, 09 Nov 2026 12:01:51 +0900
+----
+1. **Inputs and sample manifest**
+   - Provide one target/reference assembly FASTA and a manifest with one row per query assembly: sample ID, FASTA path, and optional expected divergence or species.
+   - Validate that FASTA files are readable, sequence IDs are unique, and assemblies have plausible sizes; record checksums and input metadata. Create FASTA indexes with **SAMtools `faidx`**.
+   - Run **QUAST** on the target and all queries for baseline assembly statistics. Include the target as the reference for reference-aware metrics where appropriate; retain its HTML and tabular reports. QUAST accepts multiple assemblies and can report reference-based measures when given a reference. <citation src="26"></citation>
+
+2. **Nextflow workflow design**
+   - Model each query as a sample-level record paired with the single target assembly. Fan out alignment and downstream per-pair analyses so they run independently and in parallel.
+   - Make the target path, manifest, aligner preset, output directory, resource limits, and optional structural-variant analysis configurable.
+   - Pin tool versions and use containers (or another pinned environment); support execution profiles for local, HPC, and cloud runs. Keep intermediate files in the work directory and publish final results to a predictable output directory. Capture Nextflow’s execution report, trace, and timeline for reproducibility. <citation src="2,3"></citation>
+
+3. **Per-assembly whole-genome alignment**
+   - Use **minimap2** in assembly-to-reference mode, with the target FASTA as reference and each query FASTA as query. Produce **PAF** with base-level CIGAR and difference information (`-c` and `--cs=long`), and set threads from the process CPU allocation.
+   - Expose the `asm5`, `asm10`, and `asm20` presets as parameters. Choose based on expected sequence divergence; for uncertain or cross-species comparisons, pilot a more permissive preset and inspect coverage and alignment fragmentation before selecting the production setting. Keep the preset and version in the results metadata. <citation src="8,10"></citation>
+   - Preserve the unfiltered alignments. Create a separate analysis-ready filtered PAF using configurable minimum aligned length, identity, and mapping-quality criteria; avoid discarding secondary alignments when repeats or duplicated regions matter.
+
+4. **Summaries and comparative outputs**
+   - For each query–target pair, summarize aligned bases and coverage by assembly and contig, identity, alignment lengths, strand, and unaligned contigs/regions. Label all metrics with the query and target IDs.
+   - Retain per-pair PAF files, filtered PAF files, and machine-readable summary tables (TSV/CSV), plus a combined cross-assembly summary table.
+   - Optionally generate dot plots from alignments to review collinearity, inversions, translocations, and fragmented or unexpected matches.
+
+5. **Optional structural-variation and synteny branch**
+   - If chromosome-level comparisons and rearrangement calls are needed, produce coordinate-sorted **BAM** alignments with minimap2 and **SAMtools**, then index them. Run **SyRI** separately for each query–target pair and optionally visualize its results with **plotsr**.
+   - Publish SyRI’s rearrangement/local-variation outputs, summary, VCF, logs, and plots. Treat this branch as optional: SyRI is intended for comparing assemblies and its documentation specifies chromosome-level assemblies for accurate structural-rearrangement identification. <citation src="11,12,14"></citation>
+
+6. **Final deliverables and checks**
+   - Publish: input/QC reports; per-pair raw and filtered alignments; per-pair and combined summary tables; optional BAM/index and SyRI/plotsr products; tool versions, parameters, logs, and Nextflow execution reports.
+   - Add a small test dataset and checks for expected output files, non-empty alignments, and consistent reference/query labels before scaling to the full set.

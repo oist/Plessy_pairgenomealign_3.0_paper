@@ -1,0 +1,288 @@
+Chat: sakana.ai
+Model: Namazu
+Effort: Thinking on
+Date: Mon, 09 Nov 2026 12:53:16 +0900
+----
+# Design Document: A Nextflow Pipeline for Pairwise Genome Assembly Alignment
+
+## 1. Purpose and Scope
+
+This document describes the design of an nf-core compatible Nextflow pipeline that aligns one or more query genome assemblies against a single target genome assembly. It is designed to support:
+
+- **Scale**: genomes from a few megabases to tens of gigabases.
+- **Assembly quality**: chromosome-level pseudomolecules to highly fragmented drafts containing millions of scaffolds.
+- **Divergence**: from near-identical haplotypes to species separated by hundreds of millions of years.
+- **Use cases**: synteny and breakpoint analysis, visual quality control, pairwise divergence estimation, and generation of base-level alignments for downstream multiple-sequence extraction.
+
+The pipeline is intended to be reproducible across Slurm clusters, cloud environments, and standalone workstations, and maintainable by a small team.
+
+---
+
+## 2. High-Level Architecture
+
+The pipeline is organized into six conceptual stages:
+
+1. **Input Validation and Preprocessing**: Validate sample metadata, genome FASTAs, and indices; filter and batch sequences.
+2. **Divergence Estimation (Optional)**: Rapidly estimate genetic distance to select alignment parameters automatically.
+3. **Alignment**: Execute the chosen aligner in an embarrassingly parallel target-chunk vs query-batch scheme.
+4. **Post-Processing**: Convert, merge, sort, and net raw alignments into stable, analysis-ready formats.
+5. **Quality Control and Reporting**: Compute summary statistics, generate coverage and identity profiles, and render a MultiQC report.
+6. **Output Collation**: Deliver raw alignments, merged chains, MAF blocks, coverage tracks, and divergence tables.
+
+The architecture is modular: the aligner is swappable, and post-processing steps are conditional on the use case.
+
+---
+
+## 3. Aligner Selection and Alternatives Considered
+
+### 3.1 Primary Aligner: LASTZ
+
+**Choice**: LASTZ is the default aligner.
+
+**Justification**:
+- **Sensitivity across divergence**: LASTZ remains the standard for genome-wide DNA alignment across broad evolutionary distances. Its seeding and extension algorithms can be tuned for low-similarity regions where minimap2 and other k-mer based methods lose sensitivity.
+- **Repeat handling**: LASTZ explicitly respects soft-masking and can treat transitions and repeats with special scoring options, which is essential for repeat-rich genomes.
+- **Standard outputs**: It natively produces `.lav`, `.axt`, and `.maf`, which feed directly into established chaining and netting workflows.
+- **Provenance**: It is the workhorse behind major comparative genomics resources (e.g., UCSC pairwise alignments), giving confidence in its behavior for synteny and breakpoint analysis.
+
+### 3.2 Fast-Path Aligner: Minimap2
+
+**Choice**: Minimap2 is offered as an alternative via a parameter preset (e.g., `--aligner minimap2`).
+
+**Justification**:
+- For near-identical genomes (intra-species, haplotypes, or strains), minimap2 is one to two orders of magnitude faster than LASTZ and requires less tuning.
+- It handles very long sequences efficiently, making it attractive for chromosome-level assemblies with low divergence.
+- Its PAF output is compact and sufficient for coverage-based QC and synteny of close genomes.
+
+**Limitations**: Minimap2 is less sensitive for highly divergent or repeat-heavy genomes and is not suitable for the "hundreds of millions of years" use case unless one accepts a high false-negative rate. It is therefore gated to the "near" divergence preset.
+
+### 3.3 Aligners Not Selected
+
+- **CACTUS / Progressive Cactus**: A powerful multiple-genome aligner, but it is a self-contained pipeline, not a lightweight pairwise aligner. Integrating it would violate the goal of a simple, maintainable module and would obscure intermediate files needed for QC.
+- **Nucmer (MUMmer)**: Excellent for dotplots and collinear assembly comparison, but it struggles with large-scale rearrangements and does not scale well to millions of query scaffolds or highly repetitive sequences.
+- **GSAlign**: Faster than traditional tools but relatively immature, with a smaller user base and less predictable behavior on fragmented or repeat-rich genomes. Not a good target for a small maintenance team.
+- **BLAT**: Restricted to close genomes and largely superseded by minimap2 for assembly-assembly alignment.
+
+---
+
+## 4. Parameter Selection Strategy
+
+### 4.1 Divergence Presets
+
+Users select a divergence mode. The pipeline provides four presets:
+
+| Preset | Typical Use Case | Aligner | Rationale |
+|--------|------------------|---------|-----------|
+| **near** | Same individual, haplotypes, isogenic strains | minimap2 (`asm5`) or LASTZ (high stringency) | Maximizes speed while preserving base-level accuracy. |
+| **medium** | Closely related species (e.g., mammalian sister taxa) | LASTZ (default sensitivity) | Balances sensitivity and specificity. |
+| **far** | Deeply diverged species | LASTZ (low seed thresholds, sensitive extension) | Maximizes recovery of conserved islands. |
+| **auto** | Unknown relationship | k-mer pre-scan + adaptive selection | See below. |
+
+### 4.2 Automatic Divergence Estimation
+
+If `--divergence auto` is set, the pipeline runs a lightweight k-mer distance estimation (e.g., using Mash or a similar tool) between the query and target. This provides an approximate phylogenetic distance in minutes, even for multi-gigabase genomes. The pipeline then maps this distance to one of the three presets above.
+
+**Justification**: A full alignment to choose parameters defeats the purpose; k-mer distances are robust, fast, and independent of assembly contiguity.
+
+### 4.3 LASTZ Parameter Uncertainty
+
+LASTZ performance depends heavily on substitution scoring matrices and gap penalties. For the `medium` preset, a general-purpose matrix (e.g., derived from general DNA expectations) is used. For the `far` preset, lower seed word lengths and higher threshold sensitivity are applied.
+
+**Uncertainty**: I am unsure of the optimal default substitution matrix for arbitrary, deeply diverged taxa. In a production pipeline, one might need to generate a custom matrix from a small pilot alignment, or offer taxon-specific matrix presets (e.g., vertebrate, invertebrate, plant). I would defer this to a benchmarking phase and start with LASTZ's generic defaults, documenting that users with unusual phylogenetic distances may need to supply a custom matrix.
+
+---
+
+## 5. Input Preparation
+
+### 5.1 Target Genome
+
+- **Indexing**: Produce a `.fai` index. The pipeline aborts if sequences are not uniquely named.
+- **Masking check**: Inspect the FASTA for soft-masking (lower-case bases). If absent, optionally run a light de-novo masker (e.g., WindowMasker or Red) but **preserve soft-masking only**. Hard-masking to `N` is discouraged because it destroys homology signal in conserved repetitive elements.
+- **Chunking**: The target is partitioned into non-overlapping or slightly overlapping chunks (default 20–50 Mb, configurable). Chunking is essential because LASTZ memory scales with target size, and because it creates parallelizable work units. An overlap of ~1 kb is retained so that alignments crossing chunk boundaries can be stitched during post-processing.
+
+### 5.2 Query Genome(s)
+
+- **Indexing and naming**: Same as target.
+- **Length filtering**: Scaffolds below a minimum length (default 1 kb, configurable) are discarded. Very short contigs produce noisy alignments and are rarely informative for synteny.
+- **Batching**: Query scaffolds are grouped into batches by **cumulative sequence length** (target ~5–10 Mb per batch), not by count. This prevents job starvation from tiny contigs and ensures each alignment task has a predictable memory footprint. For chromosome-level queries, each chromosome may be its own batch.
+
+### 5.3 Input Sample Sheet
+
+The pipeline accepts a CSV sample sheet with columns for `sample_id`, `query_fasta`, and optionally `query_fai`. The target genome and its index are provided once via parameters. This adheres to nf-core standards and allows multiple query genomes to be aligned to a common target in one run.
+
+---
+
+## 6. Alignment Execution
+
+### 6.1 Parallelization Strategy
+
+The core parallel unit is a **target chunk vs query batch** pair. This creates an embarrassingly parallel grid:
+
+- Each process instance receives one target chunk file and one query batch file.
+- The aligner runs independently for each pair.
+- This avoids the "million scaffold" channel explosion problem by grouping scaffolds into batches before scheduling.
+
+### 6.2 LASTZ Path
+
+- **Input**: target chunk (soft-masked), query batch.
+- **Output**: pairwise alignment in MAF format (or optionally LAV, then converted).
+- **Strand handling**: Both strands of the query are searched.
+- **Granularity**: One job per target chunk / query batch pair. Jobs are lightweight enough to be retried with increased memory if they fail due to unexpected repeat expansion.
+
+### 6.3 Minimap2 Path
+
+- **Input**: whole target (if small enough) or target chunks; query batches.
+- **Output**: PAF format.
+- **Preset mapping**: `asm5` for near, `asm10` for slightly diverged. `asm20` is available but gated with a warning because it may be insufficient for true "far" mode.
+
+---
+
+## 7. Post-Processing of Raw Alignments
+
+### 7.1 Goals
+
+- Merge alignments that span target chunk boundaries.
+- Resolve overlapping alignments to produce a non-redundant set of "best" matches (netting).
+- Convert to standard formats for downstream tools.
+
+### 7.2 LASTZ Post-Processing
+
+1. **MAF sorting**: Per-job MAF files are sorted by target coordinate.
+2. **Conversion to CHAIN**: MAF blocks are converted to CHAIN format. CHAIN is the intermediate of choice because it explicitly represents gaps and is easy to merge.
+3. **Merging**: CHAIN files from all target chunk / query batch pairs are merged and sorted globally. A merge-sort strategy is used to keep memory bounded.
+4. **Stitching chunk boundaries**: Chains that terminate near a chunk boundary and whose query coordinates are adjacent are candidate "stitch" pairs. A custom stitching step (or an existing chain-stitching tool) joins these to recover synteny blocks falsely split by chunking.
+5. **Netting (Optional)**: The merged chain file is netted to produce the highest-scoring alignment for each query region, filtering out paralogs and non-orthologous duplications. This is highly recommended for synteny and divergence analysis.
+6. **Final MAF generation**: The net (or the merged chain, if netting is skipped) is converted back to MAF for use by phylogenetic and alignment-extraction tools.
+
+### 7.3 Minimap2 Post-Processing
+
+1. **PAF merging and sorting**: PAF records are concatenated and sorted.
+2. **PAF to CHAIN**: PAF is converted to CHAIN format. This requires a robust conversion utility that interprets CIGAR strings.
+3. **Proceed as above**: Merging, stitching, and optional netting follow the same path as the LASTZ branch.
+
+**Uncertainty**: I am unsure whether the best PAF-to-CHAIN converter is sufficiently robust for all CIGAR edge cases (e.g., complex indels and tandem repeats). The pipeline may need to bundle a dedicated, tested conversion utility (e.g., implemented in Rust) to avoid relying on fragile ad-hoc scripts.
+
+---
+
+## 8. Outputs and Formats
+
+The pipeline emits the following directory structure:
+
+- `alignments/raw/`: Per-job alignment files (MAF or PAF, compressed).
+- `alignments/merged/`: Globally merged CHAIN file for each query-target pair.
+- `alignments/netted/`: Netted CHAIN and derived net file (optional).
+- `alignments/maf/`: Final merged MAF, suitable for multiple alignment and phylogenetic analysis.
+- `coverage/`: BED or bigBed files of query coverage on the target, and vice versa.
+- `synteny/`: Synteny blocks in BEDPE or TSV format, derived from chains.
+- `divergence/`: TSV tables of alignment identity, substitution counts, and coverage per sequence pair.
+- `qc/`: MultiQC report, alignment statistics, and dotplot data files.
+
+**Format justifications**:
+- **CHAIN**: Standard for genome-browser visualization and synteny analysis; compact for storage.
+- **MAF**: Required for downstream tools that extract multiple alignments (e.g., PHAST, msa_view) and for base-level divergence.
+- **PAF**: Retained only when minimap2 is used and the user explicitly requests it; otherwise converted.
+- **BEDPE/TSV**: Human-readable and easy to import into R/Python for breakpoint analysis.
+
+---
+
+## 9. Quality Control and Reporting
+
+### 9.1 Per-Genome-Pair Metrics
+
+For each query-target pair, the pipeline computes:
+- **Coverage**: Fraction of target bases covered by at least one query alignment; fraction of query bases aligned.
+- **Identity distribution**: Mean, median, and histogram of percent identity across aligned blocks.
+- **Aligned block N50**: A measure of contiguity. Low N50 indicates fragmentation or rearrangement.
+- **Rearrangement counts**: Number of inversions, translocations, and breakpoint events inferred from chain orientation and target/query coordinate jumps.
+- **Repeat expansion flag**: Query scaffolds with >10x coverage depth (configurable) are flagged as likely collapsed or expanded repeats.
+
+### 9.2 Visual QC
+
+- **Dotplot data**: A subsampled TSV of alignment points is generated for rapid plotting in R or Python. Full dotplots for multi-Gb genomes are too large for automatic rendering, so the pipeline provides a ready-to-plot data layer.
+- **Coverage profiles**: BigWig or bedGraph coverage tracks for loading into IGV or the UCSC Genome Browser.
+
+### 9.3 MultiQC Integration
+
+A custom MultiQC module aggregates alignment rates, identity distributions, and resource usage into a single HTML report. This satisfies nf-core standards and gives the small maintenance team a single entry point for troubleshooting.
+
+---
+
+## 10. Resource Management and Scaling
+
+### 10.1 Chunk and Batch Sizing
+
+- **Target chunk size**: Default 30 Mb. For small genomes (< 100 Mb), chunking is disabled to avoid boundary artifacts. For very large genomes (> 10 Gb), chunk size may be increased to 100 Mb to limit the total number of jobs, at the cost of higher per-job memory.
+- **Query batch size**: Default ~5 Mb cumulative. This keeps LASTZ memory under ~8 GB for typical repeat contents, fitting comfortably into standard cluster nodes.
+
+### 10.2 Dynamic Resource Allocation
+
+Nextflow's `retry` and `dynamic` directives are used:
+- A failed job (e.g., out of memory on a repeat-dense chunk) is automatically retried with double memory and a longer time limit.
+- CPU allocation: LASTZ is largely single-threaded per job, so parallelism is achieved via job count. Minimap2 jobs use multiple threads (default 4) but are fewer in number.
+
+### 10.3 Execution Environment Profiles
+
+- **Slurm**: Jobs are submitted to the queue. Target chunk / query batch granularity maps well to array jobs.
+- **Cloud**: Use batch-execution backends (e.g., AWS Batch or Google Life Sciences) with scratch disks. Intermediate files are written locally and copied to permanent storage only at stage end to minimize egress/ingress costs.
+- **Workstation**: A `executor = 'local'` profile with low concurrency limits (`maxForks`) prevents overwhelming a local machine. Chunking is still used to fit memory constraints.
+
+### 10.4 Disk and I/O
+
+- Intermediate alignment files are compressed with `gzip` immediately.
+- `scratch = true` (or executor-local scratch) is recommended so that heavy I/O occurs on node-local disks rather than shared filesystems.
+- A `cleanup` flag removes raw per-job outputs after successful merging to save disk space.
+
+---
+
+## 11. Testing Strategy
+
+### 11.1 Test Profiles
+
+The pipeline includes tiered test data:
+
+1. **Tiny Near**: Two small bacterial genomes (~5 Mb), near-identical. Tests basic wiring, minimap2 path, and report generation.
+2. **Medium Distant**: Two fungal or invertebrate genomes (~150 Mb), moderate divergence. Tests LASTZ default path, chunking, and MAF generation.
+3. **Fragmented Draft**: A chromosome-level target plus a highly fragmented query (~100k scaffolds). Tests batching logic and scalability of the merging step.
+4. **Large Synthetic**: A subset of a large genome (e.g., 1 Gb of human-like sequence) against a diverged synthetic target. Tests memory limits and cloud profiles without requiring full-size data.
+
+### 11.2 Validation
+
+- **Format validation**: Output MAF, CHAIN, and PAF files are checked against schema validators.
+- **Golden metrics**: For test case 2, expected values for coverage and mean identity are known; the pipeline fails CI if results deviate beyond a tolerance.
+- **nf-core lint**: The pipeline passes nf-core linting to ensure module structure and documentation standards are met.
+
+---
+
+## 12. Failure Modes and Mitigations
+
+| Failure Mode | Cause | Mitigation |
+|--------------|-------|------------|
+| **Job explosion / scheduler overload** | Millions of scaffolds × thousands of target chunks creates too many tasks. | Batch query scaffolds by cumulative length. Dynamically increase target chunk size for highly fragmented queries. |
+| **Out of memory (OOM)** | Repeat-rich target chunk causes aligner to consume excessive RAM. | Retry with doubled memory and, if persistent, reduce target chunk size for that specific region. |
+| **False synteny breakpoints at chunk edges** | A true collinear block is split across target chunk boundaries. | Retain a small overlap between chunks and implement a chain-stitching step that joins alignments with consistent query coordinates. |
+| **No alignments returned** | Divergence is too high for DNA-level alignment, or genomes are hard-masked. | Detect zero-alignment output early. Emit a warning suggesting `far` parameters, translated alignment, or that the genomes may be too distant for this method. Check for hard-masking and warn. |
+| **Extreme runtime on repetitive query batches** | Certain query scaffolds are almost entirely repetitive (e.g., centromeric). | Implement a per-job timeout. If a batch times out, exclude it from the merged set and flag it in the QC report rather than failing the whole pipeline. |
+| **Cloud cost overrun** | Large intermediate files and long staging times on cloud storage. | Use scratch disks, aggressive compression, and optional cleanup of intermediates. Provide a `--publish_all` flag for debugging, defaulting to publishing only final outputs. |
+| **Merge step memory exhaustion** | Merging chains for a 10 Gb genome requires more RAM than a single node has. | Use an external merge-sort algorithm that streams from disk, rather than loading all chains into memory. |
+
+---
+
+## 13. Uncertainties and Open Questions
+
+1. **Scoring matrix selection for deep divergence**: I am not confident that a single default LASTZ matrix will perform well across all kingdoms. A benchmarking suite comparing several matrices on a diverse taxon set would be needed before declaring the `far` preset final.
+2. **PAF-to-CHAIN conversion fidelity**: While conceptually straightforward, I am unsure whether existing tools robustly handle all edge cases (complex CIGARs, clipping, inversions) at scale. The pipeline may require a custom, formally tested conversion module.
+3. **Netting behavior on highly rearranged genomes**: `chainNet` assumes a largely conserved syntenic backbone. For genomes with rampant rearrangement (e.g., some plants or cancers), netting may discard biologically relevant duplications. I am unsure whether a single net is always preferable to simply returning merged chains; this should be user-configurable.
+4. **Optimal chunk overlap size**: The 1 kb overlap is a heuristic. I do not know the minimal overlap required to guarantee recovery of chains crossing boundaries for all genome sizes and rearrangement densities. This needs empirical tuning.
+5. **Haplotype vs homologous chromosome discrimination**: When aligning two haplotypes of the same individual, the pipeline will recover both collinear matches and heterozygous indels. However, distinguishing true haplotypic duplication from paralogous duplication in the `near` mode is non-trivial and may require post-hoc filtering not covered by this pipeline.
+6. **Multiple alignment from pairwise MAFs**: The pipeline produces pairwise MAFs. Building a true multiple alignment for many species (the "extraction of multiple alignments of selected regions" use case) requires an additional step (e.g., `ROAST` or a custom graph-based approach). I am uncertain whether that step belongs inside this pipeline or in a separate downstream tool.
+
+---
+
+## 14. Summary of Key Design Decisions
+
+- **Default aligner**: LASTZ, due to its unmatched sensitivity and tunability across evolutionary distances.
+- **Fast alternative**: Minimap2, strictly for near-identical genomes.
+- **Parallelism**: Target chunking + query batching to control memory and avoid scheduler overload.
+- **Primary output**: CHAIN format for synteny, with a derived MAF for base-level and phylogenetic analyses.
+- **Divergence handling**: User-selected presets plus an optional k-mer-based auto-estimation.
+- **Maintainability**: nf-core structure, modular processes, standard containers, and MultiQC integration to minimize long-term maintenance burden for a small team.

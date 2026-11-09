@@ -1,0 +1,215 @@
+Chat: duck.ai
+Model: GPT-6
+Effort: Reasonning
+Date: Mon, 09 Nov 2026 12:33:50 +0900
+----
+
+# Design document: target-centric genome alignment
+
+## 1. Scope and core design decision
+
+There is no single practical whole-genome aligner that gives equally trustworthy results for haplotypes, moderately diverged species, and species separated by hundreds of millions of years. The pipeline should therefore make the **alignment regime explicit**, rather than silently treating every input pair as the same problem.
+
+The default mode is a **pairwise, target-centric alignment** using minimap2 for assemblies expected to be sufficiently similar for nucleotide-level seeding. A separate **deep-divergence mode** uses a phylogeny-guided multiple-genome aligner, preferably Progressive Cactus, when a credible guide tree and appropriate taxon sampling are available. Results from these modes are distinct products, not interchangeable settings of one command. Minimap2’s assembly presets are intended for different divergence ranges, and its documentation cautions that cross-species full-genome scoring must be tuned to divergence; that is a reason to expose and report regime choices, not to promise a universal preset. <citation src="8,13,16"></citation>
+
+The design has four boundaries:
+
+- **One target plus a list of queries:** run one pairwise comparison per query, independently and in parallel.
+- **All-pairs divergence estimates:** make an explicit additional set of pairwise comparisons among genomes; target-versus-query results alone cannot produce all pairs.
+- **Selected-region multispecies alignments:** pairwise alignments do not by themselves make a consistent multiple alignment. Use the deep-divergence/multiple-genome mode, or clearly label a region-level progressive alignment of extracted sequences as a separate analysis.
+- **Biological interpretation:** an alignment describes the sequences that could be aligned under chosen parameters and filters. It does not establish orthology or make unaligned sequence equivalent to evolutionary absence.
+
+## 2. Aligner choice and alternatives
+
+| Choice | Intended role | Strengths | Limits and decision |
+|---|---|---|---|
+| **Minimap2, assembly-to-reference mode** | Default for close and moderately diverged assemblies | Fast pairwise whole-genome mapping; produces alignment blocks with coordinates and CIGAR information in PAF; simple to parallelize per query. <citation src="16"></citation> | Sensitivity and fragmentation depend on divergence, repeats, and assembly quality. It is not a general solution for very remote homology or a consistent multiway alignment. |
+| **Progressive Cactus** | Deeply diverged species and true multi-genome alignments | Guide-tree-based, reference-free whole-genome alignment; HAL preserves the multiple alignment, with reference-projected MAF export available. <citation src="12,13"></citation> | Requires a guide tree, more substantial compute and operational complexity, and is not equivalent to an independent target-query mapping. The pipeline should expose it as a distinct mode, not a hidden fallback. |
+| **MUMmer4/NUCmer** | Optional comparison/diagnostic for similar genomes | Familiar pairwise assembly comparison and useful coordinate-oriented outputs; its documentation describes unfinished-assembly comparisons and delta output that can be converted to coordinates. <citation src="1,3"></citation> | Not the default: sensitivity for more divergent sequence and repeat-heavy assemblies is a concern, and interpreting/filtering repeat-induced matches needs care. |
+| **LASTZ or another tuned local aligner** | Specialist fallback or benchmark candidate | Could be useful when an expert needs a highly tuned local-alignment workflow. | Adds another parameter surface and maintenance burden. Do not make it an automatic fallback until a representative benchmark shows a clear gain for the intended data. |
+
+The default pairwise output is **PAF with base-level alignment information**, including CIGAR and difference tags. Plain PAF can contain approximate mappings without base-level alignment details; the pipeline must require the aligned form for identity and variant-like summaries. <citation src="16,17"></citation>
+
+**Regime policy**
+
+- **Close relatives or haplotypes:** use a high-sensitivity configuration selected by validation, not by genome name alone.
+- **Moderate divergence:** use a more permissive assembly preset or a benchmark-approved custom profile. The minimap2 documentation gives `asm5`, `asm10`, and `asm20` as assembly-to-reference presets, but these are guidance rather than hard biological thresholds. <citation src="8"></citation>
+- **Beyond the validated pairwise range:** do not keep increasing sensitivity parameters and present the result as comparable. Require the user to choose a specialist aligner or the Cactus mode.
+- **Hundreds of millions of years of divergence:** treat ordinary nucleotide alignment as potentially uninformative. A tree-guided alignment may recover homologous conserved sequence, but whether it is useful depends on taxon sampling, genome quality, and the evolutionary distance. If no suitable tree is supplied, report that limitation rather than inventing an automatic answer.
+
+No pairwise regime will guarantee a meaningful alignment for every evolutionary distance, and minimap2’s divergence presets are not calibrated estimates of species divergence.
+
+## 3. Input preparation and validation
+
+Accept a samplesheet with a stable genome ID, FASTA path or URI, role (target or query), optional taxon name, optional assembly accession/version, and optional repeat-mask annotation. Require exactly one target in target-centric mode. Keep IDs machine-safe and unique; maintain a separate, immutable mapping to original FASTA headers.
+
+For every assembly:
+
+1. Check that the input exists and is readable; compute a checksum before processing.
+2. Parse FASTA and reject empty files, duplicate sequence IDs, invalid sequence records, and malformed sequence alphabets. Report ambiguous bases rather than silently converting them.
+3. Record total length, sequence count, N50/L50, length distribution, GC fraction, ambiguous-base fraction, and the number of sequences above relevant size thresholds.
+4. Detect duplicate or suspiciously identical sequence records and report them; do not automatically remove them.
+5. Normalize headers for tools that require constrained identifiers, while preserving a mapping back to original names. Record all renaming and any clipping or truncation.
+6. Preserve input sequence and coordinates exactly where possible. If any preparation changes sequences, emit the prepared FASTA and a coordinate-preserving transformation record.
+
+Retain soft masking if present. Do not hard-mask repeats by default: it can remove sequence needed to align, and it changes the interpretation of coverage and divergence. Instead, record whether masking was present, optionally accept a mask annotation, and report alignments that overlap masked sequence. A separate masked-seed sensitivity experiment may be offered, but it must be labeled as a distinct run and validated for the species group. Repeat-rich sequence can cause ambiguous or repeat-driven matches; the pipeline should expose this in QC rather than imply that masking solves it.
+
+An optional preprocessing step can split a query FASTA into stable sequence batches for scheduling, then concatenate or merge results deterministically. Do not split sequences arbitrarily by default: long alignments and rearrangements can cross arbitrary boundaries. For a target too large to index within available memory, target sharding is possible, but it can change competition among candidate loci and mapping-quality interpretation. Such runs must be marked as sharded and their results must not be described as fully equivalent to a single global target index.
+
+The input manifest, normalized sequence dictionary, checksums, masking status, and tool versions belong in the final provenance record.
+
+## 4. Workflow and alignment processing
+
+The workflow is a Nextflow DSL2 application organized around small, independently testable processes:
+
+1. **Validate inputs and build assembly metadata.**
+2. **Prepare/index the target** once per target and parameter profile, when possible.
+3. **Align each query to the target** as an independent task.
+4. **Normalize and annotate raw alignments** without discarding the raw file.
+5. **Compute per-pair QC and summary statistics.**
+6. **Optionally run all-pairs comparisons** among the supplied genomes.
+7. **Optionally run a tree-guided multi-genome alignment** for multispecies region extraction.
+8. **Publish a final report, manifest, and checksums.**
+
+Each query is an independent task with its own log and resource record. The target index should be reused only when tool version, target checksum, and relevant index parameters match. No task should infer settings from whether another task happened to succeed.
+
+### Raw alignment handling
+
+The retained primary alignment is a compressed PAF containing base-level alignment information and difference details. Preserve it unchanged after generation. Do not collapse it to a single “best hit” as part of the main output: secondary placements and split alignments are important for repeats, duplications, and rearrangements.
+
+Create derived views for common analyses:
+
+- **All alignments:** suitable for inspection of ambiguity and repeated matches.
+- **Primary/supplementary and secondary categories:** retain the aligner’s classification and clearly document it.
+- **One-to-one or collinearity-oriented filtered views:** useful for synteny summaries, but explicitly lossy.
+- **Minimum length/identity-filtered views:** thresholds are user-configurable, with the unfiltered alignment always retained.
+
+Filtering thresholds should be applied after alignment and recorded exactly. Provide both query-coverage and target-coverage summaries: these are different measures and can diverge substantially for fragmented assemblies, copy-number differences, or duplicated regions. Keep coordinate conventions explicit; PAF uses 0-based half-open query and target coordinates. <citation src="17"></citation>
+
+### Synteny and breakpoint processing
+
+Derive a sorted interval table from the PAF, retaining target and query sequence IDs, coordinates, strand, aligned length, identity-related fields, mapping quality, alignment category, and available tags. Build breakpoint and synteny summaries from neighboring blocks only after sorting by both coordinate systems and defining whether “neighbor” means adjacent on the query, target, or both.
+
+Report inversions, translocations, and large gaps as **candidate structural differences**, not as confirmed biological events. Scaffolding errors, duplicated sequence, haplotigs, contamination, and repeat-mediated alignment can produce similar patterns. Keep raw blocks available so that users can inspect the evidence.
+
+Do not use pairwise alignment-derived divergence as an unbiased genome-wide evolutionary distance. Report it as identity/divergence **within aligned, selected sequence**, with the selected sequence length, filters, ambiguous-base policy, repeat status, and alignment regime. Provide per-block and aggregate summaries, including a gap-compressed metric if supported by the selected method. Explain that different filters or aligner settings can change which regions contribute.
+
+### Multispecies regions
+
+For true multiway alignments, run Progressive Cactus only when the user supplies a suitable genome set and guide tree. Retain its HAL output as the authoritative multi-alignment artifact; offer MAF export projected onto the requested target for interoperability and region extraction. HAL represents the multiple alignment, while MAF export is reference-projected. <citation src="13"></citation>
+
+For targeted regions, accept BED intervals in the target coordinate system, extract the corresponding multi-genome alignment from HAL, and write the coordinates, reference assembly checksum, and interval definitions into the output. Do not synthesize a “multiple alignment” by stacking pairwise PAF blocks: pairwise matches can be mutually inconsistent in repeats and duplicated regions.
+
+## 5. Outputs and formats
+
+| Output | Purpose |
+|---|---|
+| `alignments/*.paf.gz` | Lossless retained pairwise alignment records, including base-level alignment tags. |
+| `alignments/*.tsv.gz` | Normalized interval table with explicit columns, coordinate convention, and filtering state. |
+| `summary/per_pair.tsv` | Per-query alignment counts, aligned bases, query/target coverage, identity summaries, ambiguity, and QC flags. |
+| `summary/assembly_metrics.tsv` | Input assembly statistics and masking/ambiguity metadata. |
+| `breakpoints/` | Candidate structural-change intervals and summary tables, with evidence and filter provenance. |
+| `plots/` and `report.html` | Dotplots, coverage and identity summaries, and run-level interpretation. |
+| `multiway/alignment.hal` and `multiway/regions/*.maf` | Optional Cactus mode products and target-projected selected regions. |
+| `provenance/` | Input checksums, tool/container versions, effective parameters, reference dictionaries, Nextflow metadata, and run manifest. |
+
+BAM/SAM should not be the main assembly-alignment deliverable: PAF is more direct for pairwise sequence-to-sequence coordinates, and the pipeline’s central outputs are not read pileups. Chain format may be an optional export if a tested converter is available, with a clear warning that conversion and filtering can lose alignment details. MAF is appropriate for multiway alignments or projection from HAL, not as a presumed native representation of independent pairwise mappings. <citation src="16,13"></citation>
+
+## 6. Parameter selection and user controls
+
+Parameters should be selected by a combination of **user-declared regime**, evidence about relatedness, and validation—not by a fragile attempt to infer species divergence from the same alignments whose sensitivity is being assessed.
+
+Expose a small set of named profiles: close, moderate, sensitive/experimental, and deep-divergence multiway. Each profile records its exact tool parameters and software version. Advanced overrides are allowed but invalidate claims that the run followed a validated profile.
+
+If the user does not know the appropriate regime, offer a small pilot on representative target/query sequence subsets and compare a limited set of candidate profiles using:
+
+- fraction of query and target sequence aligned;
+- block count and block-length distribution;
+- identity distribution and ambiguous/repetitive-sequence contribution;
+- stability of alignments across profiles;
+- visual dotplot structure and presence of implausible cross-links.
+
+A pilot is a diagnostic, not a guarantee of whole-genome sensitivity. The report should identify when output changes strongly across profiles. It should never select the profile solely because it maximizes aligned bases: a permissive setting can produce more repeat-driven or biologically irrelevant matches.
+
+For all-pairs estimates, select the same regime-selection procedure per pair and record the pair-specific settings. Do not compare divergence summaries generated from different profiles without marking the difference. Pairwise computations scale as \(n(n-1)/2\), so all-pairs mode should be opt-in and produce a clear workload estimate.
+
+## 7. Quality control and reporting
+
+The report should be useful both when the run succeeds and when the alignment is biologically poor. For each assembly and pair, include:
+
+- assembly size, sequence count, N50, ambiguous-base fraction, and available masking information;
+- aligned and unaligned bases, query and target coverage, and distributions of alignment length and identity;
+- number of primary, supplementary, secondary, and filtered blocks;
+- fraction of aligned sequence overlapping known repeat masks, if provided;
+- sequence names with unusually high or low mapping, and the number of zero-alignment sequences;
+- dotplots at genome and selected-contig scales;
+- breakpoint and collinearity summaries with clearly stated filters;
+- warnings for large differences among tested profiles or suspiciously low coverage.
+
+Do not assign universal pass/fail thresholds for assembly quality or biological plausibility. Instead, report quantitative metrics and configurable thresholds, distinguishing a **pipeline failure** from a **valid run with weak or unexpected alignment**.
+
+## 8. Resource use, scaling, and portability
+
+A pairwise run is primarily an index-and-align workload; memory and runtime depend on target size, query size, repeat content, alignment density, and settings. A single fixed resource request is inappropriate for assemblies spanning megabases to tens of gigabases.
+
+Use Nextflow’s process-level resource declarations and resource escalation/retry policies, driven by input sizes and observed task behavior. Allow the user to set cluster-specific ceilings, partitions, wall times, and scratch locations. Estimate resources from input size as a starting point, then refine from pilot runs and recorded traces. Do not promise a precise runtime estimate before benchmarking the relevant genome and hardware.
+
+Scale by query-level parallelism first. On large query assemblies, optionally parallelize stable sequence batches if doing so is validated. Avoid running every query concurrently when the target index is memory-heavy; use Nextflow concurrency limits and, where supported, cache or stage the index efficiently. On object storage, avoid excessive small-file transfers: bundle or stage sequence batches and use local scratch for large temporary files. Clean temporary data only after outputs and checksums are verified.
+
+For very large targets, splitting the index or target into shards can make a run possible but may affect repeat competition, mapping quality, and duplicate resolution. Make this a documented resource trade-off, not an invisible optimization. If a target cannot be indexed under the configured limits, fail with a diagnostic suggesting lower concurrency, more memory, or explicit sharding.
+
+Portability plan:
+
+- Run containers pinned by immutable digest for supported tools; maintain a documented software bill of materials.
+- Provide profiles for local execution, Slurm, and cloud batch execution. Keep biological parameters independent of executor configuration.
+- Use Nextflow channels and task boundaries so failures can resume without recomputing completed query pairs.
+- Support a shared work directory/cache where available, but ensure the published results are self-contained and checksummed.
+- Use resource labels and executor profiles rather than embedding cluster-specific queue names in the workflow.
+- Record the exact Nextflow version, pipeline revision, container digest, input checksums, effective parameters, and executor/task metadata.
+
+A small team should avoid maintaining separate implementations for Slurm, cloud, and workstation execution. Keep workflow logic portable and place environment-specific details in profiles and configuration.
+
+## 9. Testing and release practice
+
+Testing should verify both workflow mechanics and the scientific meaning of outputs:
+
+- **Unit tests:** FASTA validation, ID normalization, coordinate conversion, interval filtering, aggregation, and report calculations.
+- **Tiny integration fixtures:** close assemblies with known substitutions/indels, a rearranged pair, reverse-strand matches, repetitive sequence, ambiguous bases, and fragmented contigs.
+- **Workflow integration tests:** one target and multiple queries; one failed query alongside successful ones; resume behavior; compressed input/output; and empty or malformed inputs.
+- **Regression tests:** stable expected metrics and selected alignment coordinates under pinned tool versions. Use tolerances only where the underlying program is demonstrably nondeterministic.
+- **Scale tests:** assemblies with many short scaffolds and assemblies large enough to characterize memory, scratch, and index behavior. Include tests that exercise resource escalation.
+- **Cross-executor tests:** run the same small fixture locally and in a Slurm environment; run a representative containerized test in the supported cloud environment.
+- **Scientific validation:** compare selected benchmark regions and known rearrangements against curated evidence, and assess profile sensitivity across taxa and repeat levels.
+
+Adopt nf-core-style project practices: parameter schema and validation, modular DSL2 processes, pinned environments, documentation, sample-sheet examples, linting, CI tests, reproducible reports, and trace/timeline/resource reports. For scientific release, publish the benchmark data, expected results, parameter rationale, and known limitations alongside each release.
+
+## 10. Real-world failure modes and how to handle them
+
+| Failure mode | What can happen | Pipeline response |
+|---|---|---|
+| **Extreme divergence** | Few or no nucleotide matches; apparent low coverage may reflect method limits, not assembly absence. | Report regime and sensitivity limitations; stop presenting pairwise output as comprehensive. Recommend a suitable tree-guided analysis if available. |
+| **Repeat-rich genomes** | Many competing matches, inflated alignments, ambiguous placements, or misleading synteny. | Retain secondary matches, report repeat overlap and ambiguity, provide filtered views without replacing the raw output. |
+| **Millions of scaffolds** | Large indexes, high metadata overhead, slow parsing, huge reports or alignment files. | Batch work in stable units, use streaming summaries, avoid one report panel per tiny scaffold, and retain a searchable tabular summary. |
+| **Tens-of-gigabases assemblies** | Indexing may exceed memory or local scratch; sharding may alter placement competition. | Estimate and report requirements, cap concurrency, use scratch, and make any sharding explicit with caveats. |
+| **Haplotigs or alternate haplotypes** | Multiple legitimate matches can look like paralogy or duplication. | Keep multi-mapping evidence, compare assembly metrics, and avoid forcing a one-to-one result as the only output. |
+| **Contamination or organellar sequence** | Strong but unexpected alignments can dominate summaries or create apparent translocations. | Report unusually placed sequences and allow users to provide excluded/partitioned sequence lists; never silently discard records. |
+| **Assembly errors and gaps** | Breakpoint calls may correspond to scaffolding errors or unresolved regions. | Label events as candidates, track N-rich intervals, and show supporting alignment blocks. |
+| **Different masking or assembly conventions** | Coverage and identity are not directly comparable between pairs. | Record masking status, ambiguous-base treatment, filters, and coordinate dictionaries per genome and per run. |
+| **Parameter-sensitive results** | A more permissive profile may align more sequence but also introduce false or ambiguous matches. | Show profile comparisons and flag instability; do not choose solely by maximum aligned span. |
+| **Reference/shard coordinate mismatch** | Wrong labels or offsets can corrupt BED-like outputs and plots. | Validate every derived coordinate against sequence lengths and preserve the exact sequence dictionary. |
+| **Out-of-space or interrupted tasks** | Partial files can be mistaken for valid alignments. | Write to temporary task paths, validate output completion, publish atomically, and make failed tasks resumable and clearly marked. |
+
+## 11. Main uncertainties
+
+The main uncertainty is biological, not workflow-engineering: **how far a nucleotide-level pairwise method remains useful depends on lineage, repeat composition, sequence composition, and assembly quality**, not only elapsed evolutionary time. The named pairwise profiles are starting points to validate, not universal cutoffs.
+
+Other uncertainties to resolve empirically before production include:
+
+- whether the chosen minimap2 version and presets give acceptable sensitivity for the intended taxonomic groups;
+- how much soft masking changes seeding and alignment behavior for the datasets in scope;
+- which repeat-overlap and one-to-one filters are appropriate for each downstream analysis;
+- whether target sharding gives sufficiently stable placements for the largest intended genomes;
+- how much runtime and memory variation remains after pilot-based resource estimation;
+- whether the supplied guide trees and taxon sampling make Cactus results useful for the most divergent cases.
+
+The design deliberately preserves raw alignments and provenance so these decisions can be revisited without rerunning every downstream summary.

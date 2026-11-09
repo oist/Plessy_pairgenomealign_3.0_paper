@@ -1,0 +1,75 @@
+Chat: https://chat.sakana.ai/conversation/01a1be39-a335-73a6-bf00-92f104c20f01
+Model: Namazu
+Effort: Thinking on
+Date: Mon, 09 Nov 2026 11:56:40 +0900
+----
+Here is a high-level plan for a Nextflow pipeline that aligns multiple query genome assemblies against a single target reference assembly for comparative genomics.
+
+### 1. Input Preparation
+- **Inputs**: One target FASTA (the reference assembly) and a channel of query FASTA files (the assemblies to compare).
+- **Indexing**: Build a Minimap2 index of the target assembly once, so each query alignment can reuse it.
+- **Key parameters**: target genome path; query genome glob/path; output directory.
+
+### 2. Pairwise Alignment
+- **Tool**: Minimap2 (or alternatively MUMmer4/nucmer for very divergent genomes).
+- **Step**: Align each query assembly to the indexed target in parallel.
+- **Key parameters**:
+  - Preset (`-x asm5`, `asm10`, or `asm20`) chosen based on expected divergence from the target.
+  - Minimum output mapping quality (optional pre-filter).
+  - Number of threads per alignment task.
+- **Output**: One PAF (Pairwise mApping Format) file per query genome; optionally emit SAM if downstream steps need read-style data.
+
+### 3. Alignment Filtering and QC
+- **Tool**: `paftools.js` (from minimap2), awk, or a custom script; plus `samtools` only if SAM/BAM is produced.
+- **Step**: Filter alignments by minimum aligned length and minimum sequence identity to remove spurious matches and small fragments.
+- **Key parameters**:
+  - Minimum alignment length (e.g., 1 kb or 10 kb).
+  - Minimum average nucleotide identity (e.g., 90%, 95%).
+- **Output**: Filtered PAF files; a tabular summary of aligned fraction, number of blocks, and mean identity per query.
+
+### 4. Synteny and Coordinates Extraction
+- **Tool**: `paftools.js call` or a dedicated synteny caller such as Assemblytics (if using nucmer) or a custom script over PAF.
+- **Step**: Convert continuous aligned blocks into synteny anchors and derive 1-to-1 orthologous regions.
+- **Key parameters**:
+  - Maximum allowable gap between adjacent alignments to merge into one syntenic block.
+  - Minimum synteny block size.
+- **Output**: BED-like or TSV files of synteny blocks; chain files if needed for liftOver-style coordinate translation.
+
+### 5. Coverage and Conservation Analysis
+- **Tool**: BEDTools (if converting alignments to BED) and custom R/Python plotting scripts.
+- **Step**: Compute target-genome coverage by aligned query regions; identify covered, duplicated, and missing regions relative to the target.
+- **Key parameters**:
+  - Coverage depth thresholds for calling presence/absence.
+  - Merge distance for nearby aligned intervals.
+- **Output**:
+  - Target coverage BED and bigWig files.
+  - Summary tables of per-chromosome or per-scaffold coverage.
+
+### 6. Structural Comparison (Optional but Recommended)
+- **Tool**: `syri` (if starting from nucmer) or a PAF-based structural variant summarizer.
+- **Step**: Classify alignments into inversions, translocations, duplications, and indels relative to the target.
+- **Key parameters**:
+  - Minimum variant size to report.
+  - Homology/identity thresholds for SV calling.
+- **Output**: Structural variation TSV/VCF and summary statistics.
+
+### 7. Aggregation and Reporting
+- **Tool**: MultiQC (for logs), R Markdown or a simple HTML report generator.
+- **Step**: Collect alignment statistics, coverage summaries, and structural comparison results across all queries.
+- **Output**:
+  - A single HTML report with tables and diagnostic plots (aligned fraction, N50 of aligned blocks, BUSCO-style presence summaries if available).
+  - A master TSV matrix of all query-vs-target comparisons.
+
+### Key Pipeline-Wide Parameters
+- `divergence_mode`: selects minimap2 preset (asm5/asm10/asm20).
+- `min_alignment_length`: global filter on raw alignments.
+- `min_identity`: global percent identity filter.
+- `outdir`: unified publish directory.
+- `threads`: CPU resources for alignment and sorting.
+
+### Final Published Outputs
+- Raw and filtered PAF alignments per query.
+- Target coverage tracks (BED/bigWig).
+- Synteny block coordinates.
+- Structural variation summaries (if enabled).
+- Pipeline run summary report and sample matrix.

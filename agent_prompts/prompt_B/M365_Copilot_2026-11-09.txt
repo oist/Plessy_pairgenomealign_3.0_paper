@@ -1,0 +1,266 @@
+Chat: M365 Copilot
+Model: GPT-5
+Date: Mon, 09 Nov 2026 13:38:07 +0900
+----
+Design Document: A Comparative Genome Assembly Alignment Pipeline
+
+1. Goals and Scope
+
+Objective
+
+Align a set of query genome assemblies against a single target assembly across an extremely broad range of evolutionary distances and assembly qualities, producing outputs suitable for:
+
+- Synteny analysis
+- Structural rearrangement and breakpoint detection
+- Assembly quality control
+- Pairwise divergence estimation
+- Extraction of multi-species alignments for selected loci
+- Comparative genomics visualization
+
+Constraints
+
+The pipeline must:
+
+- Support assemblies from Mb to tens of Gb.
+- Handle chromosome-scale and highly fragmented assemblies.
+- Work from nearly identical haplotypes to deeply diverged species.
+- Run reproducibly on:
+  - Slurm HPC
+  - Cloud environments
+  - Single workstations
+- Follow nf-core design principles.
+- Be maintainable by a small team.
+- Avoid excessive tuning by end users.
+
+2. High-Level Architecture
+
+For each query genome:
+
+Input assembly
+      |
+      v
+Assembly QC + profiling
+      |
+      v
+Alignment strategy selection
+      |
+      +--> high similarity mode
+      |
+      +--> moderate divergence mode
+      |
+      +--> deep divergence mode
+      |
+      v
+Raw pairwise alignment
+      |
+      v
+Filtering / chaining
+      |
+      v
+Syntenic block construction
+      |
+      v
+Metrics + QC
+      |
+      v
+Standardized outputs
+
+Each query-target comparison is independent and naturally parallelizable.
+
+The pipeline should not attempt whole-genome multiple alignment.
+
+Instead it should produce high-quality pairwise alignments that can later be combined as needed.
+
+3. Alignment Engine Choice
+
+Primary Aligner
+
+I would choose minimap2 as the primary alignment engine.
+
+Why minimap2
+
+It provides:
+
+- Excellent scalability
+- Mature assembly-to-assembly support
+- Good performance across large genomes
+- Robust handling of fragmented assemblies
+- Active maintenance
+- Predictable memory requirements
+
+Importantly, minimap2 spans a wider range of divergence than most alternatives while remaining computationally practical at mammalian and plant genome scales.
+
+For a small maintenance team, robustness matters more than marginal sensitivity gains.
+
+Alternatives Considered
+
+- Nucmer
+- Wfmash
+- LastZ
+- MashMap
+- Graph-based methods
+
+Decision: retain minimap2 as primary engine, with potential optional backends in future.
+
+4. Adaptive Alignment Strategy
+
+Stage 1: Genome Profiling
+
+Estimate:
+- Genome size
+- Scaffold N50
+- Number of contigs
+- Repeat fraction
+- k-mer similarity between target and query
+
+Divergence Categories
+
+Category A: Nearly identical (<2%)
+Category B: Moderate divergence (2%-15%)
+Category C: Deep divergence (>15%)
+
+5. Parameter Selection
+
+User-facing modes:
+
+  auto
+  near
+  moderate
+  deep
+
+The pipeline derives low-level parameters automatically.
+
+6. Input Preparation
+
+- FASTA validation
+- Header normalization
+- Repeat profiling
+- Handling highly fragmented assemblies
+
+7. Raw Alignment Processing
+
+Step 1: Remove weak alignments
+Step 2: Chain alignments
+Step 3: Resolve redundancy
+Step 4: Construct syntenic blocks
+
+8. Divergence Estimation
+
+Metrics:
+- Aligned fraction
+- Average identity
+- Gap-adjusted divergence
+- Reciprocal coverage
+
+9. Outputs
+
+Canonical internal format:
+
+PAF
+
+Optional:
+
+SAM/BAM
+
+Chain-level output:
+
+ChainID
+TargetChr
+TargetStart
+TargetEnd
+QueryChr
+QueryStart
+QueryEnd
+Orientation
+Score
+
+Additional outputs:
+- Synteny blocks
+- Region retrieval database
+- Divergence matrices (TSV/JSON)
+
+10. Quality Control
+
+- Alignment-level QC
+- Assembly-level QC
+- Comparative QC
+
+Important visualizations:
+
+- Dot plots
+- Coverage heatmaps
+- Length spectra
+- Identity distributions
+
+11. Resource Use and Scaling
+
+Scaling approximately follows:
+
+Target size
+    ×
+Query size
+    ×
+Repeat complexity
+
+Profiles:
+- small
+- medium
+- large
+- huge
+
+12. Failure Modes in Real Assemblies
+
+- Extremely fragmented drafts
+- Repeat-dominated plant genomes
+- Polyploid genomes
+- Contaminated assemblies
+- Target assembly errors
+- Deep evolutionary distance
+- Tens-of-gigabases genomes
+
+13. Testing Strategy
+
+- Unit tests
+- Integration tests
+- Regression tests
+- Scalability tests
+
+Representative datasets:
+1. Bacteria
+2. Mammals
+3. Repeat-rich plants
+4. Fragmented assemblies
+5. Haplotypes
+6. Deep-divergence species pairs
+
+14. nf-core Design Considerations
+
+Modules:
+
+INPUT_QC
+ASSEMBLY_PROFILE
+DIVERGENCE_ESTIMATION
+ALIGN
+FILTER
+CHAIN
+SYNTENY
+METRICS
+REPORT
+
+15. Major Uncertainties
+
+- Single aligner vs hybrid alignment strategy
+- Synteny construction method
+- Deep-divergence thresholds
+- Large-scale region retrieval architecture
+
+Final Recommendation
+
+1. Minimap2 as primary engine.
+2. Divergence-aware parameter selection.
+3. PAF as canonical internal representation.
+4. Chaining, synteny blocks, and ambiguity tracking as first-class outputs.
+5. Rich QC, especially dot plots.
+6. Modular architecture allowing future alternative alignment backends.
+
+Most importantly, alignment should be treated as a complete comparative genomics workflow rather than as a single alignment step.

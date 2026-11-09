@@ -1,0 +1,71 @@
+Chat: https://www.google.com/
+Date: Mon, 09 Nov 2026 11:58:11 +0900
+----
+A Nextflow pipeline for whole-genome alignment (WGA) scales well by processing each query genome assembly independently in parallel against a single target assembly.
+Here is the structured conceptual plan for a high-throughput comparative genomics alignment pipeline.
+
+Pipeline Overview
+
+• Target (1): High-quality reference genome assembly.
+• Queries (N): Multiple draft or chromosome-level genome assemblies to align against the target.
+• Core Architecture: Nextflow channels broadcast the target genome to multiple parallel worker tasks, each handling a single query genome.
+
+Pipeline Steps & Tooling
+
+ [Target Fasta]  ──────────────────┐
+                                   ▼
+ [Query 1 Fasta] ──► [Step 1: Prep] ──► [Step 2: Align] ──► [Step 3: Chain/Net] ──► [Step 4: Output MAF]
+ [Query 2 Fasta] ──► [Step 1: Prep] ──► [Step 2: Align] ──► [Step 3: Chain/Net] ──► [Step 4: Output MAF]
+ [Query N Fasta] ──► [Step 1: Prep] ──► [Step 2: Align] ──► [Step 3: Chain/Net] ──► [Step 4: Output MAF]
+
+Step 1: Reference Indexing & Repeat Masking
+
+• Tools: minimap2 (indexing) or Mash (for distance estimation), WindowMasker / RepeatMasker (if soft-masking is not pre-applied).
+• Key Parameters:
+	• K-mer size and window size matching the evolutionary distance of the organisms (e.g., preset switches like -x asm5 for close species vs -x asm20 for distant species).
+• Outputs: Target index file, soft-masked FASTA files (if needed).
+
+Step 2: Pairwise Sequence Alignment
+
+• Tools: minimap2 (highly recommended for speed and scalability) or LASTZ (for highly sensitive, granular alignments of smaller/divergent genomes).
+• Key Parameters:
+	• minimap2: --eqx (outputs = or X CIGAR operators for downstream processing), -c (generate CIGAR string), and evolutionary presets (-x asm5, -x asm10, or -x asm20).
+	• Thread allocation (-t matching Nextflow task request).
+• Outputs: Pairwise alignment file per query in PAF or SAM/BAM format.
+
+Step 3: Alignment Chaining and Post-Processing
+
+• Tools: UCSC Kent Utilities (axtChain, chainMergeSort, chainPreNet, chainNet).
+• Key Parameters:
+	• Substitution matrix and gap penalties matching the evolutionary distance.
+	• Linear gap costs vs. affine gap costs depending on expected structural variant sizes.
+• Outputs:
+	• Chain files: Ordered and grouped blocks of gapless alignments.
+	• Net files: Hierarchical arrangement of chains showing orthology and structural rearrangements.
+
+Step 4: Conversion to Comparative Formats
+
+• Tools: UCSC Kent Utilities (netToAxt, axtToMaf) or halLiftover tools if constructing a graph database.
+• Key Parameters:
+	• Target and Query organism sequence dictionaries to ensure correct headers.
+• Outputs: Multiple Alignment Format (MAF) files representing individual pairwise tracks against the core reference.
+
+Key Pipeline Inputs & Outputs
+
+
+Inputs
+
+• target.fasta: Single reference genome file.
+• queries_sheet.csv: A sample sheet listing paths to all query FASTA files and their assigned species identifiers.
+• parameters.yaml: Global configurations specifying evolutionary distances (e.g., Close, Medium, Distant) to automate parameter tuning.
+
+Final Consolidated Outputs
+
+• /alignments/paf/: Raw alignment logs for structural variant troubleshooting.
+• /alignments/chains_nets/: Synteny block definitions showing large inversions and translocations.
+• /alignments/maf/: The core comparative genomics files, ready to load into visualizers (like IGV) or downstream synteny analysis tools (like MCScanX or Synteny Portal).
+To refine this pipeline design further, could you tell me:
+• What is the approximate evolutionary distance between your target and query genomes (e.g., same species, same genus, or different mammalian families)?
+• What is the average genome size and scale of your dataset (e.g., 5 bacterial assemblies vs 50 mammalian assemblies)?
+This will allow me to recommend exact algorithmic presets and specific cluster scaling strategies.
+

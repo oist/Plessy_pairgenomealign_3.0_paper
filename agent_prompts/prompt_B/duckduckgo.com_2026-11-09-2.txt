@@ -1,0 +1,64 @@
+Chat: duck.ai ("second opinion")
+Model: Gemma 4
+Date: Mon, 09 Nov 2026 12:36:29 +0900
+----
+## Aligner Selection and Alternatives
+
+The core alignment engine will be Minimap2. It is the most versatile choice for this range of genomic data because it handles both the extreme scale (gigabase genomes) and the extreme divergence (from haplotypes to distant species) using specialized presets. Its use of a minimizer-based seeding approach allows it to remain computationally efficient even with fragmented assemblies containing millions of scaffolds.
+
+Several alternatives were considered. LAST was evaluated for its superior sensitivity with highly divergent sequences, but its computational overhead is prohibitive for genomes in the tens of gigabases. Cactus/HAL was considered for the multiple alignment requirement; however, these tools are extremely resource-intensive and difficult for a small team to maintain and troubleshoot. BWA-MEM and Bowtie2 were dismissed immediately as they are optimized for short-read mapping and cannot handle the large-scale structural variations and long-gap alignments typical of genome-to-genome comparisons.
+
+## Parameter Selection
+
+Because the divergence ranges from nearly identical to hundreds of millions of years, a single set of parameters is insufficient. The pipeline will implement a dynamic preset selection strategy. Before alignment, the pipeline will run Mash to calculate the Jaccard distance between the query and the target genome. 
+
+Based on the Mash distance, the pipeline will automatically assign a Minimap2 preset: `-x asm5` for closely related genomes (divergence < 5%), `-x asm10` for moderate divergence, and `-x asm20` for highly divergent species. This ensures that the seed length and scoring matrices are optimized for the specific pair, preventing the loss of alignments in divergent species or the inflation of false positives in nearly identical ones.
+
+## Input Preparation
+
+The pipeline expects a single target FASTA file and a samplesheet containing paths to multiple query FASTA files. To ensure reproducibility and prevent failures due to naming collisions, the pipeline will standardize sequence headers using a renaming module. 
+
+For the target genome, the pipeline will generate a Minimap2 index (.mmi) once and reuse it for all queries. To handle fragmented assemblies, the pipeline will pre-calculate the N50 and total scaffold count of each query. This metadata is used to adjust resource requests dynamically and to provide context in the final QC reports.
+
+## Processing of Raw Alignments
+
+Minimap2 produces PAF (Pairwise Alignment Format) files. While PAF is efficient, it is insufficient for complex downstream analysis. The pipeline will process these raw alignments through a three-stage refinement:
+
+First, it will use `paftools` to convert PAF files to BAM format. This allows the use of standard samtools utilities and enables visualization in genome browsers like IGV. Second, the pipeline will filter for primary alignments. In repeat-rich genomes, a single query sequence may map to many locations; keeping only the primary alignment prevents the artificial inflation of synteny blocks and divergence estimates. Third, it will calculate a "coverage-weighted identity" score for each aligned segment, ignoring regions of low-complexity or excessive gaps.
+
+## Outputs and Formats
+
+The pipeline will provide outputs tiered by the intended use:
+
+For visual QC and breakpoint analysis, the primary output is a sorted, indexed BAM file per query. For synteny analysis, the pipeline will generate a BED12 file containing the coordinates of the high-confidence alignment blocks, including the orientation and identity of each block. 
+
+To satisfy the requirement for divergence estimates across all pairs, the pipeline will produce a distance matrix in CSV format, where each cell contains the average sequence identity. For the extraction of multiple alignments, the pipeline will provide a coordinate-based extraction tool. The user specifies a region on the target genome, and the pipeline uses `samtools` to pull the corresponding aligned segments from all query BAM files, outputting them as a multi-FASTA file ready for refinement with tools like MAFFT or Clustal Omega.
+
+## Quality Control and Reporting
+
+The pipeline will integrate MultiQC as the central reporting hub. It will collect metrics from each alignment process, including the percentage of the query genome aligned, the average identity, and the distribution of alignment lengths. 
+
+To support visual QC of assemblies, the pipeline will generate low-resolution dotplots for a representative subset of the genomes. These dotplots will visualize the query versus the target, allowing users to quickly identify large-scale inversions, translocations, or assembly collapses. The reporting module will also flag "suspicious" alignments, such as those where a single query scaffold maps to widely separated regions of the target, which often indicates an assembly error.
+
+## Resource Use and Scaling
+
+To maintain portability across Slurm, the cloud, and workstations, the pipeline will use Nextflow profiles and dynamic resource allocation. Instead of fixed memory limits, the pipeline will calculate the required memory based on the size of the target genome index and the query genome. For example, memory will be requested as a function of `target_genome_size * multiplier`.
+
+To handle the scaling of tens of gigabases, the pipeline will implement "chunking" for extremely large query genomes, splitting them into smaller sets of scaffolds that are aligned in parallel and then merged. This prevents the OOM (Out of Memory) errors common when processing massive, repeat-rich assemblies on cluster nodes with limited RAM.
+
+## Testing
+
+The pipeline will follow the nf-core testing paradigm. A `test` profile will be created using small, well-characterized genomes (e.g., *Saccharomyces cerevisiae*) to ensure the basic logic is sound. 
+
+Integration tests will be performed using a set of synthetic genomes created with a simulator to introduce known breakpoints and divergence levels. This allows the team to verify that the distance-based preset selection and the synteny block extraction are mathematically accurate. Continuous Integration (CI) will be handled via GitHub Actions, running the test profile on every push to ensure no regressions.
+
+## Failure Modes and Justifications
+
+Real-world assemblies present specific failure modes that this design addresses:
+
+*   Memory Exhaustion: Large, repeat-rich genomes can cause the aligner to consume unexpected amounts of RAM. This is mitigated by the dynamic resource scaling and the use of the `.mmi` index.
+*   Alignment Explosion: In highly repetitive regions, a query may produce millions of secondary alignments. The decision to filter for primary alignments early in the processing stage prevents the BAM files from becoming unmanageably large.
+*   Divergence Blindness: If the wrong preset is used, highly divergent species may show zero alignment. The use of Mash for pre-flight distance estimation justifies the added step by ensuring the aligner is always tuned to the data.
+*   Fragmented Assembly Noise: Assemblies with millions of tiny scaffolds can create massive overhead in the alignment output. The pipeline will implement a minimum length threshold for scaffolds (e.g., 500bp) to filter out noise that does not contribute to synteny analysis.
+
+I am unsure about the optimal threshold for "primary" alignment filtering in extremely polyploid genomes, as the definition of a primary alignment may overlap with genuine homeologs. This will require user-configurable thresholds in the pipeline config.

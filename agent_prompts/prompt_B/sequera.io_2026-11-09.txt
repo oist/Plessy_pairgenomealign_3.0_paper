@@ -1,0 +1,330 @@
+Chat: sequera.io
+Date: Mon, 09 Nov 2026 12:35:33 +0900
+----
+Design document: pairwise alignment of query genome assemblies to a target genome
+
+Status: design proposal. Nothing is implemented yet. Scope: align N query assemblies to one target assembly, process the alignments, and produce outputs for synteny and breakpoint analysis, assembly QC, divergence estimates and reference-anchored multi-species extraction. Conventions: nf-core template, DSL2 with strict syntax, nf-schema validation, versions reported through topic channels, MultiQC, nf-test.
+
+As you asked, I designed this from first principles and did not look at or reuse any existing pipeline. The places where I am unsure are marked [uncertain] and collected in §11.
+1. Requirements that drive the design
+Requirement	What it forces
+Inputs range from 3 Mb to over 30 Gb, and from chromosome-level assemblies to drafts with millions of scaffolds	The target index must be able to split into volumes. Queries must be split into chunks for parallelism. No step may hold all-by-all data in memory. Per-sequence outputs such as dotplots must cope with millions of sequences.
+Many genomes are repeat-rich	Repeat handling must be explicit (masking plus limits on seed multiplicity). There must be a principled way to choose among repeat copies, not "keep the best hit".
+Divergence ranges from the two haplotypes of one individual to roughly 500 million years	Sensitivity has to scale with divergence. Fixed scoring parameters will be wrong at one end or the other, so parameters must be fitted per pair.
+Uses: synteny and breakpoints, visual QC, divergence, multi-species extraction	Need one-to-one orthology-like alignments, base-level alignments in MAF, dotplots, and per-pair identity statistics. The target-anchored outputs must be joinable across queries.
+Must run on Slurm, in the cloud and on a workstation, maintained by a small team	One primary aligner. Few tools, all in Bioconda so containers are automatic. No GPU dependency. Resource labels that degrade gracefully.
+2. Aligner choice
+2.1 Decision: LAST (lastdb, last-train, lastal, last-split, plus helpers)
+
+Reasons, in order of importance:
+
+    Parameters are fitted per pair (last-train). It estimates substitution and gap probabilities from the actual pair of genomes. This one feature covers the whole divergence range, and it answers "how are parameters chosen" with a statistical procedure rather than a lookup table. The trained matrix is also a useful QC and divergence output in its own right.
+    Repeats are resolved by probability (last-split). It assigns each query base to at most one target location (many-to-one), and gives every aligned segment a mismap probability. Applying it in the other direction yields one-to-one alignments. One-to-one is what synteny, breakpoint detection, divergence estimation and target-anchored multi-species joins all need. It also provides a quantitative confidence for alignments in paralogous regions instead of an arbitrary best-hit rule.
+    Sensitivity is tunable through seeds (spaced and subset seeds; minimizer and "RY" sampled seeds for speed). The same tool can be fast for haplotypes and very sensitive for deep divergence.
+    Masking is native. Lowercase soft-masking plus built-in tantan masking of simple repeats means a separate repeat-masking step is not required.
+    Operations are simple: a single Bioconda package, CPU only, multithreaded (-P), and a target index that can be split into volumes to cap memory. MAF output and maf-convert give tab, PSL, SAM, BLAST-tab, GFF and chain formats without extra tools.
+
+2.2 Alternatives considered
+Tool	Strengths	Why it is not the primary aligner
+minimap2 (asm5/asm10/asm20)	Very fast, low memory, widely used, PAF output	Its minimizer seeding loses sensitivity beyond roughly 15–25 % divergence. It has no per-pair parameter fitting and no probabilistic choice among repeat copies. Excellent for haplotypes and close species; inadequate for distant pairs.
+LASTZ + UCSC axtChain/chainNet	Gold standard for vertebrate whole-genome alignments; chain and net are well understood	Requires manual splitting of the target and query and a large UCSC "kent" toolchain. Scoring matrices are hand-picked per clade. It is slow, and a small team would have to maintain several steps.
+KegAlign / SegAlign (GPU LASTZ)	Fast at LASTZ sensitivity	Needs GPUs, which breaks the "workstation and Slurm anywhere" requirement. Same downstream chain/net burden.
+MUMmer4 nucmer	Simple, good for close genomes	Low sensitivity for divergent pairs; poor repeat handling at large genome sizes.
+wfmash	Fast, designed for pangenomes	Targets high identity (above about 70–80 %).
+FastGA	Very fast; designed for whole-genome comparison	Younger and less widely deployed. I do not yet know how it behaves on extreme drafts or very distant pairs [uncertain]. A good candidate to benchmark.
+Cactus / Progressive Cactus	True multiple genome alignment, reference-free	Different problem (multi-genome MSA). Very heavy, and it needs a guide tree. Out of scope; our outputs can be compared against it.
+AnchorWave	Handles plant genomes with large TE-driven indels well	Requires gene annotation; specialised.
+BLAST / BLAT	Familiar	Not designed for gigabase-scale whole-genome alignment.
+2.3 Optional secondary aligner
+
+I would add minimap2 as an opt-in fast path (--aligner minimap2) for haplotype-versus-haplotype work at scale, provided its PAF output is normalised into the same downstream formats. This is the only point where I would accept a second aligner, and only if users ask for it. Every extra aligner doubles the parameter, QC and test matrix for a small team. Default: LAST only.
+3. Choosing parameters
+
+Parameters fall into three layers.
+3.1 Seeding and index (lastdb, plus lastal -m and -k)
+
+These control speed against sensitivity and cannot be learned from the data. The design is a preset system with an auto default:
+Preset	Intended divergence	Seeding strategy (qualitative)	Cost
+near	Haplotypes, same species (above about 97 % identity)	Long, near-exact seeds; strong subsampling	Lowest
+close	Congeneric species	Medium spaced seeds, moderate subsampling	Low to moderate
+medium	Within an order or family	Sensitive spaced seeds (MAM4-type)	Moderate to high
+distant	Across classes or phyla	Most sensitive multi-seed set (MAM8-type), higher -m	Highest memory and CPU
+fast	Any; screening or dotplot only	Aggressively sampled seeds (RY-type)	Very low
+
+Auto-selection:
+
+    Estimate the divergence of each query–target pair from a cheap sketch distance (Mash/skani-style) computed during input preparation.
+    Sketch distances saturate above roughly 25–30 % divergence. Saturation is treated as distant, not as a number.
+    Add a guard based on target size: if the distant index would exceed --max_index_memory, fall back to medium and say so in the report. Also allow splitting the index into volumes (§7).
+
+The thresholds between presets are the weakest part of the design [uncertain]. They must come from a calibration benchmark (§9.3), not from intuition. Users can always force a preset or pass raw arguments through ext.args.
+3.2 Scoring (substitution matrix and gap costs)
+
+Learned per pair by last-train on a sample of the query against the target index:
+
+    Symmetric options are used for the substitution, gap and strand models. This makes A→B and B→A comparable, which matters for the all-pairs divergence use case.
+    Training is forced to use the same seeding and masking as the final run, so that it does not learn on easy, unmasked regions.
+
+Fallbacks: if training fails to converge or yields degenerate parameters (identity near 25 %, or gap rates at the boundary), the pipeline falls back to a stock matrix suited to the preset (for example HOXD70-like for distant pairs), records the fallback in QC, and continues. This typically happens for tiny genomes or extremely distant pairs.
+3.3 Significance and filtering
+
+    E-value / random-hit threshold (lastal -D): set relative to genome size (on the order of one random hit per 10⁹ bases). It is exposed but not normally changed.
+    Seed multiplicity cap (lastal -m): this sets sensitivity in repeats against run time. Higher values are used for distant presets.
+    Mismap threshold for last-split: one parameter, --max_mismap (default about 10⁻⁵ for "high-confidence" outputs). Unfiltered many-to-one output is also kept so users can refilter.
+    Post-masking filter (last-postmask): removes alignments dominated by masked or low-complexity sequence. On by default.
+
+3.4 Parameter provenance
+
+Every pair's effective lastdb and lastal arguments, the trained matrix and the auto-selection decision go into a per-pair JSON file and into the MultiQC report. This is essential for reproducibility, because auto makes the run data-dependent.
+4. Input preparation (subworkflow PREPARE_GENOMES)
+4.1 Inputs
+
+    A samplesheet validated by nf-schema with columns id, fasta, and optional label and group. The id must match ^[A-Za-z0-9_]+$: no dots, because MAF species and sequence naming uses species.seq, and no spaces.
+    --target gives the target FASTA, or --target_id names a samplesheet row.
+    --regions: an optional BED file on target coordinates, used for multi-species extraction (§5.5).
+    --target_lastdb: an optional prebuilt index, with a version check.
+
+4.2 Steps, applied to every genome including the target
+
+    Decompress and normalise. Accept .gz (either bgzip or plain gzip) and refuse .zip and .bz2 with a clear error. Strip carriage returns. Turn the header into the first word only. Uppercase or lowercase handling follows the masking policy below.
+
+    Validate.
+        Duplicate sequence names: fail.
+        Empty sequences: drop with a warning.
+        Non-IUPAC characters: fail.
+        Protein-looking alphabet: fail.
+        Sequence names that are not unique after truncation to the first word: fail.
+
+    Statistics (seqkit-style): total length, number of sequences, N50/L50, fraction N, fraction lowercase, GC content. These feed QC and the resource estimates.
+
+    Masking policy (--masking):
+        keep (default): trust existing soft-masking, and add tantan masking of simple repeats inside LAST.
+        tantan_only: uppercase everything, then apply tantan.
+        windowmasker: compute a fresh interspersed-repeat mask. This is optional, for unmasked repeat-rich genomes.
+
+    Guard: if more than about 80 % of a genome is lowercase, the mask is probably "everything lowercased" rather than a real repeat mask. In that case warn and fall back to tantan_only; under --strict, fail instead. Hard-masked genomes (runs of N) are accepted with a warning because they reduce alignability.
+
+    Optional scaffold filter. --min_seq_length defaults to 0, so nothing is discarded silently. The report recommends a value when the number of sequences exceeds about 10⁵.
+
+    Query chunking for parallelism. Split each query into chunks of about --chunk_size bases (default about 100–500 Mb, tuned on the benchmark).
+        Chunks are made only at sequence boundaries; sequences are never cut. Many-to-one last-split needs all alignments of a query sequence in one place, and cutting chromosomes would create artificial breakpoints. A single 1 Gb chromosome simply becomes its own chunk and relies on lastal -P threading.
+        Millions of small scaffolds are packed into size-balanced chunks.
+
+    Divergence sketch. Compute a sketch distance between each query and the target to drive auto presets, and to provide an independent divergence check that is compared with the alignment-based estimate.
+
+4.3 Recommendation surfaced to the user
+
+The more contiguous assembly should be the target. The pipeline warns if the target's N50 is far below the median query N50.
+5. Alignment and processing of the raw alignments
+5.1 Per target (once per run)
+
+LASTDB, using the preset chosen from the most sensitive requirement among all queries, or several indexes if presets differ across queries (at most one per preset actually used). The index is a reusable output, and --target_lastdb lets later runs skip this step.
+5.2 Per query (after the index)
+
+    LAST_TRAIN on the whole query, which it samples internally, against the target index. Output: the parameter file and a training log.
+    LASTAL per chunk, with the trained parameters and output piped straight into last-split in many-to-one mode. Raw unfiltered lastal output is never written to disk: it can be enormous for repeat-rich genomes. Output: a many-to-one MAF per chunk.
+    Merge chunks per query, which is valid because chunking was done by query sequence. Then last-postmask.
+        Output: the many-to-one MAF, where each query base is aligned at most once and a target base may be covered several times. This is the right output for polyploid or duplicated queries and for asking "where does each query segment go?".
+    One-to-one: swap the sequence roles, run last-split again (now each target base is covered at most once), swap back and sort by target coordinate.
+        Output: the one-to-one MAF. This is the main product, used for synteny, breakpoints, divergence and multi-species joins.
+        This step needs all of a query's alignments together. It is cheap compared with lastal, but its memory scales with the alignment size, so it gets its own resource label.
+
+5.3 Derived data, computed from the one-to-one alignments unless stated
+
+    Formats (via maf-convert and small, tested scripts):
+        tab and PSL for tabular analysis;
+        UCSC chain, for liftover and genome-browser tracks;
+        PAF, for the pafr, D-GENIES and minimap2 ecosystem. maf-convert may not produce PAF directly, so this may need a small local converter [uncertain];
+        BED of aligned target intervals and of aligned query intervals;
+        an optional SAM/BAM sorted on the target, which can be viewed directly in IGV.
+
+    Synteny blocks: merge collinear one-to-one alignments, on the same strand and in the same order on both genomes, allowing gaps up to --synteny_gap (scaled with genome size). Output a BED-like block table.
+
+    Breakpoints: classify the junctions between adjacent blocks along each query sequence as inversion, intra-chromosomal translocation, inter-chromosomal translocation or scaffold end. For drafts, junctions at scaffold ends are flagged as uninformative; only within-scaffold breakpoints are reported as candidates. This is the main tool for spotting chimeric scaffolds in assembly QC.
+
+    Divergence statistics, computed on the one-to-one alignment and also on the many-to-one alignment for comparison:
+        aligned bases as a fraction of the target and of the query;
+        substitutions per aligned column, raw and corrected (Jukes–Cantor and a simple transition/transversion-aware model);
+        indel event rate;
+        the trained substitution matrix itself.
+
+    Results are reported with their caveat (§6.3).
+
+5.4 Ordering and determinism
+
+Multithreaded lastal does not guarantee output order, so everything is sorted (MAF by target sequence and start) before checksums are taken. That makes outputs byte-reproducible for a given tool version and set of parameters.
+5.5 Multi-species region extraction (optional, --regions)
+
+All one-to-one MAFs share the target as reference, so they can be joined on target coordinates into a reference-anchored multiple alignment:
+
+    For each region, extract the slice from each pairwise one-to-one MAF, join them (LAST's maf-join, or multiz-style stacking), and write one MAF per region plus an optional FASTA alignment.
+    Limitation, stated in the docs: this is a target-projected alignment. Insertions in queries relative to the target, and query–query homology absent from the target, are not represented. It is not a substitute for Cactus.
+    To support extraction without rerunning the pipeline, the one-to-one MAFs are published bgzip-compressed and indexed by target coordinate. Which index format is most portable here is still open [uncertain].
+
+6. Outputs
+6.1 Layout
+
+Outputs are declared through the workflow output block rather than through publishDir:
+
+results/
+  target/<target_id>/            stats, mask summary, lastdb index (optional, --save_index)
+  queries/<query_id>/
+    train/                       trained parameters and log
+    alignments/
+      <t>__<q>.m2o.maf.gz        many-to-one, unfiltered by mismap (only post-mask)
+      <t>__<q>.o2o.maf.gz        one-to-one, mismap-filtered, sorted, bgzipped, plus index
+      <t>__<q>.o2o.{psl,chain,paf,tab}.gz
+      <t>__<q>.o2o.bam           (optional)
+    synteny/  blocks.tsv, breakpoints.tsv
+    plots/    dotplot.png (and optional dotplot.pdf)
+    stats/    pair_stats.json, params.json
+  regions/                       per-region multi-species MAF and FASTA (optional)
+  summary/   pairwise_divergence.tsv, alignment_summary.tsv
+  multiqc/   pipeline_info/
+
+6.2 Why MAF is the master format
+
+MAF is the only format here that keeps both base-level alignment and per-column sequence context, and LAST's mismap annotations can ride along in it. Every other format is derived from it. PAF and chain are provided because downstream tools (liftover, browsers, R/Python synteny packages) expect them.
+6.3 Caveat on divergence
+
+Identity measured on aligned bases is conditioned on alignability. For distant pairs, only conserved regions align, so identity is overestimated. The summary table therefore always reports identity together with aligned fraction and the trained substitution matrix, and the documentation discourages using raw identity as a distance beyond the medium regime. Turning this into a calibrated evolutionary distance is a separate problem and is not solved here [uncertain].
+6.4 All pairs for a set of genomes
+
+The core pipeline takes one target per run. An all-pairs matrix needs every genome to serve as a target in turn. Two options:
+
+    (a) Document a run-per-target pattern, with --target_lastdb reuse and a small aggregation step.
+    (b) Add an --all_vs_all mode that loops over targets inside one run.
+
+I would ship (a) first and add (b) only if the asymmetry between A→B and B→A turns out to be small enough that computing only half the matrix is acceptable. That has to be measured [uncertain].
+7. Quality control and reporting
+7.1 Per genome
+
+Assembly statistics (§4.2), the masking fraction, the masking-policy decision, and warnings (low contiguity, likely bad mask, duplicate or near-duplicate sequences).
+7.2 Per pair
+Metric	Why it matters
+Trained substitution matrix, percent identity and gap rates from last-train	Sanity check on the divergence regime; detects a failed training run
+Aligned fraction of target and of query (one-to-one and many-to-one)	Coverage. A big gap between many-to-one and one-to-one indicates duplication, polyploidy or uncollapsed haplotypes.
+Synteny block N50 and count	Contiguity of collinearity; a QC proxy for the assembly
+Within-scaffold breakpoint count, by class	Candidate misjoins
+Sketch distance against alignment-derived distance	Disagreement points to contamination, wrong input or a mask problem
+Run time, CPU hours and peak memory per step	Calibration of resources
+7.3 Dotplots
+
+Each pair gets a dotplot of the one-to-one alignment, with options to:
+
+    sort query sequences by their best target position and orient them to the target strand, so that well-assembled genomes produce a clean diagonal;
+    drop sequences with no or few alignments, and cap the number of sequences shown;
+    shade masked or N regions.
+
+Millions of scaffolds cannot be shown readably, so the plot is restricted to the top-K query sequences by aligned length, with K given in the caption. A many-to-one dotplot is optional.
+7.4 Reporting
+
+A MultiQC report gathers the statistics tables, last-train summaries, dotplot images (as custom content), versions and parameter provenance. It is also declared as a Seqera Platform report so it can be viewed from the run page.
+8. Resources, scaling and portability
+8.1 Where the cost goes
+Step	Scales with	Notes
+lastdb	Target size × seed density	Dominant memory cost. Sensitive seeds on a 30 Gb target can exceed a single node's RAM, so the index is split into volumes (lastdb -s) to cap memory per volume, and lastal scans the volumes in turn.
+last-train	Sample size (bounded)	Minutes to about an hour; mostly independent of genome size.
+lastal + last-split	Query size × seed hits (repeats!) × number of target volumes	Dominant CPU cost: from CPU-minutes (bacteria) to thousands of CPU-hours (distant, sensitive, mammal-sized or larger). Parallelised by query chunks and -P threads.
+One-to-one last-split	Alignment size	Moderate memory; single-threaded.
+Conversions, plots, statistics	Alignment size	Cheap, but many small files when there are millions of scaffolds.
+8.2 Resource policy
+
+    Labels derived from data: a process's memory request is a function of meta.target_size, the preset and the number of index volumes, rather than fixed labels alone. On exit code 137 or 140, retry with escalation (memory × 2, then time × 2), with a cap from resourceLimits.
+    Index size cap: --max_index_memory picks the volume size so each lastal task fits on the available nodes.
+        On Slurm and in the cloud, use smaller volumes and more nodes.
+        On a workstation, use one volume if it fits.
+    Index reuse: the index is built once per run. Optionally it is cached with a deterministic key (target checksum + preset + LAST version) so that repeated all-pairs runs do not rebuild it.
+    Cloud:
+        The index can be tens of GB and is staged to every lastal task, so use a fast shared filesystem (e.g. Fusion) or keep the volume count low. Staging cost can dominate for small query chunks [uncertain; needs measurement].
+        Use spot or preemptible instances for lastal chunks, which can be retried and are idempotent.
+        Keep the training and index tasks on-demand.
+    Slurm: chunk sizes are chosen to keep tasks between about 30 minutes and about 12 hours, to fit common walltime limits.
+    Workstation: the auto preset plus a --max_cpus/--max_memory profile. The pipeline estimates total CPU-hours up front, prints it, and warns when the estimate is impractical.
+
+8.3 Portability and reproducibility
+
+    Every tool comes from Bioconda. Containers come from the nf-core module registry or Wave and are pinned by digest, with Docker, Singularity/Apptainer and Conda profiles.
+    No GPU dependency anywhere.
+    The Nextflow version is pinned in the manifest.
+    Run-to-run variation is limited to:
+        the auto preset decision, which is recorded;
+        last-train's sampling. I believe it is deterministic for the same input, but this must be verified in tests [uncertain];
+        output order, which is fixed by sorting (§5.4).
+
+9. Testing
+9.1 Unit level (nf-test)
+
+    One nf-test per module: nf-core modules where they exist, otherwise local ones.
+    Assertions are on content-level statistics, not md5 sums, wherever the order or minor version of LAST could change bytes. Examples: number of alignment blocks, aligned bases within ±x %, identity within ±y, presence of expected breakpoints.
+    Stub runs for every process.
+
+9.2 Pipeline level
+
+    test profile (CI, a few minutes): synthetic genomes of about 1–2 Mb, built once by a documented and versioned script and committed to test-datasets:
+        a "target" with a few chromosomes;
+        a "haplotype" query with a few SNPs and indels;
+        a "rearranged" query with a known inversion, translocation and duplication, plus a fragmented version with known contig breaks;
+        a "distant" query simulated at about 30 % divergence.
+
+    Truth is known, so tests assert that the expected breakpoints are recovered, that the one-to-one output removes the duplication, and that the measured divergence is close to the simulated value.
+
+    Real small data: two or three bacterial strains or yeast species, to catch real-format problems such as soft-masking, odd headers and circular genomes.
+
+    test_full (cloud, on release): a realistic set that exercises the cost regimes:
+        two haplotypes of one vertebrate (near);
+        two congeneric species (close);
+        a distant pair (distant);
+        one highly fragmented draft with more than 10⁵ scaffolds;
+        one large repeat-rich plant genome as target, to exercise index volumes.
+
+9.3 Calibration benchmark (not CI)
+
+A one-off, re-runnable benchmark that sets the thresholds of the auto preset and the defaults for chunk and volume size. It measures sensitivity (against simulated truth and a published reference alignment), CPU-hours and peak memory for each preset across a divergence series. Its results are versioned in the documentation.
+9.4 Regression tests
+
+Any real-world failure (§10) that leads to a fix gets a minimal reproducing fixture added to the test suite.
+10. Failure modes with real-world assemblies
+Failure mode	Symptom	Mitigation
+Whole genome lowercased (bad soft-mask)	Almost nothing aligns	Lowercase-fraction guard → tantan_only plus a warning
+Unmasked, repeat-rich genome	Run time explodes; the many-to-one output is huge	tantan; -m cap; optional windowmasker; last-postmask; CPU-hour estimate warns early
+Hard-masked genome (N runs)	Low aligned fraction	Warning; the N fraction is shown in the report
+Duplicate or truncated-to-duplicate headers	Corrupt MAF, wrong joins	Fail during validation
+Dots or spaces in IDs or sequence names	Broken MAF species.seq parsing	ID regex on the samplesheet; first-word headers; species prefix added only in multi-species output
+Millions of tiny scaffolds	Too many small files, unreadable plots, slow tabular steps	Pack into chunks, never one task per scaffold; top-K dotplot; recommend --min_seq_length
+Very large single chromosomes (above 1 Gb)	One long lastal task; walltime limits	Thread with -P; the time label scales with chunk size; document walltime needs. Splitting a chromosome with overlap is deliberately avoided (it causes artificial breakpoints and duplicated alignments).
+Target over 20–30 Gb	Index does not fit in memory	Index volumes; fall back to a cheaper preset, recorded
+Both haplotypes or alt haplotigs in one FASTA; polyploids	Many-to-one shows double coverage; one-to-one arbitrarily drops one copy	Report many-to-one against one-to-one coverage; document that one-to-one is wrong for polyploid "orthology", and recommend splitting haplotypes or subgenomes
+Contamination (bacteria, adapters, other species)	Odd small scaffolds that do not align, or align off-target	Sketch-distance against alignment-distance disagreement; list unaligned large scaffolds. Contamination screening itself is out of scope.
+Organelles and plastids in the nuclear assembly; NUMTs	Mitochondrial genome "aligns" in many places	Optional --exclude_seqs list; organelle sequences flagged in the report by size and high copy number
+Circular genomes (bacteria, organelles)	An artificial breakpoint at the origin	Flag breakpoints at sequence ends on sequences marked circular (optional column)
+last-train fails or degenerates (tiny genomes, extreme divergence)	Error, or absurd parameters	Fall back to a stock matrix plus a QC flag
+Distant pair with very little alignable sequence	Near-empty outputs; divergence meaningless	Report "insufficient alignment" rather than a number below an aligned-fraction threshold
+Target equals query, or near-identical assemblies	Trivial diagonal; repeats dominate the off-diagonal	Detect identical checksums and skip with a note; for haplotypes, near preset
+Inconsistent naming across assemblies (chr1 against NC_…)	Users cannot match chromosomes	Not "fixed"; optional --seq_alias table for plot labels
+Corrupt or partially downloaded FASTA; gzip against bgzip; CRLF line endings	Parser errors deep in the run	Validate and normalise in the first step, so failures happen fast and early
+Out-of-memory or walltime kills on the HPC	Exit 137/140	Retry with escalation; resource estimates from the input statistics
+11. Open questions and things I am unsure of
+
+    Preset thresholds and seed choices for auto. The mapping from sketch distance to seeding scheme, and the switch-over points, must come from the calibration benchmark. Sketch distances also saturate exactly where the choice matters most (distant pairs).
+    Memory of sensitive indexes on 10–40 Gb targets. I know it is large and that volumes bound it. I do not have reliable numbers for how much sensitivity and time cheaper presets cost at that scale, or how volume count trades against index staging on cloud executors.
+    Determinism of last-train. I believe it gives the same output for the same input and version. Tests must verify this, otherwise parameters (and therefore alignments) differ between runs.
+    Divergence as a distance. Identity on alignable sequence is biased for distant pairs. I am not proposing a corrected evolutionary distance; how far to go with model-based correction is open.
+    A→B against B→A asymmetry. This decides whether all-pairs runs can compute only half the matrix.
+    Reference-anchored multi-species extraction. Whether stacking pairwise one-to-one MAFs is good enough for your downstream use, or a true multiple aligner is needed for selected regions, depends on what those analyses require.
+    Format conversions. I am not certain maf-convert covers PAF. A small local converter, with tests, may be needed. The best target-coordinate index for bgzipped MAF also needs to be chosen for portability.
+    Optional minimap2 path. Whether the speed gain for haplotype pairs justifies maintaining a second aligner should be decided from benchmark numbers, not by default.
+    Breakpoint calling on drafts. The synteny-gap parameter and the rule for scaffold-end junctions will produce false positives in repeat-rich, fragmented assemblies. The right defaults need real fragmented drafts with known misjoins to tune.
+
+12. Proposed structure
+Element	Contents
+PREPARE_GENOMES	Normalise, validate, compute statistics, apply masking policy, chunk queries, sketch distances
+BUILD_TARGET_INDEX	lastdb per preset needed, split into volumes as required
+ALIGN_PAIR	last-train, `lastal
+POSTPROCESS_PAIR	Conversions, synteny blocks, breakpoints, statistics
+REPORT	Dotplots, summary tables, MultiQC
+EXTRACT_REGIONS (optional)	Region slicing and target-anchored join across all queries
+Channel record	meta = [id, role, size, n_seqs, n50, lc_frac, sketch_dist, preset, chunk], passed with each file so resources and presets are data-driven
+
+The design deliberately keeps one aligner, one master format (MAF) and one key processing step (last-split). That is what makes it feasible for a small team to maintain while covering the full range of genome sizes and divergences.
+

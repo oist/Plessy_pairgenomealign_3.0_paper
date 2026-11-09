@@ -1,0 +1,246 @@
+Chat: M365 Copilot
+Model: GPT-5
+Date: Mon, 09 Nov 2026 13:38:07 +0900
+----
+Nextflow Pipeline Plan: Multi-Assembly Alignment to a Target Genome for Comparative Genomics
+
+Objective
+Align multiple query genome assemblies against a single target/reference assembly and generate whole-genome comparative analyses, structural variation catalogs, synteny summaries, and comparative quality metrics.
+
+1. Inputs
+
+Required
+- Target genome assembly (FASTA)
+- One or more query genome assemblies (FASTA)
+
+Optional
+- Reference genome annotations (GFF3/GTF)
+- Repeat annotations (BED/GFF)
+- Chromosome naming map
+- Sample metadata file
+
+Input Channel Structure
+- Single target assembly channel
+- Collection of query assembly channels
+- Metadata channel for assembly names and attributes
+
+2. Pre-processing and QC
+
+Process: Assembly Validation
+Tools:
+- SeqKit
+- seqtk
+- samtools faidx
+
+Checks:
+- FASTA integrity
+- Duplicate sequence IDs
+- Non-standard characters
+- Total assembly size
+- Number of contigs/scaffolds
+
+Outputs:
+- Assembly statistics table
+- Indexed FASTA (.fai)
+
+Process: Assembly Quality Summary
+Tool:
+- QUAST
+
+Key Parameters:
+- Minimum contig size
+- Large genome mode (if needed)
+
+Outputs:
+- N50/N90
+- Total assembly length
+- GC content
+- Assembly reports
+
+3. Repeat Annotation (Optional but Recommended)
+
+Process: Repeat Discovery
+Tools:
+- RepeatModeler
+- EDTA
+
+Outputs:
+- Custom repeat library
+
+Process: Repeat Masking
+Tool:
+- RepeatMasker
+
+Key Parameters:
+- Species-specific library or custom library
+- Soft masking
+
+Outputs:
+- Masked FASTA
+- Repeat annotation files
+
+4. Whole-Genome Alignment
+
+Primary Choice:
+- minimap2
+
+Parameters:
+- Preset: asm5, asm10, or asm20
+- Secondary alignments retained
+- Multi-threaded execution
+
+Outputs:
+- PAF alignment files
+
+Alternative Aligners:
+- nucmer (MUMmer4)
+- Cactus
+
+5. Alignment Filtering
+
+Tools:
+- paftools
+- custom filtering
+- delta-filter (for MUMmer)
+
+Filters:
+- Minimum alignment length
+- Minimum identity
+- Primary alignments only (optional)
+- Remove low-complexity matches
+
+Outputs:
+- High-confidence alignments
+- Filtered PAF/delta
+
+6. Structural Variant Detection
+
+Tools:
+- SyRI
+- Assemblytics
+
+Recommended:
+- SyRI
+
+Outputs:
+- Insertions
+- Deletions
+- Duplications
+- Inversions
+- Translocations
+- SV summary statistics
+
+7. Synteny Analysis
+
+Tools:
+- SyRI
+- MCScanX
+- plotsr
+
+Outputs:
+- Syntenic blocks
+- Rearrangement coordinates
+- Chromosome correspondence tables
+
+8. Alignment Statistics
+
+Metrics:
+- Percentage of genome aligned
+- Average identity
+- Total aligned bases
+- Coverage of target genome
+- Coverage of query genome
+- Number of aligned blocks
+- Largest aligned block
+- Structural variant counts
+
+Tools:
+- paftools
+- custom aggregation scripts
+- pandas/R
+
+Outputs:
+- TSV summary tables
+- Comparative metrics matrix
+
+9. Comparative Gene Analysis (Optional)
+
+Feature Projection:
+- Liftoff
+- Minimap2 + gffcompare
+
+Outputs:
+- Lifted annotations
+- Missing genes
+- Gene presence/absence matrix
+
+Gene Content Comparison:
+- BEDTools
+- AGAT
+- custom scripts
+
+Outputs:
+- Shared genes
+- Unique genes
+- Lost genes
+- Gain/loss summaries
+
+10. Visualization
+
+Dot Plots:
+- MUMmerplot
+- D-GENIES
+
+Outputs:
+- Genome-wide dot plots
+
+Synteny Plots:
+- plotsr
+
+Outputs:
+- Chromosome synteny figures
+- Rearrangement visualizations
+
+Circos Visualization:
+- Circos
+
+Outputs:
+- Genome-wide comparative plots
+
+11. Aggregation and Reporting
+
+Outputs:
+- Alignment summary table
+- Structural variation table
+- Synteny statistics
+- Comparative assembly metrics
+
+Final Report:
+- MultiQC (custom module)
+- RMarkdown
+- Quarto
+
+Contents:
+- QC metrics
+- Alignment statistics
+- Structural variation summaries
+- Synteny summaries
+- Visualization gallery
+- Runtime/resource usage
+
+Outputs:
+- HTML report
+- PDF report
+
+Workflow Structure:
+INPUTS -> Assembly QC -> Repeat Annotation/Masking -> Whole-Genome Alignment -> Alignment Filtering -> Structural Variant Calling -> Synteny Analysis -> Statistics Extraction -> Visualization -> Report Aggregation -> Final Reports
+
+Recommended Core Tool Stack:
+QC: QUAST, SeqKit
+Repeat masking: RepeatModeler, RepeatMasker
+Genome alignment: minimap2
+Alignment filtering: paftools
+Structural variation: SyRI
+Synteny visualization: plotsr
+Dot plots: D-GENIES
+Reporting: MultiQC + Quarto
