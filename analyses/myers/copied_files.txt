@@ -42,10 +42,6 @@
 ./3.0.2_YASS_rep3/pipeline_info/execution_trace_2026-07-31_22-03-05.txt
 ./3.0.2_YASS_rep3/pipeline_info/params_2026-07-31_22-03-19.json
 ./3.0.2_YASS_rep3/multiqc/multiqc_data/multiqc_last_o2o.txt
-./2.3.0_YASS/2.3.0_YASS/pipeline_info/params_2026-07-09_15-40-22.json
-./2.3.0_YASS/2.3.0_YASS/pipeline_info/execution_trace_2026-07-09_15-40-13.txt
-./2.3.0_RY4/2.3.0_RY4/pipeline_info/execution_trace_2026-07-09_08-54-16.txt
-./2.3.0_RY4/2.3.0_RY4/pipeline_info/params_2026-07-09_08-54-20.json
 ./3.0.2_RY128_rep2_cascade_m2m/pipeline_info/params_2026-08-02_09-41-56.json
 ./3.0.2_RY128_rep2_cascade_m2m/pipeline_info/execution_trace_2026-08-02_09-41-51.txt
 ./3.0.2_RY128_rep2_cascade_m2m/multiqc/multiqc_data/multiqc_last_o2o.txt
@@ -68,8 +64,6 @@
 ./AWS/results-b64a8e657da2e4b1e2e99950b7355dd99d1d45d4/pipeline_info/params_2026-07-28_23-53-55.json
 ./AWS/results-b64a8e657da2e4b1e2e99950b7355dd99d1d45d4/pipeline_info/execution_trace_2026-07-28_23-53-30.txt
 ./AWS/results-b64a8e657da2e4b1e2e99950b7355dd99d1d45d4/multiqc/multiqc_data/multiqc_last_o2o.txt
-./3.0.0_RY128/3.0.0_RY128/pipeline_info/params_2026-07-09_08-56-53.json
-./3.0.0_RY128/3.0.0_RY128/pipeline_info/execution_trace_2026-07-09_08-56-44.txt
 ./3.0.2_YASS_rep2/pipeline_info/params_2026-07-31_22-03-15.json
 ./3.0.2_YASS_rep2/pipeline_info/execution_trace_2026-07-31_22-02-57.txt
 ./3.0.2_YASS_rep2/multiqc/multiqc_data/multiqc_last_o2o.txt
@@ -87,8 +81,6 @@
 ./3.0.2_RY128_rep4_cascade/pipeline_info/execution_trace_2026-08-01_10-48-17.txt
 ./3.0.2_RY128_rep4_cascade/pipeline_info/params_2026-08-01_10-48-22.json
 ./3.0.2_RY128_rep4_cascade/multiqc/multiqc_data/multiqc_last_o2o.txt
-./3.0.0_RY4/2.3.0_RY4/pipeline_info/params_2026-07-09_08-57-34.json
-./3.0.0_RY4/2.3.0_RY4/pipeline_info/execution_trace_2026-07-09_08-57-29.txt
 ./3.0.2_YASS_rep1_cascade/pipeline_info/execution_trace_2026-07-31_17-53-18.txt
 ./3.0.2_YASS_rep1_cascade/pipeline_info/params_2026-07-31_17-53-24.json
 ./3.0.2_YASS_rep1_cascade/multiqc/multiqc_data/multiqc_last_o2o.txt
@@ -118,8 +110,6 @@
 ./3.0.2_RY4_rep4_cascade/pipeline_info/params_2026-08-01_10-49-03.json
 ./3.0.2_RY4_rep4_cascade/pipeline_info/execution_trace_2026-08-01_10-48-58.txt
 ./3.0.2_RY4_rep4_cascade/multiqc/multiqc_data/multiqc_last_o2o.txt
-./2.3.0_RY128/2.3.0_RY128/pipeline_info/execution_trace_2026-07-09_08-53-36.txt
-./2.3.0_RY128/2.3.0_RY128/pipeline_info/params_2026-07-09_08-53-40.json
 ./3.0.2_RY128_rep2/pipeline_info/execution_trace_2026-07-16_19-07-49.txt
 ./3.0.2_RY128_rep2/pipeline_info/params_2026-07-16_19-08-06.json
 ./3.0.2_RY128_rep2/multiqc/multiqc_data/multiqc_last_o2o.txt
