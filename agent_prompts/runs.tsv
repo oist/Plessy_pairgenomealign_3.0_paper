@@ -10,3 +10,5 @@ B_duckai_gpt6	B	duck.ai	GPT-6	NA	2026-11-09 12:33:50 +0900	NA	NA	yes	1	no	prompt
 B_google	B	Google (google.com)	NA	NA	2026-11-09 12:38:15 +0900	NA	NA	NA	1	no	prompt_B/google.com_2026-11-09.txt	minimap2, Cactus, GSAlign; UCSC chain/net
 B_sakana_namazu	B	Sakana (chat.sakana.ai)	Namazu	NA	2026-11-09 12:53:16 +0900	NA	NA	yes	1	no	prompt_B/sakana.ai_2026-11-09.txt	LASTZ, UCSC chain/net; minimap2 for close genomes
 B_seqera	B	Seqera AI (seqera.io)	NA	NA	2026-11-09 12:35:33 +0900	NA	NA	NA	1	no	prompt_B/sequera.io_2026-11-09.txt	LAST design matching nf-core/pairgenomealign, which it named in its answer to prompt A
+A_claude_opus55	A	Claude (Anthropic)	Claude Opus 5.5	claude-opus-5-5	2026-11-12 16:38:56 +0900	a colleague's Claude Team account, separate from the authors' Team	NA	NA	1	no	prompt_A/claude-opus-5.5-2026-11-12.txt	LAST; parameter and file names of nf-core/pairgenomealign (see summary.md)
+B_claude_opus55	B	Claude (Anthropic)	Claude Opus 5.5	claude-opus-5-5	2026-11-12 16:41:44 +0900	a colleague's Claude Team account, separate from the authors' Team	NA	NA	1	no	prompt_B/claude-opus-5.5-2026-11-12.txt	LAST, per-pair last-train, one-to-one by swap and last-split

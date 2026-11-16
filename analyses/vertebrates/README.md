@@ -77,3 +77,26 @@ all tasks 474 CPU-hours.
 
 The dot plots of six pairs with an invertebrate query failed (`FAILED` in the
 trace); the pipeline ignores this error.
+
+Rerun
+-----
+
+nf-core/pairgenomealign 3.0.4 on the OIST HPC cluster, with `-profile oist` and
+`nf-params--vgp-rerun.conf` only, the same samplesheet and the same parameters as the
+first run except the exports, left at their default (none)
+(`run_2026-11/params_2026-11-09_16-54-25.json`).  It ran in one go, from 16:54 on
+9 November 2026 to 02:09 the next day (9 h 14 min), and used 486 CPU-hours.
+
+- Seven alignment tasks exceeded 72 GB and succeeded on their second attempt, with
+  200 GB; the largest, with the gorilla query, used 162 GB.
+- The alignment task of GCA_947247035.1 (*Vipera ursinii*) took 4 h 52 min at 25 %
+  CPU, against 6 min in the first run, and finished 2 h 44 min after all the other
+  alignments.
+- Some tasks waited in the queue because of other jobs of the same user (Slurm
+  reason `AssocGrpMemLimit`).
+- Merging the CRAM files took 2 h 53 min.
+- The dot plots of six invertebrate queries failed, as in the first run.
+
+The 580 one-to-one MAF files take 110,421,630,781 bytes (102.8 GiB) and the CRAM file
+24,436,992,843 bytes (22.8 GiB), 4.5 times less (`run_2026-11/alignment_sizes.tsv`).
+The CRAM file contains 580 read groups.

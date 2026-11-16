@@ -1,0 +1,125 @@
+Model: claude-opus-5-5
+Date: 2026-11-12 16:38:56 JST (Asia/Tokyo)
+----
+
+# Nextflow pipeline plan: many-to-one whole-genome alignment
+
+## Goal
+
+Align N query genome assemblies to one target assembly. For each pair, produce a filtered, orthology-like (one-to-one) alignment, plus QC plots and statistics for downstream comparative genomics such as synteny, breakpoints and conservation.
+
+## Recommended aligner
+
+**LAST** (`lastdb`, `last-train`, `lastal`, `last-split`, `maf-swap`, `last-postmask`, `maf-convert`, `last-dotplot`).
+- It handles divergent genomes better than minimap2 because of trained substitution and gap scores and sensitive spaced seeds.
+- It produces a MAF that is aware of split alignments, and from that a true one-to-one alignment.
+- **Optional alternative:** a `--aligner minimap2` branch (`-x asm5/asm10/asm20`) for very close genomes where speed matters more than sensitivity.
+
+## Inputs and parameters
+
+| Param | Meaning | Default suggestion |
+|---|---|---|
+| `--target` | Target FASTA (gz OK) | required |
+| `--input` | Samplesheet CSV: `id,fasta` for each query | required |
+| `--seed` | lastdb seed / `-u` | `YASS` (balanced); `MAM8` (distant, sensitive, RAM-heavy); `RY4`/`RY32` (closely related, fast) |
+| `--masking` | Repeat handling | `soft` (use existing lowercase, `-R11 -c`); `tantan` (`-R01 -c`); `none` |
+| `--lastal_args` | Extra lastal flags | `-C2` (gapless-hit culling), `-D1e9` (significance threshold) |
+| `--m_limit` | Max mismatch probability for last-split | `1e-5` |
+| `--train_args` | last-train flags | `--revsym -C2` (add `-D1e9` to match lastal) |
+| `--one_to_one` | Also produce 1:1 alignments | `true` |
+| `--dotplots` | Make dotplots | `true` |
+| `--outdir` | Results directory | `results/` |
+
+Profiles: `docker`, `singularity`/`apptainer` (BioContainers images for `last`, `seqkit`, `multiqc`), `slurm`, and `test` (two small genomes).
+
+## Workflow steps
+
+1. **INPUT_CHECK**
+   - Parse the samplesheet and validate that IDs are unique and files exist.
+   - Emit tuples `[meta, fasta]`.
+
+2. **PREPARE_FASTA** (target and each query)
+   - Decompress, sanitise sequence names (no spaces or odd characters), and keep soft-masking.
+   - Run `seqkit stats -a` and `seqkit fx2tab -nl` to get sizes, N50 and contig lengths.
+   - Contig lengths feed the dotplots and coverage statistics.
+
+3. **LASTDB** (target only, run once)
+   - Command: `lastdb -P{cpus} -u{seed} {masking flags} target_db target.fa`.
+   - Output: the database directory, broadcast to all queries as a value channel.
+   - Memory note: MAM8 on a large target can need much more than 100 GB, so make it a configurable resource label.
+
+4. **LAST_TRAIN** (per query)
+   - Command: `last-train -P{cpus} --revsym {train_args} target_db query.fa > query.train`.
+   - Learns a substitution and gap matrix specific to each pair. This is the main source of sensitivity across divergence levels.
+   - Output: `.train` parameter file, kept as provenance.
+
+5. **LASTAL** (many-to-one, per query)
+   - Command: `lastal -P{cpus} -p query.train {lastal_args} target_db query.fa | last-split -m{m_limit} > query.m2o.maf`.
+   - After last-split, each query base aligns to at most one target locus.
+   - Very large queries could be split into chunks of about 100 Mb with `seqkit split` and the MAFs merged afterwards. That is optional.
+
+6. **ONE_TO_ONE** (per query, if `--one_to_one`)
+   - Command: `maf-swap query.m2o.maf | last-split -m{m_limit} | maf-swap > query.o2o.maf`.
+   - This keeps each target base aligned at most once as well.
+   - The result approximates orthologous alignment and is the main output for synteny and breakpoint analysis.
+
+7. **POSTMASK** (optional, recommended with soft-masked input)
+   - Command: `last-postmask` on the m2o and o2o MAFs.
+   - Drops alignments made mostly of masked or low-complexity sequence.
+
+8. **CONVERT** (per alignment)
+   - `maf-convert psl` gives PSL for UCSC tools and liftOver chains.
+   - `maf-convert tab` gives compact tabular output for statistics.
+   - `maf-convert gff` or BED gives target-coordinate intervals for GenomicRanges and the GenomicBreaks R package.
+   - SAM/BAM via `maf-convert sam` plus `samtools` is optional, for IGV.
+   - **Optional chain/net sub-workflow:** `axtChain` → `chainMergeSort` → `chainNet` → `netChainSubset` gives UCSC chain/liftOver files.
+
+9. **DOTPLOT** (per query)
+   - Command: `last-dotplot` on the o2o and m2o alignments, as PNG.
+   - Order sequences by size, or use `--sort1=3 --sort2=3` for alignment-guided ordering. Drop tiny contigs with `-1`/`-2` patterns or a minimum-length filter.
+
+10. **ALIGNMENT_STATS** (per query)
+    - Computed from the tab files with a small script:
+      - Aligned bases on target and on query, and % of each genome covered
+      - Identity distribution, weighted by alignment length
+      - Number and length (N50) of alignment blocks
+      - Count of target sequences hit per query sequence
+    - Output: TSV per pair, then merged into a single table.
+
+11. **REPORT**
+    - MultiQC, with custom-content TSVs from stats and seqkit plus dotplot images.
+    - Nextflow `-with-report`, `-with-timeline` and `-with-trace`, plus a `software_versions.yml`.
+
+## Output layout
+
+```
+results/
+  target/            lastdb/, target.stats.tsv, target.sizes
+  <query_id>/
+    train/           <id>.train
+    maf/             <id>.m2o.maf.gz, <id>.o2o.maf.gz
+    psl/  tab/  gff/ (bed/, sam/, chain/ optional)
+    dotplots/        <id>.o2o.png, <id>.m2o.png
+    stats/           <id>.alnstats.tsv
+  summary/           all_pairs.alnstats.tsv, multiqc_report.html
+  pipeline_info/     versions, trace, timeline, DAG
+```
+
+## Design notes
+
+- **Orientation convention:** the target is always the `lastdb` reference, so coordinates are target-centric and comparable across queries.
+- **Parallelism:**
+  - `lastdb` runs once.
+  - `last-train` and `lastal` scatter per query, and per chunk if enabled.
+  - Threads go to `-P`.
+  - Labels separate jobs: `process_high_memory` for lastdb and lastal, and `process_low` for conversions and plots.
+- **Resumability:** publish intermediates with `-resume`-friendly deterministic names, and cache the lastdb.
+- **Divergence guidance (README):**
+  - Same species or strains: `RY32` or minimap2 `asm5`.
+  - Same genus: `YASS`.
+  - Distant or highly rearranged genomes: `MAM8` with more RAM.
+- **Testing:** a nf-test suite on a small pair, such as two bacterial or yeast chromosomes, that checks MAF integrity and non-empty stats.
+- **Downstream extensions (out of scope, but outputs are ready for them):**
+  - Multi-species MAF assembly via `maf-join`, or Cactus for a progressive multiple alignment.
+  - Synteny and breakpoint analysis in R/GenomicBreaks from the o2o GFF.
+  - Conservation tracks.
