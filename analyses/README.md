@@ -8,12 +8,15 @@ article does not use.
 Results
 -------
 
-- `primates/`: Figure 2, the all-versus-all alignment of the genomes of the
-  full-size test.  `primates.Rmd` draws the figure from `primates.benchmark.RData`
-  (statistics of each ordered pair); `genomes.tsv` and `primates_ncbi_lineages.tsv`
-  describe the genomes; `distances.tsv` and `pair_statistics.tsv.gz` hold the
-  distances and statistics as tables; `maf_vs_cram.tsv` compares the sizes of the
-  CRAM and one-to-one MAF files.
+- `primates/`: Figure 2 (see its `README.md`), the all-versus-all alignment of
+  the 35 genomes of the full-size test (33 primates and two outgroups) with
+  release 3.0.4, November 2026.  `run_2026-11/`: execution trace, parameters,
+  versions and MultiQC tables of each target, configuration files and
+  GenomicBreaks run records; `genomicbreaks_yaml.tar.gz`: statistics of each
+  ordered pair; `load_stats.R` loads them into `primates.benchmark.RData` and
+  writes `genomes.tsv`, `distances.tsv` and `pair_statistics.tsv.gz`;
+  `primates.Rmd` draws the figure; `primates_ncbi_lineages.tsv`: NCBI lineage of
+  each genome; `maf_vs_cram.tsv`: sizes of the CRAM and one-to-one MAF files.
 - `multiqc/`: the MultiQC report of the full-size test of release 3.0.4, which is
   the human-versus-others iteration of Figure 2.
 - `vertebrates/`: Figure 3, the human genome against the phase 1 assemblies of the

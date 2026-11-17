@@ -29,10 +29,10 @@ can be added to tree plots to color them.
 
 ```{r clades}
 makeCladeList <- function(Tibble) FocalCladeList(
-  Cercopithecidae = focalClade(Tibble, "29_Papio_anubis_GCF_000264685",       "29_Nasalis_larvatus_GCF_000772465",   "#377EB8", "Cercopithecidae"),
+  Cercopithecidae = focalClade(Tibble, "29_Papio_anubis_GCA_000264685",       "29_Nasalis_larvatus_GCA_000772465",   "#377EB8", "Cercopithecidae"),
   Hominidae       = focalClade(Tibble, "00_Homo_sapiens_GCF_000001405",       "15_Pongo_abelii_GCF_028885655",       "#4DAF4A", "Hominidae"),
-  Hylobatidae     = focalClade(Tibble, "19_Hoolock_leuconedys_GCF_047372625", "19_Hylobates_pileatus_GCF_021498465", "#984EA3", "Hylobatidae"),
-  Platyrrhini     = focalClade(Tibble, "43_Saguinus_midas_GCF_021498475",     "43_Pithecia_pithecia_GCF_028551515",  "#FF7F00", "Platyrrhini"),
+  Hylobatidae     = focalClade(Tibble, "19_Hoolock_leuconedys_GCA_047372625", "19_Hylobates_pileatus_GCA_021498465", "#984EA3", "Hylobatidae"),
+  Platyrrhini     = focalClade(Tibble, "43_Saguinus_midas_GCA_021498475",     "43_Pithecia_pithecia_GCA_028551515",  "#FF7F00", "Platyrrhini"),
   Strepsirrhini   = focalClade(Tibble, "74_Lemur_catta_GCF_020740605",        "74_Nycticebus_coucang_GCF_027406575", "#A65628", "Strepsirrhini")
 )
 
@@ -64,7 +64,17 @@ pretty_labels <- function(ids)
   as.expression(Map(function(s, a) bquote(italic(.(s)) ~ .(paste0("(", a, ")"))),
                     species_name(ids), accession_of(ids)))
 
-treeHeatMap_ <- function(pairwise_matrix, clades, treeheight_row = 100, ...) {
+# Species names in italics, with the assembly name, shortened, when a species
+# has two genomes (taxons: the genome table loaded with the statistics)
+short_labels <- function(ids, assembly = setNames(sub("^T2T-|v[0-9.]+$|\\.p[0-9]+$", "", taxons$GenomeID), taxons$id)) {
+  sp  <- species_name(ids)
+  dup <- sp %in% sp[duplicated(sp)]
+  as.expression(Map(function(s, a, d) if (d) bquote(italic(.(s)) ~ .(paste0("(", a, ")"))) else bquote(italic(.(s))),
+                    sp, assembly[ids], dup))
+}
+
+treeHeatMap_ <- function(pairwise_matrix, clades, treeheight_row = 100, cellwidth = 12, cellheight = 12,
+                         labels_row = pretty_labels(rownames(pairwise_matrix)), ...) {
   d  <- as.dist(pairwise_matrix)
   hc <- hclust(d, method = "average")
   co <- cba::order.optimal(d, hc$merge)
@@ -83,9 +93,9 @@ treeHeatMap_ <- function(pairwise_matrix, clades, treeheight_row = 100, ...) {
 
   pheatmap::pheatmap(pairwise_matrix, cluster_rows = hc, cluster_cols = hc,
     annotation_row = annot[, "clade", drop = FALSE], annotation_names_row = FALSE,
-    annotation_colors = color_list, labels_row = pretty_labels(rownames(pairwise_matrix)),
+    annotation_colors = color_list, labels_row = labels_row,
     show_colnames = FALSE, treeheight_row = treeheight_row, treeheight_col = 0,
-    cellwidth = 12, cellheight = 12, border_color = NA, ...)
+    cellwidth = cellwidth, cellheight = cellheight, border_color = NA, ...)
 }
 ```
 
@@ -152,6 +162,38 @@ lin <- read.delim(lineage_file)
 file.mtime(lineage_file)                            # date of the NCBI Taxonomy snapshot
 ```
 
+### Primates only
+
+The colugo and the mouse were aligned as outgroups; the comparison with the NCBI
+Taxonomy and Figure 2 use the primates only (genomes whose lineage contains
+the order Primates), without the tarsier (infraorder Tarsiiformes), as in the
+previous version of the figure.  With the tarsier, the UPGMA tree places it
+outside the other primates, so that Haplorrhini is not recovered: UPGMA builds
+ultrametric trees, which assume equal rates of change in all lineages, and the
+rate appears to differ between lineages (the Lorisiformes are more distant from
+the other primates than the other Strepsirrhini are).
+
+```{r primates_only}
+in_lineage <- function(taxon) lin$genome_id[grepl(taxon, lin$lineage, fixed = TRUE)]
+primates <- genomes[genomes %in% setdiff(in_lineage("Primates [order]"), in_lineage("Tarsiiformes [infraorder]"))]
+setdiff(genomes, primates)                          # left out
+matrices_primates <- lapply(matrices_symmetric, function(m) m[primates, primates])
+```
+
+Mean percent difference to the Simiiformes, by infraorder, and to the
+Strepsirrhini as a whole: under a constant rate, the Lorisiformes and the
+Lemuriformes would be at the same distance.
+
+```{r rates}
+mean_difference <- function(a, b, m = matrices_symmetric$percent_difference_global)
+  mean(m[intersect(rownames(m), a), intersect(colnames(m), b)])
+simiiformes <- in_lineage("Simiiformes [infraorder]")
+round(c(Lorisiformes  = mean_difference(in_lineage("Lorisiformes [infraorder]"), simiiformes),
+        Lemuriformes  = mean_difference(in_lineage("Lemuriformes [infraorder]"), simiiformes),
+        Strepsirrhini = mean_difference(in_lineage("Strepsirrhini [suborder]"),  simiiformes),
+        Tarsiiformes  = mean_difference(in_lineage("Tarsiiformes [infraorder]"), simiiformes)), 1)
+```
+
 ### Comparison of the UPGMA tree with the NCBI Taxonomy
 
 NCBI taxa are compared with the UPGMA tree as sets of genomes.  Only the taxa
@@ -207,8 +249,12 @@ print_ncbi_comparison <- function(cmp) {
 ```
 
 ```{r ncbi_comparison}
-cmp <- compare_ncbi(matrices_symmetric$percent_difference_global, lin)
+cmp <- compare_ncbi(matrices_primates$percent_difference_global, lin)
 print_ncbi_comparison(cmp)
+
+# With the tarsier
+with_tarsier <- genomes[genomes %in% in_lineage("Primates [order]")]
+print_ncbi_comparison(compare_ncbi(matrices_symmetric$percent_difference_global[with_tarsier, with_tarsier], lin))
 
 # NCBI taxa
 data.frame(taxon = names(cmp$ncbi), genomes = lengths(cmp$ncbi), recovered = cmp$recovered, row.names = NULL)
@@ -222,26 +268,34 @@ data.frame(status = cmp$clade_status[other],
 distances <- c("percent_difference_global", "percent_difference_local", "P", "P_raw", "JC69", "K80",
                "K80_gap_distance", "F81", "HKY85", "T92", "TN93", "LogDet")
 vapply(distances, function(k) isTRUE(ape::all.equal.phylo(
-  cmp$upgma, ape::as.phylo(hclust(as.dist(matrices_symmetric[[k]]), method = "average")),
+  cmp$upgma, ape::as.phylo(hclust(as.dist(matrices_primates[[k]]), method = "average")),
   use.edge.length = FALSE)), TRUE)
 ```
 
 ### Figure 2
 
 On the row dendrogram (the UPGMA tree): filled circle, the clade is an NCBI
-taxon, named when its rank is above genus (genus and species names are in the
-row labels); open circle, the clade is not an NCBI taxon (it resolves a node
-that the NCBI Taxonomy leaves unresolved); red cross, the clade contradicts an
-NCBI taxon, drawn only when there is one.  The symbols are explained in the
-legend on the right, which replaces the annotation legend of pheatmap and
-follows its style (`pheatmap:::draw_annotation_legend`).  Node positions follow
+taxon, named when its rank is family or above, unless the clade colour bar
+names it (subfamilies are not named, for lack of room; genus and species names
+are in the row labels); when several taxa have the same genomes, the least
+inclusive is named (for example Simiiformes rather than Haplorrhini); open
+circle, the clade is not an NCBI taxon (it resolves a node that the NCBI
+Taxonomy leaves unresolved); red cross, the clade contradicts an NCBI taxon,
+drawn only when there is one.  The symbols are explained in the legend below
+the figure, which replaces the annotation legend of pheatmap and follows its
+style (`pheatmap:::draw_annotation_legend`); with the legend below the figure,
+the colour scale moves there too, as a horizontal bar with pheatmap's default
+colours and breaks, to leave the width to the tree.  Node positions follow
 `pheatmap:::draw_dendrogram` (no gaps): x = 1 − height / maximum height / 1.05,
 y = 1 − leaf position.
 
 ```{r figure2_functions}
-treeHeatMap_ncbi <- function(pairwise_matrix, clades, cmp, treeheight_row = 200, fontsize_nodes = 8, ...) {
+treeHeatMap_ncbi <- function(pairwise_matrix, clades, cmp, treeheight_row = 200, fontsize_nodes = 8,
+                             legend = c("right", "bottom"),
+                             named_ranks = c("order", "suborder", "infraorder", "parvorder", "superfamily", "family"), ...) {
+  legend <- match.arg(legend)
   fig <- treeHeatMap_(pairwise_matrix, clades, treeheight_row = treeheight_row,
-                      annotation_legend = FALSE, silent = TRUE, ...)
+                      annotation_legend = FALSE, legend = legend == "right", silent = TRUE, ...)
   hc  <- fig$tree_row
 
   # Genomes under each merge of hc, and position of the merge in the row-tree cell
@@ -264,13 +318,16 @@ treeHeatMap_ncbi <- function(pairwise_matrix, clades, cmp, treeheight_row = 200,
   stopifnot(setequal(vapply(tips[inner], key, ""), vapply(cmp$clades, key, "")))
   node$status <- vapply(tips[inner], cmp$status, "")
 
-  # Names of NCBI taxa above genus: the most inclusive name of the merged ones
+  # Names of NCBI taxa: of the merged names, the least inclusive of the named
+  # ranks; none when the clade colour bar names the clade
   node$label <- ""
   for (k in which(node$status == "ncbi")) {
-    hit  <- names(cmp$ncbi)[vapply(cmp$ncbi, setequal, TRUE, tips[[inner[k]]])]
-    name <- strsplit(hit, " = ", fixed = TRUE)[[1]][1]
-    rank <- sub("^.*\\[(.*)\\]$", "\\1", name)
-    if (!rank %in% c("genus", "species", "subspecies")) node$label[k] <- sub(" \\[.*$", "", name)
+    hit   <- names(cmp$ncbi)[vapply(cmp$ncbi, setequal, TRUE, tips[[inner[k]]])]
+    names <- strsplit(hit, " = ", fixed = TRUE)[[1]]
+    taxon <- sub(" \\[.*$", "", names)
+    rank  <- sub("^.*\\[(.*)\\]$", "\\1", names)
+    if (any(taxon %in% vapply(clades, function(x) x@displayName, ""))) next
+    if (any(rank %in% named_ranks)) node$label[k] <- tail(taxon[rank %in% named_ranks], 1)
   }
 
   # Symbols of the nodes, on the tree and in the legend; only the classes present
@@ -280,26 +337,58 @@ treeHeatMap_ncbi <- function(pairwise_matrix, clades, cmp, treeheight_row = 200,
     contradicts = list(label = "Contradicts an NCBI taxon", pch = 4,  size = 6, gp = grid::gpar(col = "#D7191C", lwd = 2)))
   shown <- intersect(names(symbols), node$status)
 
-  lab <- node$label != ""
+  gt   <- fig$gtable
+  cell <- gt$layout[gt$layout$name == "row_tree", ]
+
+  # Position of each name: the first of five boxes around its node (above or below
+  # the branch on its left, right of the node, above or below on its right) that
+  # overlaps no branch, symbol, name placed before, and does not reach the
+  # annotation column; deepest nodes first.  Coordinates in bigpts from the bottom
+  # left of the tree cell (absolute sizes: cellwidth and cellheight are set).
+  lab <- which(node$label != "")
+  gpn <- grid::gpar(fontsize = fontsize_nodes)
+  dev <- grDevices::dev.cur(); grDevices::pdf(NULL)
+  W  <- grid::convertWidth(gt$widths[cell$l], "bigpts", valueOnly = TRUE)
+  H  <- grid::convertHeight(gt$heights[cell$t], "bigpts", valueOnly = TRUE)
+  tw <- vapply(node$label[lab], function(l) grid::convertWidth(grid::grobWidth(grid::textGrob(l, gp = gpn)), "bigpts", TRUE), 0)
+  tt <- grid::convertHeight(grid::grobHeight(grid::textGrob("Hg", gp = gpn)), "bigpts", TRUE)
+  grDevices::dev.off(); if (dev > 1) grDevices::dev.set(dev)
+  X <- W * c(rep(1, n), 1 - h); Y <- H * (1 - pos)                 # leaves, then merges
+  m <- ifelse(hc$merge < 0, -hc$merge, n + hc$merge)
+  rect <- function(x1, x2, y1, y2) cbind(x1 = pmin(x1, x2), x2 = pmax(x1, x2), y1 = pmin(y1, y2), y2 = pmax(y1, y2))
+  obstacles <- rbind(
+    rect(X[m[, 1]], X[n + seq_len(n - 1)], Y[m[, 1]], Y[m[, 1]]),  # branches of pheatmap:::draw_dendrogram
+    rect(X[m[, 2]], X[n + seq_len(n - 1)], Y[m[, 2]], Y[m[, 2]]),
+    rect(X[n + seq_len(n - 1)], X[n + seq_len(n - 1)], Y[m[, 1]], Y[m[, 2]]),
+    rect(node$x * W - 2.5, node$x * W + 2.5, node$y * H - 2.5, node$y * H + 2.5))   # symbols
+  overlap <- function(b, o) sum(b[1] < o[, 2] & o[, 1] < b[2] & b[3] < o[, 4] & o[, 3] < b[4])
+  boxes <- matrix(NA_real_, length(lab), 4, dimnames = list(NULL, c("x1", "x2", "y1", "y2")))
+  for (j in order(-node$size[lab])) {
+    x <- node$x[lab[j]] * W; y <- node$y[lab[j]] * H; w <- tw[j] + 2; t <- tt + 1
+    cand <- rbind(c(x - 2.5 - w, x - 2.5, y + 1, y + 1 + t), c(x - 2.5 - w, x - 2.5, y - 1 - t, y - 1),
+                  c(x + 3.5, x + 3.5 + w, y - t / 2, y + t / 2),
+                  c(x + 2.5, x + 2.5 + w, y + 1, y + 1 + t), c(x + 2.5, x + 2.5 + w, y - 1 - t, y - 1))
+    hits <- apply(cand, 1, overlap, o = rbind(obstacles, boxes[!is.na(boxes[, 1]), , drop = FALSE])) +
+            1000 * (cand[, 2] > W)
+    if (min(hits) > 0) message("Name over ", min(hits), " other element(s): ", node$label[lab[j]])
+    boxes[j, ] <- cand[which.min(hits), ]
+  }
+
   marks <- do.call(grid::gList, Filter(Negate(is.null), c(
     lapply(shown, function(st) grid::pointsGrob(node$x[node$status == st], node$y[node$status == st],
                                                 pch = symbols[[st]]$pch, size = grid::unit(symbols[[st]]$size, "pt"),
                                                 gp = symbols[[st]]$gp)),
-    list(if (any(lab)) grid::rectGrob(                                # white box behind each name
-      x = grid::unit(node$x[lab], "npc") - grid::unit(3, "pt"),
-      y = grid::unit(node$y[lab], "npc") + grid::unit(1.5, "pt"),
-      width  = grid::unit(1, "strwidth",  as.list(node$label[lab])) + grid::unit(2, "pt"),
-      height = grid::unit(1, "strheight", as.list(node$label[lab])) + grid::unit(2, "pt"),
-      just = c("right", "bottom"), gp = grid::gpar(fill = "white", col = NA, fontsize = fontsize_nodes)),
-    if (any(lab)) grid::textGrob(node$label[lab],
-      x = grid::unit(node$x[lab], "npc") - grid::unit(4, "pt"),
-      y = grid::unit(node$y[lab], "npc") + grid::unit(2.5, "pt"),
-      just = c("right", "bottom"), gp = grid::gpar(fontsize = fontsize_nodes))))))
+    list(if (length(lab)) grid::rectGrob(                             # white box behind each name
+      x = grid::unit(boxes[, "x1"], "bigpts"), y = grid::unit(boxes[, "y1"], "bigpts"),
+      width = grid::unit(boxes[, "x2"] - boxes[, "x1"], "bigpts"), height = grid::unit(boxes[, "y2"] - boxes[, "y1"], "bigpts"),
+      just = c("left", "bottom"), gp = grid::gpar(fill = "white", col = NA)),
+    if (length(lab)) grid::textGrob(node$label[lab],
+      x = grid::unit(boxes[, "x1"] + 1, "bigpts"), y = grid::unit((boxes[, "y1"] + boxes[, "y2"]) / 2, "bigpts"),
+      just = c("left", "centre"), gp = gpn)))))
 
-  gt <- fig$gtable
-
-  # Legend on the right of the colour scale, in the column of the annotation
-  # legend, in its style: clade colours, then node symbols.
+  # Legend in the style of pheatmap's annotation legend: clade colours, then node
+  # symbols; on the right of the colour scale, in the column of the annotation
+  # legend, or below the figure, one row per section, then the colour scale.
   fontsize <- if (is.null(list(...)$fontsize)) 10 else list(...)$fontsize   # pheatmap's default
   gp   <- grid::gpar(fontsize = fontsize)
   gp_b <- grid::gpar(fontsize = fontsize, fontface = "bold")
@@ -307,40 +396,74 @@ treeHeatMap_ncbi <- function(pairwise_matrix, clades, cmp, treeheight_row = 200,
   clade_colors <- character()
   for (clade in names(clades)) clade_colors[clades[[clade]]@displayName] <- clades[[clade]]@color
   clade_colors <- clade_colors[order(names(clade_colors))]
+  key_symbol <- function(section, it, x, y)
+    if (section == "clade")
+      grid::rectGrob(x = x, y = y, hjust = 0, vjust = 1, width = 2 * th, height = 2 * th,
+                     gp = grid::gpar(col = NA, fill = clade_colors[[it]]))
+    else
+      grid::pointsGrob(x = x + th, y = y - th, pch = symbols[[it]]$pch,
+                       size = grid::unit(symbols[[it]]$size, "pt"), gp = symbols[[it]]$gp)
+  key_text <- function(section, it) if (section == "clade") it else symbols[[it]]$label
   key <- list()
-  y <- grid::unit(1, "npc")
-  for (section in c("clade", "tree node")) {
-    key <- c(key, list(grid::textGrob(section, x = 0, y = y, hjust = 0, vjust = 1, gp = gp_b)))
-    y <- y - 1.5 * th
-    for (it in if (section == "clade") names(clade_colors) else shown) {
-      symbol <- if (section == "clade")
-        grid::rectGrob(x = 0, y = y, hjust = 0, vjust = 1, width = 2 * th, height = 2 * th,
-                       gp = grid::gpar(col = NA, fill = clade_colors[[it]]))
-      else
-        grid::pointsGrob(x = th, y = y - th, pch = symbols[[it]]$pch,
-                         size = grid::unit(symbols[[it]]$size, "pt"), gp = symbols[[it]]$gp)
-      text <- if (section == "clade") it else symbols[[it]]$label
-      key <- c(key, list(symbol, grid::textGrob(text, x = 2.4 * th, y = y - th, hjust = 0, vjust = 0.5, gp = gp)))
-      y <- y - 2 * th
+  if (legend == "right") {
+    y <- grid::unit(1, "npc")
+    for (section in c("clade", "tree node")) {
+      key <- c(key, list(grid::textGrob(section, x = 0, y = y, hjust = 0, vjust = 1, gp = gp_b)))
+      y <- y - 1.5 * th
+      for (it in if (section == "clade") names(clade_colors) else shown) {
+        key <- c(key, list(key_symbol(section, it, grid::unit(0, "npc"), y),
+                           grid::textGrob(key_text(section, it), x = 2.4 * th, y = y - th, hjust = 0, vjust = 0.5, gp = gp)))
+        y <- y - 2 * th
+      }
+      y <- y - 1.5 * th
     }
-    y <- y - 1.5 * th
+    width_of <- function(txt, gp)                      # one grob per label: grobWidth of a vector is the first's
+      do.call(grid::unit.c, lapply(txt, function(t) grid::grobWidth(grid::textGrob(t, gp = gp))))
+    texts <- c(names(clade_colors), vapply(symbols[shown], `[[`, "", "label"))
+    at <- gt$layout[gt$layout$name == "legend", ]      # colour scale; the next column is for annotation legends
+    gt$widths[at$l + 1] <- max(2.4 * th + max(width_of(texts, gp)),
+                               max(width_of(c("clade", "tree node"), gp_b))) + grid::unit(4, "pt")
+    gt <- gtable::gtable_add_grob(gt, grid::gTree(children = do.call(grid::gList, key)),
+                                  t = at$t, b = at$b, l = at$l + 1, clip = "off", name = "legend_clade_node")
+  } else {
+    y <- grid::unit(1, "npc") - th
+    for (section in c("clade", "tree node")) {
+      x <- grid::unit(0, "npc")
+      key <- c(key, list(grid::textGrob(section, x = x, y = y - th, hjust = 0, vjust = 0.5, gp = gp_b)))
+      x <- x + grid::grobWidth(grid::textGrob(section, gp = gp_b)) + 1.5 * th
+      for (it in if (section == "clade") names(clade_colors) else shown) {
+        key <- c(key, list(key_symbol(section, it, x, y),
+                           grid::textGrob(key_text(section, it), x = x + 2.4 * th, y = y - th, hjust = 0, vjust = 0.5, gp = gp)))
+        x <- x + 2.4 * th + grid::grobWidth(grid::textGrob(key_text(section, it), gp = gp)) + 2 * th
+      }
+      y <- y - 3 * th
+    }
+    # Colour scale: pheatmap's default colours, breaks and legend values
+    colours <- grDevices::colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdYlBu")))(100)
+    range_m <- range(pairwise_matrix)
+    values  <- grid::grid.pretty(range_m)
+    values  <- values[values >= range_m[1] & values <= range_m[2]]
+    section <- "difference (%)"
+    x  <- grid::grobWidth(grid::textGrob(section, gp = gp_b)) + 1.5 * th
+    bw <- 30 * th                                    # width of the bar
+    at <- x + bw * (values - range_m[1]) / diff(range_m)
+    key <- c(key, list(
+      grid::textGrob(section, x = 0, y = y - th, hjust = 0, vjust = 0.5, gp = gp_b),
+      grid::rectGrob(x = x + bw * (seq_along(colours) - 1) / length(colours), y = y, hjust = 0, vjust = 1,
+                     width = bw / length(colours), height = 2 * th, gp = grid::gpar(col = NA, fill = colours)),
+      grid::segmentsGrob(x0 = at, x1 = at, y0 = y - 2 * th, y1 = y - 2.5 * th),
+      grid::textGrob(values, x = at, y = y - 2.8 * th, vjust = 1, gp = gp)))
+    tree <- gt$layout[gt$layout$name == "row_tree", ]
+    gt <- gtable::gtable_add_rows(gt, 11.5 * th, pos = -1)
+    gt <- gtable::gtable_add_grob(gt, grid::gTree(children = do.call(grid::gList, key)),
+                                  t = nrow(gt), l = tree$l, r = ncol(gt), clip = "off", name = "legend_clade_node")
   }
-  width_of <- function(txt, gp)                        # one grob per label: grobWidth of a vector is the first's
-    do.call(grid::unit.c, lapply(txt, function(t) grid::grobWidth(grid::textGrob(t, gp = gp))))
-  texts <- c(names(clade_colors), vapply(symbols[shown], `[[`, "", "label"))
-  at <- gt$layout[gt$layout$name == "legend", ]        # colour scale; the next column is for annotation legends
-  gt$widths[at$l + 1] <- max(2.4 * th + max(width_of(texts, gp)),
-                             max(width_of(c("clade", "tree node"), gp_b))) + grid::unit(4, "pt")
-  gt <- gtable::gtable_add_grob(gt, grid::gTree(children = do.call(grid::gList, key)),
-                                t = at$t, b = at$b, l = at$l + 1, clip = "off", name = "legend_clade_node")
 
   cell <- gt$layout[gt$layout$name == "row_tree", ]
 
-  # Room on the left for the names of the deepest nodes
-  if (any(lab)) {
-    widest <- node$label[lab][which.max(nchar(node$label[lab]))]
-    gt <- gtable::gtable_add_cols(gt, grid::unit(1, "grobwidth",
-            grid::textGrob(widest, gp = grid::gpar(fontsize = fontsize_nodes))), pos = 0)
+  # Room on the left for the names that extend past the tree cell
+  if (length(lab) && min(boxes[, "x1"]) < 0) {
+    gt <- gtable::gtable_add_cols(gt, grid::unit(-min(boxes[, "x1"]), "bigpts"), pos = 0)
     cell$l <- cell$l + 1
   }
   gt <- gtable::gtable_add_grob(gt, grid::gTree(children = marks), t = cell$t, l = cell$l,
@@ -360,8 +483,11 @@ figure_size <- function(fig) {
 ```
 
 ```{r figure2_build}
-fig2 <- treeHeatMap_ncbi(matrices_symmetric$percent_difference_global, clades, cmp,
-                         main = "Percent nucleotide difference")
+# Drawn at its printed size, 160 mm wide, with 6-pt text and square cells
+fig2 <- treeHeatMap_ncbi(matrices_primates$percent_difference_global, clades, cmp,
+                         main = "Percent nucleotide difference", fontsize = 6, fontsize_nodes = 6,
+                         cellwidth = 7, cellheight = 7, treeheight_row = 129, legend = "bottom",
+                         labels_row = short_labels(primates))
 (fig2_size <- figure_size(fig2))
 ```
 
@@ -381,9 +507,14 @@ Alignment of _Cercopithecus mitis_ (GCF_028627265.1) to the human genome
 levels, only the alignments between the 250 sequences of each genome with the
 largest aligned width are kept.
 
-```{r million_contigs}
+```{r million_contigs_file}
+# On Deigo only; this alignment is from the earlier set of genomes (August 2026)
+cm_blasttab <- "/bucket/LuscombeU/common/ScramblingInTheTree/AlignedGenomes/3.0/RY128/pairgenomealign_benchmark/results_29_Cercopithecus_mitis_GCF_028627265.1/alignment/29_Cercopithecus_mitis_GCF_028627265.1___00_Homo_sapiens_GCF_000001405.29.blasttabplus.gz"
+```
+
+```{r million_contigs, eval = file.exists(cm_blasttab)}
 library(GenomicBreaks)
-gb <- load_genomic_breaks("/bucket/LuscombeU/common/ScramblingInTheTree/AlignedGenomes/3.0/RY128/pairgenomealign_benchmark/results_29_Cercopithecus_mitis_GCF_028627265.1/alignment/29_Cercopithecus_mitis_GCF_028627265.1___00_Homo_sapiens_GCF_000001405.29.blasttabplus.gz")
+gb <- load_genomic_breaks(cm_blasttab)
 
 alignment_counts <- function(gb)
   c(alignments = length(gb), target_seqs = length(seqlevels(gb)), query_seqs = length(seqlevels(gb$query)))
