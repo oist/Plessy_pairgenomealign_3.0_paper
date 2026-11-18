@@ -5,15 +5,15 @@
 #         coverage of the alignment of five genomes to the human CHM13 genome
 #         (pipeline 3.0.2, median of replicates) and the values of Myers et al.
 #         Table S2.
-#   exons.pdf (Figure 6, 80 x 92 mm): human coding exons and bases covered by
-#         alignments of the mouse genome.
+#   exons.pdf (Figure 6, 160 x 62 mm): A, B: human coding bases and exons
+#         covered by alignments of the mouse genome.
 # Inputs: myers_dir (execution traces, MultiQC tables and coverage.tsv of the
 # 3.0.2 runs) and exon_table (coverage table written by bin/06_coverage.sh).
 # Code of the section of Figure 5 in Benchmark.Rmd (Charles Plessy), with the input
 # paths as parameters, the exon values read from exon_table instead of typed in,
 # 8 pt instead of 7 (lines 0.6 mm, points 1.8), legends limited to the sources
-# shown, and its panel C drawn as a separate figure (no grey background, dotted
-# leader lines).  Run from the repository root.
+# shown, and its panel C drawn as a separate figure of two dot charts (bases,
+# exons) instead of one chart with two axes.  Run from the repository root.
 #===============================================================================
 library("tidyverse")
 library("patchwork")
@@ -515,50 +515,36 @@ exon <- read_tsv(exon_table, show_col_types = FALSE) %>%
          bases  = cds_bp_covered / 36043292,
          exons  = exons_hit / 213124)
 
-exon_long <- exon %>%
-  pivot_longer(c(bases, exons), names_to = "measure", values_to = "fraction") %>%
-  mutate(xpos = if_else(measure == "bases", 0, 1))
+# Two dot charts with the same rows, most covered on top: (A) coding bases
+# covered, (B) coding exons overlapped by at least one aligned base.  Dotted
+# lines: complete coverage.  Row labels coloured by source, as the data labels
+# of Figure 5.
+exon <- exon %>%
+  mutate(label = sub("\n", " ", label),
+         row   = factor(label, levels = label[order(cds_bp_covered)]),
+         mb    = cds_bp_covered / 1e6,
+         k     = exons_hit / 1e3)
+row_colours <- text_colour(source_colours[as.character(exon$source[match(levels(exon$row), exon$label)])])
 
-xb <- 1.5                                    # grey/white border, carries the exon axis
-exon_breaks <- c(0, 50, 100, 150) / 213.124   # ticks
-exon_labels <- c("0", "", "100k", "")           # labels only where no data label runs across
-base_breaks <- seq(0, 30, 5) / 36.043292
-base_labels <- seq(0, 30, 5)
-exon_breaks <- c(exon_breaks, 1); exon_labels <- c(exon_labels, "213k")
-base_breaks <- c(base_breaks, 1); base_labels <- c(base_labels, "36.0")
+exon_panel <- function(var, total, breaks, total_label, title, xlab)
+  ggplot(exon, aes(.data[[var]], row, colour = source, shape = source)) +
+    annotate("segment", x = total, xend = total, y = -Inf, yend = Inf,
+             linetype = "dotted", colour = "grey30", linewidth = 0.4) +
+    geom_point(size = ps) +
+    scale_source(c("pairgenomealign", "Gulhan2025")) +
+    scale_x_continuous(limits = c(0, total), breaks = c(breaks, total), labels = c(breaks, total_label),
+                       expand = expansion(mult = c(0.03, 0.03))) +
+    labs(x = xlab, y = NULL, colour = NULL, shape = NULL, title = title,
+         subtitle = "Benchmark of Gulhan et al.") +
+    theme_fig +
+    theme(panel.grid.minor = element_blank(),
+          axis.text.y = element_text(colour = row_colours))
 
-panelExon <- ggplot(exon_long, aes(xpos, fraction, group = method, colour = source, shape = source)) +
-  annotate("segment", x = -Inf, xend = xb, y = base_breaks, yend = base_breaks,
-           colour = highlight, linewidth = 0.3) +
-  annotate("segment", x = xb, xend = xb, y = -Inf, yend = Inf, colour = "grey20", linewidth = 0.3) +
-  annotate("segment", x = xb, xend = xb + 0.06, y = exon_breaks, yend = exon_breaks,
-           colour = "grey20", linewidth = 0.3) +
-  annotate("text", x = xb + 0.1, y = exon_breaks, label = exon_labels,
-           hjust = 0, size = ts, colour = "grey30") +
-  annotate("segment", x = c(-Inf, xb + 0.8), xend = c(xb, Inf), y = 1, yend = 1,   # gap for "213k"
-           linetype = "dotted", colour = "grey30", linewidth = 0.4) +
-  annotate("text", x = 3.45, y = 1.02, label = "complete\ncoverage", hjust = 1, vjust = 0, lineheight = 0.9,
-           size = ts, colour = "grey30") +
-  geom_line(linewidth = lw) +
-  geom_point(size = ps, show.legend = TRUE) +   # ggplot2 >= 3.5 would omit keys for sources absent from C
-  geom_text_repel(data = filter(exon_long, measure == "exons"),
-                  aes(label = label, colour = stage(source, after_scale = text_colour(colour))), lineheight = 0.9,
-                  direction = "y", nudge_x = xb - 0.4, xlim = c(xb + 0.7, NA), ylim = c(NA, 0.97),
-                  hjust = 0, min.segment.length = 0,
-                  box.padding = 0.15, point.padding = 0.1, force = 2, seed = 1,
-                  size = ts, segment.size = 0.3, segment.linetype = "dotted", show.legend = FALSE) +
-  scale_source(c("pairgenomealign", "Gulhan2025")) +
-  scale_x_continuous(breaks = c(0, 1), labels = c("bases", "exons"), limits = c(-0.2, 3.5),
-                     expand = c(0, 0)) +
-  scale_y_continuous(limits = c(0, 1.15), expand = expansion(mult = c(0.02, 0)),   # room above for the label
-                     breaks = base_breaks, labels = base_labels) +
-  coord_cartesian(clip = "off") +
-  labs(x = "Mouse aligned to human", y = "Human coding bases covered (Mb)", colour = NULL, shape = NULL,
-       title = "Human coding sequence covered",
-       subtitle = "Benchmark of Gulhan et al.") +
-  theme_fig +
-  theme(aspect.ratio = aspC,
-        panel.grid = element_blank())
+panelExonA <- exon_panel("mb", 36.043292, c(0, 10, 20, 30), "36.0",
+                         "A: Coding bases covered", "Human coding bases covered (Mb)")
+panelExonB <- exon_panel("k", 213.124, c(0, 50, 100, 150), "213",
+                         "B: Coding exons overlapped", "Human coding exons overlapped (thousands)") +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 
 #--- Assembly -----------------------------------------------------------------
 
@@ -576,5 +562,6 @@ fig <- (panelA + guides(colour = "none", shape = "none")) |
 fig <- fig + plot_layout(guides = "collect") & legend_theme
 ggsave("benchmark.pdf", fig, width = 160, height = 92, units = "mm")
 
-fig_exons <- panelExon + guides(colour = key_colour, shape = key_shape) + legend_theme
-ggsave("exons.pdf", fig_exons, width = 80, height = 92, units = "mm")
+fig_exons <- (panelExonA | panelExonB) + plot_layout(guides = "collect") &
+  guides(colour = key_colour, shape = key_shape) & legend_theme
+ggsave("exons.pdf", fig_exons, width = 160, height = 62, units = "mm")
