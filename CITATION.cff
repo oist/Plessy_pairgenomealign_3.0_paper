@@ -25,6 +25,7 @@ authors:
 license:
   - GPL-3.0-or-later
   - CC-BY-4.0
+doi: 10.5281/zenodo.24327550
 repository-code: "https://github.com/oist/Plessy_pairgenomealign_3.0_paper"
 keywords:
   - pipeline

@@ -19,7 +19,8 @@ Contents
   nf-core/pairgenomealign; not part of the article.
 - `AGENTS.md`: instructions for AI agents working on this repository.
 
-Releases of this repository are archived on Zenodo.
+Releases of this repository are archived on Zenodo; this DOI covers all
+versions and resolves to the latest one: https://doi.org/10.5281/zenodo.24327550
 
 Licence
 -------
