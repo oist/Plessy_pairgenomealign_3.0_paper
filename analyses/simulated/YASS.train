@@ -1,0 +1,246 @@
+# lastal version: 1652
+# maximum percent identity: 100
+# scale of score parameters: 4.3815
+# scale used while training: 87.63
+
+# lastal -j7 -D1e9 -S1 -C2 -P8 -Qfastx --split-n --split-m=0.01
+
+# aligned letter pairs: 686746
+# deletes: 5292.354
+# inserts: 15653.32
+# delOpens: 1389.686
+# insOpens: 4561.521
+# alignments: 172
+# mean delete size: 3.80831
+# mean insert size: 3.4316
+# substitution percent identity: 80.5629
+
+# count matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 664435.8       42144.5893     45041.9474     66575.24      
+# C 42144.5893     442384         26089.1634     45041.9474    
+# G 45041.9474     26089.1634     442384         42144.5893    
+# T 66575.24       45041.9474     42144.5893     664435.8      
+
+# probability matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 0.241814       0.0153381      0.0163925      0.0242293     
+# C 0.0153381      0.161001       0.00949486     0.0163925     
+# G 0.0163925      0.00949486     0.161001       0.0153381     
+# T 0.0242293      0.0163925      0.0153381      0.241814      
+
+# matchProb: 0.991161
+# delOpenProb: 0.0042946
+# insOpenProb: 0.0042946
+# delExtendProb: 0.715874
+# insExtendProb: 0.715874
+# endProb: 0.999876
+
+# delExistCost: 559
+# insExistCost: 559
+# delExtendCost: 29
+# insExtendCost: 29
+
+# score matrix (query letters = columns, reference letters = rows):
+#        A      C      G      T
+# A     87   -121   -115   -114
+# C   -121    119   -129   -115
+# G   -115   -129    119   -121
+# T   -114   -115   -121     87
+
+# lastal -j7 -D1e9 -S1 -C2 -P8 -Qfastx --split-n --split-m=0.01 -t87.286 -p-
+
+# aligned letter pairs: 687649
+# deletes: 1384.474
+# inserts: 11699.828
+# delOpens: 421.7787
+# insOpens: 3680.7138
+# alignments: 175
+# mean delete size: 3.28247
+# mean insert size: 3.17868
+# substitution percent identity: 80.349
+
+# count matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 662702.8       43365.933      43496.43841    69775.4446    
+# C 43365.933      442412.4       26778.56152    43496.43841   
+# G 43496.43841    26778.56152    442412.4       43365.933     
+# T 69775.4446     43496.43841    43365.933      662702.8      
+
+# probability matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 0.240914       0.0157649      0.0158124      0.0253656     
+# C 0.0157649      0.160831       0.00973487     0.0158124     
+# G 0.0158124      0.00973487     0.160831       0.0157649     
+# T 0.0253656      0.0158124      0.0157649      0.240914      
+
+# matchProb: 0.993817
+# delOpenProb: 0.00296454
+# insOpenProb: 0.00296454
+# delExtendProb: 0.686457
+# insExtendProb: 0.686457
+# endProb: 0.999873
+
+# delExistCost: 579
+# insExistCost: 579
+# delExtendCost: 33
+# insExtendCost: 33
+
+# score matrix (query letters = columns, reference letters = rows):
+#        A      C      G      T
+# A     87   -118   -118   -110
+# C   -118    120   -126   -118
+# G   -118   -126    120   -118
+# T   -110   -118   -118     87
+
+# lastal -j7 -D1e9 -S1 -C2 -P8 -Qfastx --split-n --split-m=0.01 -t87.8387 -p-
+
+# aligned letter pairs: 688637
+# deletes: 860.6695
+# inserts: 11191.0579
+# delOpens: 288.2856
+# insOpens: 3577.8931
+# alignments: 174
+# mean delete size: 2.98548
+# mean insert size: 3.12783
+# substitution percent identity: 80.2486
+
+# count matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 662968.6       43686.862      43711.61365    70314.983     
+# C 43686.862      442522.4       26980.18978    43711.61365   
+# G 43711.61365    26980.18978    442522.4       43686.862     
+# T 70314.983      43711.61365    43686.862      662968.6      
+
+# probability matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 0.240627       0.0158563      0.0158653      0.0255211     
+# C 0.0158563      0.160615       0.00979258     0.0158653     
+# G 0.0158653      0.00979258     0.160615       0.0158563     
+# T 0.0255211      0.0158653      0.0158563      0.240627      
+
+# matchProb: 0.994166
+# delOpenProb: 0.00279075
+# insOpenProb: 0.00279075
+# delExtendProb: 0.679201
+# insExtendProb: 0.679201
+# endProb: 0.999874
+
+# delExistCost: 581
+# insExistCost: 581
+# delExtendCost: 34
+# insExtendCost: 34
+
+# score matrix (query letters = columns, reference letters = rows):
+#        A      C      G      T
+# A     87   -117   -117   -110
+# C   -117    119   -126   -117
+# G   -117   -126    119   -117
+# T   -110   -117   -117     87
+
+# lastal -j7 -D1e9 -S1 -C2 -P8 -Qfastx --split-n --split-m=0.01 -t87.4706 -p-
+
+# aligned letter pairs: 688757
+# deletes: 760.9524
+# inserts: 11092.7899
+# delOpens: 261.5547
+# insOpens: 3556.5309
+# alignments: 174
+# mean delete size: 2.90934
+# mean insert size: 3.11899
+# substitution percent identity: 80.2336
+
+# count matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 662948.4       43737.2081     43756.5601     70346.4226    
+# C 43737.2081     442486.4       27000.85738    43756.5601    
+# G 43756.5601     27000.85738    442486.4       43737.2081    
+# T 70346.4226     43756.5601     43737.2081     662948.4      
+
+# probability matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 0.240588       0.0158725      0.0158795      0.0255291     
+# C 0.0158725      0.160581       0.00979876     0.0158795     
+# G 0.0158795      0.00979876     0.160581       0.0158725     
+# T 0.0255291      0.0158795      0.0158725      0.240588      
+
+# matchProb: 0.994236
+# delOpenProb: 0.00275575
+# insOpenProb: 0.00275575
+# delExtendProb: 0.6779
+# insExtendProb: 0.6779
+# endProb: 0.999874
+
+# delExistCost: 582
+# insExistCost: 582
+# delExtendCost: 34
+# insExtendCost: 34
+
+# score matrix (query letters = columns, reference letters = rows):
+#        A      C      G      T
+# A     87   -117   -117   -110
+# C   -117    119   -126   -117
+# G   -117   -126    119   -117
+# T   -110   -117   -117     87
+
+# lastal -j7 -D1e9 -S1 -C2 -P8 -Qfastx --split-n --split-m=0.01 -t87.4617 -p-
+
+# aligned letter pairs: 688757
+# deletes: 753.236
+# inserts: 11082.0691
+# delOpens: 258.5565
+# insOpens: 3553.4906
+# alignments: 174
+# mean delete size: 2.91324
+# mean insert size: 3.11864
+# substitution percent identity: 80.2321
+
+# count matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 662926.4       43740.6006     43760.34469    70351.3822    
+# C 43740.6006     442484.4       27002.1038     43760.34469   
+# G 43760.34469    27002.1038     442484.4       43740.6006    
+# T 70351.3822     43760.34469    43740.6006     662926.4      
+
+# probability matrix (query letters = columns, reference letters = rows):
+#   A              C              G              T             
+# A 0.24058        0.0158737      0.0158809      0.025531      
+# C 0.0158737      0.16058        0.00979923     0.0158809     
+# G 0.0158809      0.00979923     0.16058        0.0158737     
+# T 0.025531       0.0158809      0.0158737      0.24058       
+
+# matchProb: 0.994245
+# delOpenProb: 0.00275141
+# insOpenProb: 0.00275141
+# delExtendProb: 0.677909
+# insExtendProb: 0.677909
+# endProb: 0.999874
+
+# delExistCost: 582
+# insExistCost: 582
+# delExtendCost: 34
+# insExtendCost: 34
+
+# score matrix (query letters = columns, reference letters = rows):
+#        A      C      G      T
+# A     87   -117   -117   -110
+# C   -117    119   -126   -117
+# G   -117   -126    119   -117
+# T   -110   -117   -117     87
+
+# substitution percent identity: 81.4244
+# ref letter %: 31.0 19.0 19.0 31.0
+# qry letter %: 31.0 19.0 19.0 31.0
+#last -Q fastx
+#last -t4.14363
+#last -a 29
+#last -A 29
+#last -b 2
+#last -B 2
+#last -S 1
+# score matrix (query letters = columns, reference letters = rows):
+       A      C      G      T
+A      4     -6     -6     -5
+C     -6      6     -6     -6
+G     -6     -6      6     -6
+T     -5     -6     -6      4
