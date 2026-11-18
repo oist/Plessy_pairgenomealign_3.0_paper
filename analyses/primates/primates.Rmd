@@ -8,7 +8,7 @@ editor_options:
 
 ## Load session
 
-See the data load template in the parent directory.
+The statistics are loaded by `load_stats.R` in this directory.
 
 Also used, by namespace: `ape`, `cba`, `pheatmap`, `gtable`, `jsonlite`
 (download of the NCBI lineages only) and `GenomicBreaks` (last section).

@@ -1,8 +1,8 @@
 #===============================================================================
 # Statistics of the primate all-versus-all alignment (release 3.0.4, November
-# 2026) loaded as in dataLoadTemplate.Rmd of the Scrambling in the Tree of Life
-# project (Charles Plessy), and saved in primates.benchmark.RData for
-# primates.Rmd.  Run from this directory.
+# 2026) loaded with ScrambledTreeBuilder as in the unit's data-loading
+# template, and saved in primates.benchmark.RData for primates.Rmd.  Run from
+# this directory.
 # Inputs: genomicbreaks_yaml.tar.gz (one YAML file per ordered pair, written by
 # oist/plessy_nf_GenomicBreaks 0.24.0.2) and pairgenomealign_benchmark_304.tsv
 # (metadata of the 35 genomes).  Differences from the template: the YAML files
