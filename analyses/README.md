@@ -10,7 +10,7 @@ Results
 
 - `primates/`: Figure 2 (see its `README.md`), the all-versus-all alignment of
   the 35 genomes of the full-size test (33 primates and two outgroups) with
-  release 3.0.4, November 2026.  `run_2026-11/`: execution trace, parameters,
+  release 3.0.4, November 2026.  `run_2026-11/`: execution trace (gzipped), parameters,
   versions and MultiQC tables of each target, configuration files and
   GenomicBreaks run records; `genomicbreaks_yaml.tar.gz`: statistics of each
   ordered pair; `load_stats.R` loads them into `primates.benchmark.RData` and
