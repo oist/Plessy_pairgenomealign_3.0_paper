@@ -5,6 +5,8 @@ Manuscript and supporting material of the article "nf-core/pairgenomealign: a
 scalable pipeline for pairwise whole-genome alignment", by Charles Plessy,
 Mohammed Mahdi, Takahiro Fujita, Martin C. Frith and Nicholas M. Luscombe.
 
+Preprint: https://doi.org/10.64898/2026.11.18.767494 (bioRxiv).
+
 Contents
 --------
 

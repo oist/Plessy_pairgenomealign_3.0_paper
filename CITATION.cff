@@ -34,3 +34,20 @@ keywords:
   - genome alignment
   - LAST
   - benchmark
+references:
+  - type: article
+    title: "nf-core/pairgenomealign: a scalable pipeline for pairwise whole-genome alignment"
+    authors:
+      - family-names: Plessy
+        given-names: Charles
+      - family-names: Mahdi
+        given-names: Mohammed
+      - family-names: Fujita
+        given-names: Takahiro
+      - family-names: Frith
+        given-names: Martin C.
+      - family-names: Luscombe
+        given-names: Nicholas M.
+    journal: bioRxiv
+    year: 2026
+    doi: 10.64898/2026.11.18.767494
