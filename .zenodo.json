@@ -13,6 +13,7 @@
   "access_right": "open",
   "keywords": ["pipeline", "Nextflow", "nf-core", "genome", "alignment", "synteny", "LAST", "benchmark"],
   "related_identifiers": [
-    {"identifier": "10.5281/zenodo.22119145", "relation": "references", "scheme": "doi"}
+    {"identifier": "10.5281/zenodo.22119145", "relation": "references", "scheme": "doi"},
+    {"identifier": "10.64898/2026.11.18.767494", "relation": "isSupplementTo", "scheme": "doi", "resource_type": "publication-preprint"}
   ]
 }
