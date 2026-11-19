@@ -6,7 +6,10 @@
 
 % add 'mode=plain' to transfer to PCJ
 % remove 'mode=plain' to submit to PCI
-\DocumentMetadata{tagging=on}
+% PDF tagging stops lineno from numbering the lines of paragraphs (only
+% headings get numbers), so it is off for the PCI version, which needs line
+% numbers; restore it with 'mode=plain', which has no line numbers.
+%\DocumentMetadata{tagging=on}
 \documentclass[PCJ,Unicode,screen]{cedram}
 
 \usepackage[
